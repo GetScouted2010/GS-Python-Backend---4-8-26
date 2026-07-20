@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-07-20T18:09:57.639Z"
+stopped_at: "Wave 2 complete: 01-02 (test infra + fixtures) and 01-03 (models + migrations) both done, self-checked"
+last_updated: "2026-07-20T20:12:52.189Z"
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 9
-  completed_plans: 1
+  completed_plans: 3
 ---
 
 # Project State
@@ -46,6 +46,7 @@ Plan: 2 of 9
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-data-foundation P03 | 10min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,7 @@ Recent decisions affecting current work:
 - Phase 3-6 split scoring engine port into curation → port → parity testing → caching, matching the "fine" granularity target and treating the 15,700-line untested port as the project's highest-risk work needing its own verification step at each stage.
 - Phase 3 (Curation) carries no directly-owned v1 requirement — it is prerequisite risk-mitigation work (snapshot oracle, de-dup map) that Phases 4-6 depend on to satisfy SCORE-01 through SCORE-07.
 - [Phase 01]: Django field names mirror CSV column names verbatim (locked naming decision); Player.club FK sourced from Team_within_selected_timeframe not Team; Total_Score renamed legacy_total_score; 14 movement columns isolated into Player.extended_stats JSONField
+- [Phase 01-data-foundation]: Player model's ~99 stat FloatFields keep exact CSV casing for parity traceability; identifier/profile fields use lowercase Django-conventional names per plan's explicit field list
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-20T18:09:57.636Z
-Stopped at: Completed 01-01-PLAN.md
-Resume file: .planning/phases/01-data-foundation/01-02-PLAN.md
+Last session: 2026-07-20T20:12:52.183Z
+Stopped at: Wave 2 complete: 01-02 (test infra + fixtures) and 01-03 (models + migrations) both done, self-checked
+Resume file: .planning/phases/01-data-foundation/01-04-PLAN.md

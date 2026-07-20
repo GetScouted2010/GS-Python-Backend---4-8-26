@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 1/9 | In Progress|  |
+| 1. Data Foundation | 3/9 | In Progress|  |
 | 2. Auth & Access Control | 0/TBD | Not started | - |
 | 3. Scoring Engine Curation & Correctness Oracle | 0/TBD | Not started | - |
 | 4. Scoring Engine Port | 0/TBD | Not started | - |
