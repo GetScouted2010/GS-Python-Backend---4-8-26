@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: "Wave 2 complete: 01-02 (test infra + fixtures) and 01-03 (models + migrations) both done, self-checked"
-last_updated: "2026-07-20T20:12:52.189Z"
+stopped_at: Completed 01-04-PLAN.md (Club derivation + import infra)
+last_updated: "2026-07-20T20:36:03.608Z"
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 9
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 1 (Data Foundation) — EXECUTING
-Plan: 2 of 9
+Plan: 5 of 9
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 9
 
 *Updated after each plan completion*
 | Phase 01-data-foundation P03 | 10min | 2 tasks | 6 files |
+| Phase 01 P04 | 12min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,8 @@ Recent decisions affecting current work:
 - Phase 3 (Curation) carries no directly-owned v1 requirement — it is prerequisite risk-mitigation work (snapshot oracle, de-dup map) that Phases 4-6 depend on to satisfy SCORE-01 through SCORE-07.
 - [Phase 01]: Django field names mirror CSV column names verbatim (locked naming decision); Player.club FK sourced from Team_within_selected_timeframe not Team; Total_Score renamed legacy_total_score; 14 movement columns isolated into Player.extended_stats JSONField
 - [Phase 01-data-foundation]: Player model's ~99 stat FloatFields keep exact CSV casing for parity traceability; identifier/profile fields use lowercase Django-conventional names per plan's explicit field list
+- [Phase 01-data-foundation]: clubs_with_ambiguous_league counts any club with >1 distinct League value (matches 01-RESEARCH.md's verified 525/1059), tracked separately from genuine mode ties
+- [Phase 01-data-foundation]: Added a repo-root get-scouted-be/conftest.py re-exporting fixture_dir so every app's test dir (sibling of core/tests/, not descendant) can use the shared fixture-path fixture
 
 ### Pending Todos
 
@@ -72,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-20T20:12:52.183Z
-Stopped at: Wave 2 complete: 01-02 (test infra + fixtures) and 01-03 (models + migrations) both done, self-checked
-Resume file: .planning/phases/01-data-foundation/01-04-PLAN.md
+Last session: 2026-07-20T20:36:03.606Z
+Stopped at: Completed 01-04-PLAN.md (Club derivation + import infra)
+Resume file: None
