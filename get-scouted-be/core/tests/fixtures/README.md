@@ -26,6 +26,7 @@ below carry meaningful seeded values; the rest are blank).
 | 6, 14 | `Position` = `GK` -- used to assert goalkeepers get zero role/compatibility rows by design |
 | 1, 2, 5, 7 | Non-GK `CB` rows whose `UniqueID` also appears in `positions_CB_sample.csv` and `compatibility_CB_sample.csv` |
 | 81 | **The cross-file trap**: `UniqueID = 81` here is a genuine player ("D. Solanke", Tottenham Hotspur). The SAME `UniqueID = 81` value appears in `transferdata_sample.csv` as a **club-scoped** id (Genk) mapping to several unrelated players -- the importer must not link Genk's transfer rows to this player. |
+| 82, 83 | **Genuinely tied club/league (added in Plan 01-04)**: "Sevilla" appears in exactly 2 rows with 2 DIFFERENT League values (`Bundesliga (Germany)` x1, `La Liga (Spain)` x1) -- a true 1-1 tie, unlike Manchester City's 4-1 split which has a clear mode. Exercises the alphabetical tie-break path (`Bundesliga (Germany)` sorts first) required by `test_league_mode` in `clubs/tests/test_club_derivation.py`. |
 
 All `UniqueID` values in this file are unique (player-scoped).
 
