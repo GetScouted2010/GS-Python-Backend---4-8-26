@@ -1,0 +1,13 @@
+UniqueID,Club,Player,Age,Nationality,Position,Short_Position,Market_Value,Dealing_Club,Dealing_Country,Fee,Movement,Window,League_Name,Year,is_loan,loan_status
+81,Genk,Leandro Trossard,19,Belgium,Right Winger,RW,2000000,Zulte Waregem,Belgium,500000,arrival,Summer,jupiler-pro-league,2016,FALSE,NA
+81,Genk,Mike Trésor,20,Belgium,Attacking Midfielder,AM,3000000,Zulte Waregem,Belgium,1500000,arrival,Winter,jupiler-pro-league,2020,FALSE,NA
+81,Genk,Joseph Paintsil,21,Ghana,Right Winger,RW,5000000,Independent FC,Ghana,800000,arrival,Summer,jupiler-pro-league,2019,FALSE,NA
+81,Genk,Leandro Trossard,22,Belgium,Right Winger,RW,10000000,Brighton,England,20000000,departure,Summer,jupiler-pro-league,2019,FALSE,NA
+109,Kortrijk,Isaak Davies,21,Wales,Second Striker,FWD,800000,Cardiff City,England,0,arrival,Summer,jupiler-pro-league,2023,TRUE,Loan transfer
+109,Kortrijk,Alex Mighten,19,England,Winger,RW,1200000,Nottingham Forest,England,0,arrival,Winter,jupiler-pro-league,2022,TRUE,Loan transfer
+235,Westerlo,Jordy Mathei,27,Belgium,Second Striker,FWD,0,KFC Houtvenne,Belgium,0,arrival,Summer,jupiler-pro-league,2022,FALSE,end of loan
+235,Westerlo,Lyle Foster,20,South Africa,Striker,ST,4000000,Independent FC,South Africa,1000000,arrival,Summer,jupiler-pro-league,2021,FALSE,NA
+300,Anderlecht,Random Player A,24,Belgium,Centre Back,CB,6000000,Independent FC,Belgium,2000000,arrival,Summer,jupiler-pro-league,2021,FALSE,NA
+300,Anderlecht,Random Player B,26,Belgium,Centre Back,CB,7000000,Club Brugge,Belgium,3000000,departure,Winter,jupiler-pro-league,2022,FALSE,NA
+400,Standard Liège,Random Player C,18,Belgium,Left Back,LB,1000000,Independent FC,Belgium,0,arrival,Summer,jupiler-pro-league,2020,TRUE,Loan transfer
+999,Charleroi,Random Player D,29,Belgium,Goalkeeper,GK,500000,Independent FC,Belgium,0,departure,Summer,jupiler-pro-league,2018,FALSE,free transfer
