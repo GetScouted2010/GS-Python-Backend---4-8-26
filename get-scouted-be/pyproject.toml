@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+python_files = ["test_*.py"]
+testpaths = ["clubs", "players", "transfers", "core"]
+markers = ["integration: tests that run against real/large CSV samples (slower)"]
+addopts = "-ra"
