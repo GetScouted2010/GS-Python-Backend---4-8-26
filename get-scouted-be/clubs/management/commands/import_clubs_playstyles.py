@@ -75,9 +75,16 @@ UPDATE_FIELDS = [
 def derive_club_league(players_df):
     """Most-common League per Team_within_selected_timeframe.
 
-    Ties broken alphabetically via `sorted(...)`. Returns (league_map, tied_clubs)
-    where tied_clubs is a sorted list of {club, leagues, winner} dicts, one per
-    club whose top League count is shared by more than one League value.
+    Ties broken alphabetically via `sorted(...)`. Returns
+    (league_map, tied_clubs, ambiguous_clubs):
+    - tied_clubs: sorted list of {club, tied_leagues, winner} dicts, one per
+      club whose TOP League count is shared by more than one League value
+      (a genuine mode tie -- the alphabetical tie-break actually fires here).
+    - ambiguous_clubs: sorted list of club names with MORE THAN ONE distinct
+      League value at all (len(counter) > 1), matching the
+      `clubs_with_ambiguous_league` metric definition from 01-RESEARCH.md
+      (~49.6% of real clubs hit this -- most have a clear mode, not a tie,
+      but still carry more than one League value across their player rows).
     """
     club_leagues = defaultdict(Counter)
     for team, league in zip(
@@ -89,14 +96,21 @@ def derive_club_league(players_df):
 
     league_map = {}
     tied_clubs = []
+    ambiguous_clubs = []
     for club, counts in club_leagues.items():
         max_count = max(counts.values())
         winners = sorted(league for league, count in counts.items() if count == max_count)
         league_map[club] = winners[0]
         if len(winners) > 1:
             tied_clubs.append({"club": club, "tied_leagues": winners, "winner": winners[0]})
+        if len(counts) > 1:
+            ambiguous_clubs.append(club)
 
-    return league_map, sorted(tied_clubs, key=lambda entry: entry["club"])
+    return (
+        league_map,
+        sorted(tied_clubs, key=lambda entry: entry["club"]),
+        sorted(ambiguous_clubs),
+    )
 
 
 def _clean(value):
@@ -154,7 +168,7 @@ class Command(BaseCommand):
 
         report = ImportReport(source_file=str(players_csv), source_row_count=len(players_df))
 
-        league_map, tied_clubs = derive_club_league(players_df)
+        league_map, tied_clubs, ambiguous_clubs = derive_club_league(players_df)
         styles_map = load_playstyles(playstyles_df)
 
         # Union: every Players.csv club, plus any Playstyles-only club name
@@ -190,10 +204,14 @@ class Command(BaseCommand):
         created = max(after_count - before_count, 0)
         updated = len(club_objs) - created
 
+        # Log every genuine tie-break event (mode shared by >1 League value) --
+        # verified rarer than "ambiguous" (a club having >1 distinct League
+        # value at all), but this is the specific case where the alphabetical
+        # tie-break decision actually changes the outcome.
         for entry in tied_clubs:
             report.add_field_issue("League", "ambiguous_league_tie", sample_id=entry["club"])
 
-        report.set_counts(created=created, updated=updated, flagged=len(tied_clubs))
+        report.set_counts(created=created, updated=updated, flagged=len(ambiguous_clubs))
 
         distinct_clubs = len(all_club_names)
         coverage_rate = (
@@ -203,9 +221,14 @@ class Command(BaseCommand):
             "club_derivation",
             {
                 "distinct_clubs": distinct_clubs,
-                "clubs_with_ambiguous_league": len(tied_clubs),
+                # Per 01-RESEARCH.md: any club with MORE THAN ONE distinct
+                # League value across its player rows counts as ambiguous
+                # (~49.6% of real clubs) -- a strict superset of tied_clubs,
+                # which is only the subset where the mode itself is tied.
+                "clubs_with_ambiguous_league": len(ambiguous_clubs),
                 "clubs_with_playing_style_coverage": clubs_with_style,
                 "playing_style_coverage_rate": coverage_rate,
+                "ambiguous_clubs": ambiguous_clubs,
                 "tied_clubs": tied_clubs,
             },
         )
@@ -215,7 +238,8 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Upserted {len(club_objs)} clubs "
-                f"({len(tied_clubs)} ambiguous-league ties, "
+                f"({len(ambiguous_clubs)} ambiguous-league clubs, "
+                f"{len(tied_clubs)} genuine mode ties, "
                 f"playing-style coverage {coverage_rate:.1%}). "
                 f"Report: {json_path}, {md_path}"
             )
