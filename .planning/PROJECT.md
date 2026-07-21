@@ -13,11 +13,11 @@ The backend must serve accurate, real scouting data and real (not approximated) 
 ### Validated
 
 - ✓ Real dataset migration: Players, Clubs/Playstyles, per-position role scores, Compatibility Scores, and transfer history CSVs (from `API-Updated-/dataset/`) imported into the new Postgres schema, with a reviewed combined import report — Phase 1 (41,708 players, 1,060 clubs, 230,139 role scores, 8,188,712 compatibility rows, 47,201 transfers)
+- ✓ Auth with roles (scout, analyst, director, admin) — Phase 2: custom Django `accounts.User` (UUID PK, email login) is now `AUTH_USER_MODEL`, replacing Supabase Auth and the other 2 legacy auth models; DRF+simplejwt wired deny-by-default; registration/login/refresh/logout/password-reset endpoints live; reusable `MinimumRole` role-hierarchy permission primitive built and proven via `/api/auth/me/` and `/api/auth/admin/users/`, ready for Phase 7/8 reuse on Watchlist/Shortlist/SquadPlan
 
 ### Active
 
 - [ ] Django + DRF backend on Postgres, designed to serve `pixel-perfect-clone-60729` (replacing its current Supabase backend)
-- [ ] Auth with roles (scout, analyst, director, admin) — replacing Supabase Auth, reconciling the 3 conflicting legacy auth models (JWT, disabled API-key middleware, Supabase Auth)
 - [ ] Full CRUD API for core entities: Players, Clubs, Transfers, Watchlist, Shortlists, Squad Plans, Recent Activity, Profiles
 - [ ] Full port of `impact_model_v4.1.py` (~15,700 lines) as the live Django scoring engine — Player Score (RMM), Compatibility Score (CS), Financial Fit (TFM), Transfer Probability
 - [ ] AI features in v1: natural-language search parsing (query → structured filters) and AI-generated scout reports / club insights, built behind an LLM-provider-agnostic interface
@@ -65,8 +65,8 @@ The backend must serve accurate, real scouting data and real (not approximated) 
 | LLM provider abstracted, not chosen yet | Avoids premature lock-in; decide with real requirements when that phase is actually planned | — Pending |
 | Hosting/deployment target deferred | Not yet decided; building cleanly (Docker/12-factor) means this doesn't block backend development | — Pending |
 | Keep full scope despite the 4-day soft deadline | User explicitly chose realism over force-fitting scope into an unrealistic window | — Pending |
-| Existing Supabase-authenticated users in `pixel-perfect-clone-60729` are not migrated | Clean re-registration under the new Django auth system; product is still at prototype/demo stage, not a live user base | — Pending |
+| Existing Supabase-authenticated users in `pixel-perfect-clone-60729` are not migrated | Clean re-registration under the new Django auth system; product is still at prototype/demo stage, not a live user base | ✓ Good — Phase 2 confirmed zero Supabase references anywhere in `get-scouted-be/`; clean self-service registration is the only path in |
 | All 5 models (Club, Player, PlayerRoleScore, PlayerClubCompatibility, Transfer) use UUID primary keys instead of Django's default auto-incrementing integer | Avoids enumerable, guessable IDs (`/players/1`, `/players/2`, ...) once these are exposed via API in Phase 7+; cheapest to change before any API/FK consumers exist | ✓ Good — switched before Phase 2, migrations regenerated cleanly, full real dataset re-imported and reconciled (PASS), 18/18 tests green |
 
 ---
-*Last updated: 2026-07-21 after Phase 1 (Data Foundation) completion*
+*Last updated: 2026-07-21 after Phase 2 (Auth & Access Control) completion*
