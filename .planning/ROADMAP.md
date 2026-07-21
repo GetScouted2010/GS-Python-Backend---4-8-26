@@ -71,7 +71,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Running the original script against the real migrated dataset (Phase 1) produces a stored, versioned snapshot of its output (RMM, CS, TFM, Transfer Probability) for every position group, saved as the correctness oracle Phase 5 checks the port against.
   3. Non-deterministic or sklearn-trained components (e.g. Transfer Probability) are identified and separated from purely deterministic calculators, with their handling documented for the port.
   4. A written curation map exists showing, per score, which original functions and columns feed it.
-**Plans**: TBD
+**Plans**: 7 plans (3 waves)
+- [ ] 03-01-PLAN.md — Foundation: scikit-learn/joblib deps, scoring app skeleton, ORM→script DataFrame reconstruction (wave 1)
+- [ ] 03-02-PLAN.md — Duplicate-function catalogue (20 names, last-wins resolution of 18, flag 2) (wave 2)
+- [ ] 03-03-PLAN.md — Escalation review + human decision for the 2 four-definition functions (wave 2, checkpoint)
+- [ ] 03-04-PLAN.md — RMM (Player Impact) calculator characterization (wave 2)
+- [ ] 03-05-PLAN.md — CS role-fit + deterministic Transfer Probability characterization (wave 2)
+- [ ] 03-06-PLAN.md — TFM sklearn model training + versioned joblib artifact (wave 2)
+- [ ] 03-07-PLAN.md — Full-population oracle snapshot + master curation map finalization (wave 3)
 
 ### Phase 4: Scoring Engine Port
 **Goal**: The curated, authoritative calculators for all four scores run as real Django/Python services and are reachable via API with full component breakdowns.
@@ -179,7 +186,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 9/9 | Complete    | 2026-07-21 |
 | 2. Auth & Access Control | 3/3 | Complete    | 2026-07-21 |
-| 3. Scoring Engine Curation & Correctness Oracle | 0/TBD | Not started | - |
+| 3. Scoring Engine Curation & Correctness Oracle | 0/7 | Not started | - |
 | 4. Scoring Engine Port | 0/TBD | Not started | - |
 | 5. Scoring Parity Testing | 0/TBD | Not started | - |
 | 6. Scoring Performance & Caching Layer | 0/TBD | Not started | - |
