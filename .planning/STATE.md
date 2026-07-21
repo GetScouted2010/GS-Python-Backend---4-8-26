@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-07-21T12:13:08.484Z"
+stopped_at: Completed 02-03-PLAN.md (Phase 2 all plans executed, pending verification)
+last_updated: "2026-07-21T13:20:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 1
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -30,9 +30,9 @@ Plan: 3 of 3
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 22.5 min
-- Total execution time: 0.75 hours
+- Total plans completed: 3
+- Average duration: 21 min
+- Total execution time: 1.05 hours
 
 **By Phase:**
 
@@ -42,7 +42,7 @@ Plan: 3 of 3
 
 **Recent Trend:**
 
-- Last 5 plans: 25min, 20min
+- Last 5 plans: 25min, 20min, 18min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -55,6 +55,7 @@ Plan: 3 of 3
 | Phase 01-data-foundation P09 | 100min | 2 tasks | 6 files |
 | Phase 02 P01 | 25min | 3 tasks | 12 files |
 | Phase 02 P02 | 20min | 2 tasks | 8 files |
+| Phase 02 P03 | 18min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,10 @@ Recent decisions affecting current work:
 - [Phase 02-auth-access-control]: DRF wired deny-by-default (JWTAuthentication only, IsAuthenticated only); simplejwt 5.5.1 pinned (patches CVE-2024-22513) with rotation+blacklist; full Phase 1 dataset re-imported post-reset with PASS reconciliation
 - [Phase 02-auth-access-control]: /api/auth/* account lifecycle endpoints live -- register (admin excluded from self-service), login (JWT with embedded role+email claims, generic 401 on bad creds), refresh (rotate+blacklist prior token), logout (TokenBlacklistView revocation), password-reset request/confirm (Django's default_token_generator, console email, generic 200 on request regardless of email match)
 - [Phase 02-auth-access-control]: AUTH_PASSWORD_VALIDATORS was missing entirely from this hand-written config/settings/base.py (not auto-seeded outside Django's startproject template) -- added the standard 4-validator list so validate_password() actually enforces password strength on registration and password-reset-confirm instead of being a silent no-op
+- [Phase 02-auth-access-control]: Additive role hierarchy encoded in exactly one place -- ROLE_RANK dict + MinimumRole(role) permission-class factory in accounts/permissions.py (scout=analyst=1 < director=2 < admin=3) -- no bespoke per-role permission classes; this is the primitive Phase 7/8 will import for Watchlist/Shortlist/SquadPlan role gating
+- [Phase 02-auth-access-control]: /api/auth/me/ makes self-role-escalation structurally impossible (role is a read_only_field on ProfileSerializer, not just an app-logic check); /api/auth/admin/users/ gives director read-only org-wide visibility and admin-only role-change/soft-deactivation with zero destroy route ever registered (no hard delete at the API layer)
+- [Phase 02-auth-access-control]: Role/deactivation immediacy (no re-login required) verified against a real endpoint end-to-end, not just the permission class in isolation -- confirms JWTAuthentication's per-request DB refetch + DB-fresh permission reads compose correctly as researched
+- [Phase 02-auth-access-control]: All 3 plans executed, full suite 47/47 passing; Phase 2 pending goal-backward verification before being marked complete
 
 ### Pending Todos
 
@@ -97,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T12:13:08.481Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-07-21T13:20:00.000Z
+Stopped at: Completed 02-03-PLAN.md (Phase 2 all plans executed, pending verification)
 Resume file: None
