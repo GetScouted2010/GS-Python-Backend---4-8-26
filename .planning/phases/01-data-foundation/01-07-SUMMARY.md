@@ -113,3 +113,15 @@ None - no external service configuration required.
 ---
 *Phase: 01-data-foundation*
 *Completed: 2026-07-21*
+
+## Self-Check: PASSED
+
+- FOUND: get-scouted-be/players/management/commands/import_compatibility_scores.py
+- FOUND: get-scouted-be/players/tests/test_compatibility.py
+- FOUND: get-scouted-be/core/import_reports/Compatability Scores_20260721T015413Z.json
+- FOUND: .planning/phases/01-data-foundation/01-07-SUMMARY.md
+- FOUND commit: 87a7fa1 (feat: import_compatibility_scores command)
+- FOUND commit: 2ba82cd (test: compatibility normalization + unresolved-header tests)
+- FOUND commit: 57b1c68 (chore: full-dataset import report)
+- FOUND commit: 8fe13ad (docs: plan metadata)
+- players/ test suite: 7 passed, 0 failed
