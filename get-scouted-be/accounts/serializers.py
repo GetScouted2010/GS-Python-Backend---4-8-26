@@ -30,3 +30,14 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["role"] = user.role
         token["email"] = user.email
         return token
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Self-service profile view/edit. role is read-only here to block
+    self-escalation -- role changes are admin-only (see AdminUserSerializer).
+    """
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "display_name", "role"]
+        read_only_fields = ["id", "email", "role"]

@@ -5,13 +5,17 @@ from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import User
-from accounts.serializers import RegisterSerializer, RoleTokenObtainPairSerializer
+from accounts.serializers import (
+    ProfileSerializer,
+    RegisterSerializer,
+    RoleTokenObtainPairSerializer,
+)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -71,3 +75,16 @@ class PasswordResetConfirmView(APIView):
         user.set_password(new_password)
         user.save(update_fields=["password"])
         return Response({"detail": "Password has been reset."})
+
+
+class ProfileView(generics.RetrieveUpdateAPIView):
+    """Self-service profile at /api/auth/me/ -- always targets the calling
+    user (no pk in the URL); role is read-only via ProfileSerializer so a
+    user can never self-escalate their own role.
+    """
+
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]  # explicit; matches the global default
+
+    def get_object(self):
+        return self.request.user
