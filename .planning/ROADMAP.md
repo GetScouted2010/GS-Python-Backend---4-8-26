@@ -186,7 +186,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 9/9 | Complete    | 2026-07-21 |
 | 2. Auth & Access Control | 3/3 | Complete    | 2026-07-21 |
-| 3. Scoring Engine Curation & Correctness Oracle | 2/7 | In Progress | - |
+| 3. Scoring Engine Curation & Correctness Oracle | 4/7 | In Progress | - |
 | 4. Scoring Engine Port | 0/TBD | Not started | - |
 | 5. Scoring Parity Testing | 0/TBD | Not started | - |
 | 6. Scoring Performance & Caching Layer | 0/TBD | Not started | - |
