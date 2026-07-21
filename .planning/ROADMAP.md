@@ -72,7 +72,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Non-deterministic or sklearn-trained components (e.g. Transfer Probability) are identified and separated from purely deterministic calculators, with their handling documented for the port.
   4. A written curation map exists showing, per score, which original functions and columns feed it.
 **Plans**: 7 plans (3 waves)
-- [ ] 03-01-PLAN.md — Foundation: scikit-learn/joblib deps, scoring app skeleton, ORM→script DataFrame reconstruction (wave 1)
+- [x] 03-01-PLAN.md — Foundation: scikit-learn/joblib deps, scoring app skeleton, ORM→script DataFrame reconstruction (wave 1)
 - [ ] 03-02-PLAN.md — Duplicate-function catalogue (20 names, last-wins resolution of 18, flag 2) (wave 2)
 - [ ] 03-03-PLAN.md — Escalation review + human decision for the 2 four-definition functions (wave 2, checkpoint)
 - [ ] 03-04-PLAN.md — RMM (Player Impact) calculator characterization (wave 2)

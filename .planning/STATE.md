@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 3 context gathered
-last_updated: "2026-07-21T16:20:37.615Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-07-21T22:34:46.469Z"
 progress:
   total_phases: 12
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 19
+  completed_plans: 13
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 3 — scoring-engine-curation-&-correctness-oracle
+**Current focus:** Phase 03 — scoring-engine-curation-correctness-oracle
 
 ## Current Position
 
-Phase: 2 (auth-access-control) — COMPLETE
-Next: Phase 3 (scoring-engine-curation-&-correctness-oracle) — not yet planned
+Phase: 03 (scoring-engine-curation-correctness-oracle) — EXECUTING
+Plan: 2 of 7
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Next: Phase 3 (scoring-engine-curation-&-correctness-oracle) — not yet planned
 | Phase 02 P01 | 25min | 3 tasks | 12 files |
 | Phase 02 P02 | 20min | 2 tasks | 8 files |
 | Phase 02 P03 | 18min | 2 tasks | 5 files |
+| Phase 03 P01 | 25min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,7 @@ Recent decisions affecting current work:
 - [Phase 02-auth-access-control]: /api/auth/me/ makes self-role-escalation structurally impossible (role is a read_only_field on ProfileSerializer, not just an app-logic check); /api/auth/admin/users/ gives director read-only org-wide visibility and admin-only role-change/soft-deactivation with zero destroy route ever registered (no hard delete at the API layer)
 - [Phase 02-auth-access-control]: Role/deactivation immediacy (no re-login required) verified against a real endpoint end-to-end, not just the permission class in isolation -- confirms JWTAuthentication's per-request DB refetch + DB-fresh permission reads compose correctly as researched
 - [Phase 02-auth-access-control]: All 3 plans executed, full suite 47/47 passing; Phase 2 pending goal-backward verification before being marked complete
+- [Phase 03-01]: scikit-learn/joblib installed, `scoring` Django app skeleton registered; `reconstruct.py` bridges real migrated Postgres data (Player/PlayerRoleScore/Club/Transfer) into the four script-literal-column-named DataFrames impact_model_v4.1.py's ported functions expect, using FIELD_MAPPING.md's reverse rename; club playing-style NaNs preserved (never zero-filled); role-score pivot logs (not fabricates) coverage gaps against ROLE_COLUMNS_BY_POSITION
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T16:20:37.610Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-scoring-engine-curation-correctness-oracle/03-CONTEXT.md
+Last session: 2026-07-21T22:34:46.469Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: .planning/phases/03-scoring-engine-curation-correctness-oracle/03-02-PLAN.md
