@@ -26,6 +26,12 @@ Identify and characterize the authoritative logic inside the untested, duplicate
 - **Everything else is preserved and documented, not touched** — odd thresholds, hardcoded weights (e.g. the `league_weights` dict), unusual formulas. These may be deliberate tuning choices, not bugs, even if they look debatable. Do not "improve" them during characterization.
 - **Every fix applied must be documented in the curation map:** what was wrong, what changed, why. No silent fixes.
 
+### Score-to-Artifact Mapping Resolution (escalated during research, resolved 2026-07-21)
+
+- **Research finding:** direct inspection of `impact_model_v4.1.py` confirmed the `RandomForestRegressor` (lines 5638-5652) predicts `log_fee` (transfer fee/value) — NOT a probability. The column literally named `"Transfer Probability %"` (lines 3809-3814) is a separate, fully deterministic, non-ML weighted formula (`0.30*compatibility + 0.20*performance + 0.20*financial + 0.30*contract_fit`).
+- **Resolution (locked):** the RandomForestRegressor artifact is the **Financial Fit (TFM)** artifact, not Transfer Probability. Train it, joblib-version it, and record its MAE/R² as TFM's characterization data. **Transfer Probability is the deterministic weighted-formula port** — no ML training, no joblib artifact, no MAE/R² needed for it; just faithfully port the arithmetic and its inputs.
+- This supersedes the "Transfer Probability / sklearn Component" section below wherever it refers to "the Transfer Probability model" — read every instance there as referring to the TFM artifact instead.
+
 ### Transfer Probability / sklearn Component
 
 - Verified: no pre-trained model file exists anywhere in the codebase. `RandomForestRegressor` trains at runtime via `train_test_split(..., random_state=42)` + `RandomForestRegressor(..., random_state=42)` — both seeded, so the trained model IS reproducible given identical input data (impact_model_v4.1.py lines ~5638-5652).
