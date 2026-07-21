@@ -4,14 +4,17 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from rest_framework import generics, status
+from rest_framework import generics, mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import User
+from accounts.permissions import MinimumRole
 from accounts.serializers import (
+    AdminUserSerializer,
     ProfileSerializer,
     RegisterSerializer,
     RoleTokenObtainPairSerializer,
@@ -88,3 +91,35 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class AdminUserViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Org-wide user management at /api/auth/admin/users/.
+
+    Director+ gets read-only visibility (list/retrieve); admin-only for
+    writes (update/partial_update/deactivate). Deliberately excludes the
+    create mixin (registration is the only creation path) and the hard-delete
+    mixin (accounts are never hard-deleted, only soft-deactivated) -- no
+    destroy route is ever registered on this viewset.
+    """
+
+    queryset = User.objects.all().order_by("email")
+    serializer_class = AdminUserSerializer
+    permission_classes = [MinimumRole("director")]
+
+    def get_permissions(self):
+        if self.action in ("update", "partial_update", "deactivate"):
+            return [MinimumRole("admin")()]
+        return [MinimumRole("director")()]
+
+    @action(detail=True, methods=["post"])
+    def deactivate(self, request, pk=None):
+        user = self.get_object()
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+        return Response(self.get_serializer(user).data)

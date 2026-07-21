@@ -41,3 +41,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "email", "display_name", "role"]
         read_only_fields = ["id", "email", "role"]
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """Org-wide user management. Only ever reached through admin-rank-gated
+    actions (AdminUserViewSet), so role and is_active ARE writable here --
+    unlike ProfileSerializer, which the user themself can reach.
+    """
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "display_name", "role", "is_active", "date_joined"]
+        read_only_fields = ["id", "email", "date_joined"]
