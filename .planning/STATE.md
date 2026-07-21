@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-07-21T22:34:46.469Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-07-21T23:41:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 2
   total_plans: 19
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 03 (scoring-engine-curation-correctness-oracle) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 2 of 7
 | Phase 02 P02 | 20min | 2 tasks | 8 files |
 | Phase 02 P03 | 18min | 2 tasks | 5 files |
 | Phase 03 P01 | 25min | 2 tasks | 10 files |
+| Phase 03 P02 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - [Phase 02-auth-access-control]: Role/deactivation immediacy (no re-login required) verified against a real endpoint end-to-end, not just the permission class in isolation -- confirms JWTAuthentication's per-request DB refetch + DB-fresh permission reads compose correctly as researched
 - [Phase 02-auth-access-control]: All 3 plans executed, full suite 47/47 passing; Phase 2 pending goal-backward verification before being marked complete
 - [Phase 03-01]: scikit-learn/joblib installed, `scoring` Django app skeleton registered; `reconstruct.py` bridges real migrated Postgres data (Player/PlayerRoleScore/Club/Transfer) into the four script-literal-column-named DataFrames impact_model_v4.1.py's ported functions expect, using FIELD_MAPPING.md's reverse rename; club playing-style NaNs preserved (never zero-filled); role-score pivot logs (not fabricates) coverage gaps against ROLE_COLUMNS_BY_POSITION
+- [Phase 03-02]: DUPLICATE_FUNCTIONS.md catalogues all 20 duplicate top-level names in impact_model_v4.1.py; 18 two-definition names mechanically resolved via last-wins (cross-checked against get_export_columns_for_position's byte-identical bodies; build_transfer_value_dataset and export_team_shortlist_xlsx directly confirmed to have provably-dead first definitions); pick_first_existing (required=True->False) and format_financial (value=->x=) signature drifts flagged for Phase 4 verification; prepare_team_and_transfer_signal and player_transfer_history (4 defs each) left ESCALATION PENDING for Plan 03; financial_fit_label documented as nested duplicated-logic, out of scope for last-wins
 
 ### Pending Todos
 
@@ -104,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T22:34:46.469Z
-Stopped at: Completed 03-01-PLAN.md
-Resume file: .planning/phases/03-scoring-engine-curation-correctness-oracle/03-02-PLAN.md
+Last session: 2026-07-21T23:41:00.000Z
+Stopped at: Completed 03-02-PLAN.md
+Resume file: .planning/phases/03-scoring-engine-curation-correctness-oracle/03-03-PLAN.md
