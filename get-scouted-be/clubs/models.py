@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -9,6 +11,7 @@ class Club(models.Model):
     Playstyles.csv's Team values (see FIELD_MAPPING.md section 3).
     """
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
     league = models.CharField(max_length=255, null=True, blank=True)
     country = models.CharField(max_length=255, null=True, blank=True)

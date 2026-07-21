@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -10,6 +12,7 @@ class Transfer(models.Model):
     joined against Player.unique_id (see FIELD_MAPPING.md section 4).
     """
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     club = models.ForeignKey(
         "clubs.Club",
         on_delete=models.SET_NULL,

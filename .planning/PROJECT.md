@@ -66,6 +66,7 @@ The backend must serve accurate, real scouting data and real (not approximated) 
 | Hosting/deployment target deferred | Not yet decided; building cleanly (Docker/12-factor) means this doesn't block backend development | — Pending |
 | Keep full scope despite the 4-day soft deadline | User explicitly chose realism over force-fitting scope into an unrealistic window | — Pending |
 | Existing Supabase-authenticated users in `pixel-perfect-clone-60729` are not migrated | Clean re-registration under the new Django auth system; product is still at prototype/demo stage, not a live user base | — Pending |
+| All 5 models (Club, Player, PlayerRoleScore, PlayerClubCompatibility, Transfer) use UUID primary keys instead of Django's default auto-incrementing integer | Avoids enumerable, guessable IDs (`/players/1`, `/players/2`, ...) once these are exposed via API in Phase 7+; cheapest to change before any API/FK consumers exist | ✓ Good — switched before Phase 2, migrations regenerated cleanly, full real dataset re-imported and reconciled (PASS), 18/18 tests green |
 
 ---
 *Last updated: 2026-07-21 after Phase 1 (Data Foundation) completion*

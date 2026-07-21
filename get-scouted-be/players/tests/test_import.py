@@ -17,6 +17,7 @@ file -- keep it importable and additive.)
 
 import datetime
 import shutil
+import uuid
 
 import pytest
 from django.core.management import call_command
@@ -60,7 +61,7 @@ def test_player_row_count(fixture_dir, tmp_path):
     assert Player.objects.filter(club__isnull=False).exists()
     for player in Player.objects.all():
         # Accessing club_id never raises regardless of resolved/null state.
-        assert player.club_id is None or isinstance(player.club_id, int)
+        assert player.club_id is None or isinstance(player.club_id, uuid.UUID)
 
 
 @pytest.mark.django_db

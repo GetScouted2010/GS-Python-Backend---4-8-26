@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -12,6 +14,7 @@ class Player(models.Model):
     """
 
     # --- Identifiers / natural key ---
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     unique_id = models.IntegerField(unique=True)
     player = models.CharField(max_length=255)
     season = models.CharField(max_length=32, null=True, blank=True)
@@ -168,6 +171,7 @@ class Player(models.Model):
 class PlayerRoleScore(models.Model):
     """A per-role score for a player (e.g. how well they fit 'wide_centre_back_lcb')."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     player = models.ForeignKey(
         "players.Player", on_delete=models.CASCADE, related_name="role_scores"
     )
@@ -197,6 +201,7 @@ class PlayerClubCompatibility(models.Model):
     Question 2).
     """
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     player = models.ForeignKey(
         "players.Player", on_delete=models.CASCADE, related_name="compatibilities"
     )
