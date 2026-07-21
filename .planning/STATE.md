@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-04-PLAN.md (Club derivation + import infra)
-last_updated: "2026-07-20T20:36:03.608Z"
+stopped_at: Completed 01-05-PLAN.md (Player import)
+last_updated: "2026-07-21T01:31:46.185Z"
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 9
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 1 (Data Foundation) — EXECUTING
-Plan: 5 of 9
+Plan: 6 of 9
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 5 of 9
 *Updated after each plan completion*
 | Phase 01-data-foundation P03 | 10min | 2 tasks | 6 files |
 | Phase 01 P04 | 12min | 2 tasks | 10 files |
+| Phase 01-data-foundation P05 | 25min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 - [Phase 01-data-foundation]: Player model's ~99 stat FloatFields keep exact CSV casing for parity traceability; identifier/profile fields use lowercase Django-conventional names per plan's explicit field list
 - [Phase 01-data-foundation]: clubs_with_ambiguous_league counts any club with >1 distinct League value (matches 01-RESEARCH.md's verified 525/1059), tracked separately from genuine mode ties
 - [Phase 01-data-foundation]: Added a repo-root get-scouted-be/conftest.py re-exporting fixture_dir so every app's test dir (sibling of core/tests/, not descendant) can use the shared fixture-path fixture
+- [Phase 01-data-foundation]: Removed the redundant flagged_uids param from _build_player_kwargs -- report.add_field_issue is monkey-patched once in Command.handle() to track flagged rows, so per-row helpers only need a report reference
+- [Phase 01-data-foundation]: Contract_expires' 18% 'missing' rate in the real Players.csv is encoded as the literal string '0', not a blank cell -- correctly flagged via the unparseable/strptime branch with identical null+flagged effect
 
 ### Pending Todos
 
@@ -75,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-20T20:36:03.606Z
-Stopped at: Completed 01-04-PLAN.md (Club derivation + import infra)
+Last session: 2026-07-21T01:31:30.772Z
+Stopped at: Completed 01-05-PLAN.md (Player import)
 Resume file: None

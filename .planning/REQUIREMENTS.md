@@ -9,11 +9,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Data Foundation
 
-- [ ] **DATA-01**: Real player profile data (position, age, nationality, foot, height, contract, market value) is migrated from legacy CSVs/Mongo into Postgres
+- [x] **DATA-01**: Real player profile data (position, age, nationality, foot, height, contract, market value) is migrated from legacy CSVs/Mongo into Postgres
 - [x] **DATA-02**: Real club data (league, country, manager, formation, squad size, playing style) is migrated into Postgres
-- [ ] **DATA-03**: Position-aware, multi-season player performance stats (goals, assists, tackles, interceptions, passing, duels, xG/xA) are migrated and queryable
+- [x] **DATA-03**: Position-aware, multi-season player performance stats (goals, assists, tackles, interceptions, passing, duels, xG/xA) are migrated and queryable
 - [ ] **DATA-04**: Real transfer history (fee, date, source/destination club, market value at transfer time) is migrated and queryable
-- [ ] **DATA-05**: Migration produces a reviewed import report surfacing field-mapping mismatches instead of silently dropping/defaulting data
+- [x] **DATA-05**: Migration produces a reviewed import report surfacing field-mapping mismatches instead of silently dropping/defaulting data
 
 ### Authentication & Access
 
