@@ -91,3 +91,78 @@ class _FakeRequest:
 
     def __init__(self, user):
         self.user = user
+
+
+# ---------------------------------------------------------------------------
+# Task 2: /api/auth/admin/users/ — director read-only, admin read/write
+# ---------------------------------------------------------------------------
+
+
+def test_role_gated_403(authenticated_client):
+    """A scout/analyst (below director rank) is denied list access."""
+    client, _ = authenticated_client(role="scout")
+    response = client.get("/api/auth/admin/users/")
+    assert response.status_code == 403
+
+    client, _ = authenticated_client(role="analyst")
+    response = client.get("/api/auth/admin/users/")
+    assert response.status_code == 403
+
+
+def test_director_read_only_visibility(authenticated_client, user_factory):
+    """Director sees the full org-wide user list/detail but cannot write."""
+    client, _ = authenticated_client(role="director")
+    other = user_factory(role="scout")
+
+    response = client.get("/api/auth/admin/users/")
+    assert response.status_code == 200
+    emails = [row["email"] for row in response.data]
+    assert other.email in emails
+
+    response = client.get(f"/api/auth/admin/users/{other.pk}/")
+    assert response.status_code == 200
+    assert response.data["email"] == other.email
+
+    response = client.patch(
+        f"/api/auth/admin/users/{other.pk}/", {"role": "director"}, format="json"
+    )
+    assert response.status_code == 403
+
+    response = client.post(f"/api/auth/admin/users/{other.pk}/deactivate/")
+    assert response.status_code == 403
+
+
+def test_admin_can_change_role(authenticated_client, user_factory):
+    """Admin PATCHing another user's role -> 200; role persisted."""
+    client, _ = authenticated_client(role="admin")
+    target = user_factory(role="scout")
+
+    response = client.patch(
+        f"/api/auth/admin/users/{target.pk}/", {"role": "director"}, format="json"
+    )
+    assert response.status_code == 200
+    assert response.data["role"] == "director"
+    target.refresh_from_db()
+    assert target.role == "director"
+
+
+def test_admin_can_deactivate_soft(authenticated_client, user_factory):
+    """Admin POST deactivate/ -> 200, is_active False, row still exists (soft only)."""
+    client, _ = authenticated_client(role="admin")
+    target = user_factory(role="scout")
+
+    response = client.post(f"/api/auth/admin/users/{target.pk}/deactivate/")
+    assert response.status_code == 200
+    target.refresh_from_db()
+    assert target.is_active is False
+    assert User.objects.filter(pk=target.pk).exists()
+
+
+def test_no_hard_delete_route(authenticated_client, user_factory):
+    """No destroy action is registered on the viewset at all -- DELETE -> 405."""
+    client, _ = authenticated_client(role="admin")
+    target = user_factory(role="scout")
+
+    response = client.delete(f"/api/auth/admin/users/{target.pk}/")
+    assert response.status_code == 405
+    assert User.objects.filter(pk=target.pk).exists()
