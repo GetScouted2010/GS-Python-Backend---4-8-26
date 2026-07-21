@@ -100,6 +100,26 @@ DATASET_DIR = env(
     default=str(BASE_DIR.parent / "API-Updated-" / "dataset"),
 )
 
+# Password validators — Django's four standard validators (min length 8, not too
+# similar to user attributes, not entirely numeric, not a common password). Not set
+# by default outside the startproject template, so this project's from-scratch
+# settings must declare it explicitly to satisfy the "Django default validators, no
+# custom rules" locked decision (registration/password-reset both call validate_password).
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
 # DRF: deny-by-default posture (AUTH-02/AUTH-03) — JWTAuthentication is the only
 # configured auth class, IsAuthenticated is the only default permission. Views that
 # must be public (register/login/refresh/password-reset) explicitly set
