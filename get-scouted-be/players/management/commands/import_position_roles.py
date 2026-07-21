@@ -125,7 +125,12 @@ class Command(BaseCommand):
 
             header_df = pd.read_csv(file_path, nrows=0)
             role_columns = [c for c in header_df.columns if c != "UniqueID"]
-            dtypes = {"UniqueID": "int64"}
+            # UniqueID uses the nullable "Int64" dtype (not "int64") because a
+            # few of the real Positions/*.csv files have trailing blank rows
+            # (e.g. "CM with league.csv" has 2 all-NaN rows) -- a plain int64
+            # dtype crashes the whole file on those; the nullable dtype lets
+            # us flag and skip just those rows instead.
+            dtypes = {"UniqueID": "Int64"}
             for col in role_columns:
                 dtypes[col] = "Float64"
 
@@ -139,7 +144,15 @@ class Command(BaseCommand):
 
             file_row_count = 0
             for row in long_df.to_dict(orient="records"):
-                uid = int(row["UniqueID"])
+                raw_uid = row["UniqueID"]
+                if pd.isna(raw_uid):
+                    # Trailing blank source row (all-NaN) -- flag and skip,
+                    # not a player join failure.
+                    report.add_field_issue(
+                        "UniqueID", "missing_unique_id_blank_row"
+                    )
+                    continue
+                uid = int(raw_uid)
                 player_id = player_id_map.get(uid)
                 if player_id is None:
                     report.add_field_issue(
