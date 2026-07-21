@@ -1,8 +1,8 @@
 ---
 phase: 03
 slug: scoring-engine-curation-correctness-oracle
-status: draft
-nyquist_compliant: false
+status: ready
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-21
 ---
@@ -67,11 +67,11 @@ created: 2026-07-21
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 90s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies — all 14 tasks across the 7 final plans (03-01 through 03-07) carry `<verify><automated>` commands
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (scikit-learn/joblib install, `scoring/` app skeleton — both owned by Plan 03-01)
+- [x] No watch-mode flags
+- [x] Feedback latency < 90s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-07-21 (verified by gsd-plan-checker against the final 7-plan set, post cross-plan data-contract revision)
