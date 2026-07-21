@@ -12,14 +12,13 @@ The backend must serve accurate, real scouting data and real (not approximated) 
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Real dataset migration: Players, Clubs/Playstyles, per-position role scores, Compatibility Scores, and transfer history CSVs (from `API-Updated-/dataset/`) imported into the new Postgres schema, with a reviewed combined import report — Phase 1 (41,708 players, 1,060 clubs, 230,139 role scores, 8,188,712 compatibility rows, 47,201 transfers)
 
 ### Active
 
 - [ ] Django + DRF backend on Postgres, designed to serve `pixel-perfect-clone-60729` (replacing its current Supabase backend)
 - [ ] Auth with roles (scout, analyst, director, admin) — replacing Supabase Auth, reconciling the 3 conflicting legacy auth models (JWT, disabled API-key middleware, Supabase Auth)
 - [ ] Full CRUD API for core entities: Players, Clubs, Transfers, Watchlist, Shortlists, Squad Plans, Recent Activity, Profiles
-- [ ] Real dataset migration: import Players, Playstyles, per-position stats, Compatibility Scores, and transfer history CSVs (from `API-Updated-/dataset/`) into the new Postgres schema
 - [ ] Full port of `impact_model_v4.1.py` (~15,700 lines) as the live Django scoring engine — Player Score (RMM), Compatibility Score (CS), Financial Fit (TFM), Transfer Probability
 - [ ] AI features in v1: natural-language search parsing (query → structured filters) and AI-generated scout reports / club insights, built behind an LLM-provider-agnostic interface
 - [ ] Data model and endpoints support the PRD's 6 pages: AI Dashboard, AI Shortlist, Player Profile, Club Intelligence, Squad Planner, Player → Club Matching
@@ -60,12 +59,13 @@ The backend must serve accurate, real scouting data and real (not approximated) 
 |----------|-----------|---------|
 | Backend serves `pixel-perfect-clone-60729` (new PRD platform), not legacy `RT-Tool-Frontend` | New platform reflects the current product direction; the legacy Node API already adequately serves the old frontend | — Pending |
 | Port `impact_model_v4.1.py` in full as the real scoring engine | It's already Python/pandas — Django is a natural fit; the current JS heuristic in the frontend is not the real methodology | — Pending |
-| Migrate real datasets (CSVs from `API-Updated-`) into Postgres rather than starting empty | Real scouting data already exists and is valuable; avoids building and demoing against fake data | — Pending |
+| Migrate real datasets (CSVs from `API-Updated-`) into Postgres rather than starting empty | Real scouting data already exists and is valuable; avoids building and demoing against fake data | ✓ Good — Phase 1 imported all 5 real datasets successfully; surfaced and fixed 3 real data-quality bugs (player import TypeError, blank rows in 3 position CSVs, 51 duplicate transfer rows) that synthetic data would have hidden |
 | AI features (NL search, AI-generated reports/insights) are in scope for v1 | The PRD treats these as core to the product's value proposition, not an optional add-on | — Pending |
 | Backend-only scope; frontend rewiring explicitly deferred | Keeps this project focused and shippable; frontend integration is a distinct, separately-scoped effort | — Pending |
 | LLM provider abstracted, not chosen yet | Avoids premature lock-in; decide with real requirements when that phase is actually planned | — Pending |
 | Hosting/deployment target deferred | Not yet decided; building cleanly (Docker/12-factor) means this doesn't block backend development | — Pending |
 | Keep full scope despite the 4-day soft deadline | User explicitly chose realism over force-fitting scope into an unrealistic window | — Pending |
+| Existing Supabase-authenticated users in `pixel-perfect-clone-60729` are not migrated | Clean re-registration under the new Django auth system; product is still at prototype/demo stage, not a live user base | — Pending |
 
 ---
-*Last updated: 2026-07-20 after initialization*
+*Last updated: 2026-07-21 after Phase 1 (Data Foundation) completion*
