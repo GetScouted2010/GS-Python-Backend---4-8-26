@@ -11,7 +11,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **DATA-01**: Real player profile data (position, age, nationality, foot, height, contract, market value) is migrated from legacy CSVs/Mongo into Postgres
 - [x] **DATA-02**: Real club data (league, country, manager, formation, squad size, playing style) is migrated into Postgres
-- [ ] **DATA-03**: Position-aware, multi-season player performance stats (goals, assists, tackles, interceptions, passing, duels, xG/xA) are migrated and queryable
+- [x] **DATA-03**: Position-aware, multi-season player performance stats (goals, assists, tackles, interceptions, passing, duels, xG/xA) are migrated and queryable
 - [ ] **DATA-04**: Real transfer history (fee, date, source/destination club, market value at transfer time) is migrated and queryable
 - [ ] **DATA-05**: Migration produces a reviewed import report surfacing field-mapping mismatches instead of silently dropping/defaulting data
 
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete (Plan 05) |
 | DATA-02 | Phase 1 | Complete (Plan 04) |
-| DATA-03 | Phase 1 | In Progress (Player stats done, Plan 05; role-score/compatibility normalization pending Plans 06-07) |
+| DATA-03 | Phase 1 | Complete (Player stats, Plan 05; role-score normalization, Plan 06) |
 | DATA-04 | Phase 1 | In Progress (Plan 5/9 done; transfer import pending Plan 08) |
 | DATA-05 | Phase 1 | In Progress (Club + Player import reports done, Plans 04-05; full pipeline report pending Plan 09) |
 | AUTH-01 | Phase 2 | Pending |

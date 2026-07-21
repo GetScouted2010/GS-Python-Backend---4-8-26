@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-05-PLAN.md (Player import)
-last_updated: "2026-07-21T01:31:46.185Z"
+stopped_at: Completed 01-08-PLAN.md (Transfer import, UniqueID-is-club trap avoided)
+last_updated: "2026-07-21T01:42:05.846Z"
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 9
-  completed_plans: 5
+  completed_plans: 7
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 1 (Data Foundation) — EXECUTING
-Plan: 6 of 9
+Plan: 8 of 9
 
 ## Performance Metrics
 
@@ -49,6 +49,8 @@ Plan: 6 of 9
 | Phase 01-data-foundation P03 | 10min | 2 tasks | 6 files |
 | Phase 01 P04 | 12min | 2 tasks | 10 files |
 | Phase 01-data-foundation P05 | 25min | 2 tasks | 6 files |
+| Phase 01-data-foundation P06 | 18min | 2 tasks | 3 files |
+| Phase 01-data-foundation P08 | 12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -65,6 +67,10 @@ Recent decisions affecting current work:
 - [Phase 01-data-foundation]: Added a repo-root get-scouted-be/conftest.py re-exporting fixture_dir so every app's test dir (sibling of core/tests/, not descendant) can use the shared fixture-path fixture
 - [Phase 01-data-foundation]: Removed the redundant flagged_uids param from _build_player_kwargs -- report.add_field_issue is monkey-patched once in Command.handle() to track flagged rows, so per-row helpers only need a report reference
 - [Phase 01-data-foundation]: Contract_expires' 18% 'missing' rate in the real Players.csv is encoded as the literal string '0', not a blank cell -- correctly flagged via the unparseable/strptime branch with identical null+flagged effect
+- [Phase 01-data-foundation]: import_position_roles: switched UniqueID dtype from int64 to nullable Int64 -- 3 real Positions/*.csv files (CM/LB/RB) have blank all-NaN trailing rows that crashed a plain int64 parse; now flagged+skipped per row instead
+- [Phase 01-data-foundation]: PlayerRoleScore full-scale row count is 230,139 (long format, one row per player-role), not the ~38,600 estimate in 01-RESEARCH.md/the plan's verification note -- that figure described the wide-format row sum across the 9 files, not the melted long-format total the must_haves truths require
+- [Phase 01-data-foundation]: Transfer.club resolved strictly via transferdata's Club NAME column; UniqueID stored only as source_unique_id for cross-source confirmation, never joined to Player.unique_id
+- [Phase 01-data-foundation]: Transfer player-name matching excludes non-unique (ambiguous) names from the match map entirely -- ambiguous treated identically to unmatched (player=None, logged), never guessed
 
 ### Pending Todos
 
@@ -78,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T01:31:30.772Z
-Stopped at: Completed 01-05-PLAN.md (Player import)
+Last session: 2026-07-21T01:42:05.844Z
+Stopped at: Completed 01-08-PLAN.md (Transfer import, UniqueID-is-club trap avoided)
 Resume file: None
