@@ -1,0 +1,29 @@
+{
+  "run_at": "2026-07-21T11:34:42Z",
+  "source_file": "/Users/MAC/Desktop/getScouted/API-Updated-/dataset/Positions",
+  "source_row_count": 230139,
+  "rows_created": 230139,
+  "rows_updated": 0,
+  "rows_flagged": 0,
+  "field_issues": [
+    {
+      "field": "UniqueID",
+      "issue": "missing_unique_id_blank_row",
+      "count": 38,
+      "rate": 0.0002,
+      "sample_ids": []
+    }
+  ],
+  "per_position_row_counts": {
+    "AM": 17624,
+    "CB": 39260,
+    "CM": 37478,
+    "DM": 23114,
+    "FWD": 44737,
+    "LB": 22740,
+    "LW": 11058,
+    "RB": 23388,
+    "RW": 10740
+  },
+  "gk_coverage_note": "GK players have zero PlayerRoleScore rows by design -- there is no GK Positions/*.csv file in the source dataset. This is expected coverage, not a join failure."
+}
