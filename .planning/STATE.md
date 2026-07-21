@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-07-PLAN.md (Compatibility Score import, ~8.1M rows normalized)
-last_updated: "2026-07-21T02:12:09.049Z"
+stopped_at: Completed 01-09-PLAN.md (import_all orchestrator + reconciliation + runbook, Phase 1 complete)
+last_updated: "2026-07-21T02:51:32.079Z"
 progress:
   total_phases: 12
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 1 (Data Foundation) — EXECUTING
-Plan: 9 of 9
+Phase: 1 (Data Foundation) — COMPLETE
+Plan: 9 of 9 (all plans complete)
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Plan: 9 of 9
 | Phase 01-data-foundation P06 | 18min | 2 tasks | 3 files |
 | Phase 01-data-foundation P08 | 12min | 2 tasks | 5 files |
 | Phase 01-data-foundation P07 | 35min | 2 tasks | 4 files |
+| Phase 01-data-foundation P09 | 100min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 01-data-foundation]: Transfer player-name matching excludes non-unique (ambiguous) names from the match map entirely -- ambiguous treated identically to unmatched (player=None, logged), never guessed
 - [Phase 01-data-foundation]: PlayerClubCompatibility's idempotent upsert conflict target is (player, club_name_raw), never (player, club) -- club is null for unresolved headers and Postgres treats multiple NULLs as non-conflicting, so club_name_raw is mandatory to avoid duplicating null-club rows on re-run
 - [Phase 01-data-foundation]: Full-scale import_compatibility_scores run confirmed 8,188,712 PlayerClubCompatibility rows (9 files x ~212 club columns each), only 1 distinct unresolved club header ("St_DOT_ Louis City", not present in cs_field_mapping.json), 0 unmatched players; idempotent re-run left row count unchanged
+- [Phase 01-data-foundation]: import_all reconciliation delegates Club/Transfer expected counts to each sub-command's own report section (club_derivation.distinct_clubs; transfer_import.duplicate_event_keys_collapsed) rather than recomputing independently, so the two calculations cannot drift apart
+- [Phase 01-data-foundation]: import_transfers now collapses same-composite-event-key rows within a chunk before bulk_create (last occurrence wins, logged) -- real transferdata final.csv has ~51 genuinely-duplicated rows that otherwise crash Postgres's ON CONFLICT DO UPDATE with a CardinalityViolation
+- [Phase 01-data-foundation]: Full real-dataset import_all phase-gate run reconciled to PASS: Club=1060, Player=41708, Transfer=47201 (47252 raw minus 51 collapsed duplicates), PlayerRoleScore=230139, PlayerClubCompatibility=8188712; Transfer.player unmatched rate is ~98% (46391/47252) by design given Player's per-season row granularity plus the never-guess-ambiguous-names policy
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T02:12:09.047Z
-Stopped at: Completed 01-07-PLAN.md (Compatibility Score import, ~8.1M rows normalized)
+Last session: 2026-07-21T02:51:32.076Z
+Stopped at: Completed 01-09-PLAN.md (import_all orchestrator + reconciliation + runbook, Phase 1 complete)
 Resume file: None

@@ -12,7 +12,7 @@ The backend is built along the hard dependency chain the domain imposes: real da
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Data Foundation** - Real player, club, stats, and transfer data migrated into Postgres with a reviewed import report
+- [x] **Phase 1: Data Foundation** - Real player, club, stats, and transfer data migrated into Postgres with a reviewed import report (completed 2026-07-21)
 - [ ] **Phase 2: Auth & Access Control** - One Django system of record for identity, gating every write endpoint by role
 - [ ] **Phase 3: Scoring Engine Curation & Correctness Oracle** - The authoritative logic in the untested scoring script is characterized and snapshotted before any porting begins
 - [ ] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns
@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 8/9 | In Progress|  |
+| 1. Data Foundation | 9/9 | Complete   | 2026-07-21 |
 | 2. Auth & Access Control | 0/TBD | Not started | - |
 | 3. Scoring Engine Curation & Correctness Oracle | 0/TBD | Not started | - |
 | 4. Scoring Engine Port | 0/TBD | Not started | - |
