@@ -1,0 +1,51 @@
+{
+  "run_at": "2026-07-21T02:47:57Z",
+  "source_file": "/Users/MAC/Desktop/getScouted/API-Updated-/dataset/transferdata final.csv",
+  "source_row_count": 47252,
+  "rows_created": 0,
+  "rows_updated": 47201,
+  "rows_flagged": 46442,
+  "field_issues": [
+    {
+      "field": "Player",
+      "issue": "unmatched_name",
+      "count": 46391,
+      "rate": 0.9818,
+      "sample_ids": [
+        "Benjamin Nygren",
+        "Isaak Davies",
+        "Jordy Mathei",
+        "Cong Phuong Nguyen",
+        "Benjamin Nygren",
+        "Jordy Mathei",
+        "Jordan Remacle",
+        "Glodi Mbuyi-Mbayo",
+        "Denzel Jubitana",
+        "Benjamin Nygren"
+      ]
+    },
+    {
+      "field": "transfer_event_key",
+      "issue": "duplicate_source_row",
+      "count": 51,
+      "rate": 0.0011,
+      "sample_ids": [
+        "John McAtee",
+        "Josh Bowler",
+        "Jason McCarthy",
+        "Oscar Threlkeld",
+        "Janoi Donacien",
+        "Finley Craske",
+        "Barrie McKay",
+        "Joel Cooper",
+        "Liam Vincent",
+        "Marc Bola"
+      ]
+    }
+  ],
+  "transfer_import": {
+    "unmatched_players": 46391,
+    "unresolved_clubs": 0,
+    "duplicate_event_keys_collapsed": 51
+  }
+}

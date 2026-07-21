@@ -94,6 +94,49 @@ def _parse_is_loan(raw, report, sample_id):
     return None
 
 
+def _dedupe_transfer_objs(objs: list) -> tuple[list, list]:
+    """Collapse `Transfer` objects sharing the identical composite event key
+    (player_name_raw, year, window, movement, club_id, dealing_club) within
+    one chunk, keeping the LAST occurrence (source row order preserved).
+
+    Real "transferdata final.csv" contains ~51 pairs of genuinely duplicated
+    rows -- verified-literal duplicate data-entry rows, not a parsing
+    artifact -- so two source rows can legitimately share every one of the
+    six key columns. Postgres's `bulk_create(update_conflicts=True)` cannot
+    affect the same conflict-target row twice within a SINGLE INSERT
+    statement (raises `CardinalityViolation: ON CONFLICT DO UPDATE command
+    cannot affect row a second time`) -- this collapse is required, not
+    merely defensive, for the full-dataset import to complete. Duplicates
+    that happen to land in different chunks are unaffected by this function
+    and upsert fine on their own (each chunk is a separate SQL statement,
+    so the second chunk's row simply UPDATEs the first's).
+
+    Returns `(deduped_objs, discarded_names)` where `discarded_names` is the
+    `player_name_raw` of every row collapsed away, for per-row report
+    logging (never silently dropped from the report, even though the row
+    itself is not separately inserted).
+    """
+    by_key: dict[tuple, object] = {}
+    order: list[tuple] = []
+    discarded_names: list[str] = []
+    for obj in objs:
+        key = (
+            obj.player_name_raw,
+            obj.year,
+            obj.window,
+            obj.movement,
+            obj.club_id,
+            obj.dealing_club,
+        )
+        if key in by_key:
+            discarded_names.append(obj.player_name_raw)
+        else:
+            order.append(key)
+        by_key[key] = obj
+    deduped = [by_key[key] for key in order]
+    return deduped, discarded_names
+
+
 def _build_transfer_kwargs(row: dict, club_id_map: dict, player_name_to_id: dict, report: ImportReport) -> dict:
     """Build one Transfer's constructor kwargs from a raw CSV row dict.
 
@@ -193,6 +236,8 @@ class Command(BaseCommand):
 
         before_count = Transfer.objects.count()
         total_rows = 0
+        total_upserts = 0
+        duplicate_event_keys = 0
         unmatched_players = 0
         unresolved_clubs = 0
         unresolved_club_names = set()
@@ -219,9 +264,23 @@ class Command(BaseCommand):
                 kwargs = _build_transfer_kwargs(row, club_id_map, player_name_to_id, report)
                 objs.append(Transfer(**kwargs))
             total_rows += len(objs)
+
+            # Collapse any rows within this chunk that share the exact same
+            # composite event key -- real transferdata final.csv has ~51
+            # such genuinely-duplicated rows, and Postgres cannot apply
+            # ON CONFLICT DO UPDATE to the same conflict target twice within
+            # one INSERT statement.
+            deduped_objs, discarded_names = _dedupe_transfer_objs(objs)
+            for name in discarded_names:
+                report.add_field_issue(
+                    "transfer_event_key", "duplicate_source_row", sample_id=name
+                )
+            duplicate_event_keys += len(discarded_names)
+            total_upserts += len(deduped_objs)
+
             with transaction.atomic():
                 Transfer.objects.bulk_create(
-                    objs,
+                    deduped_objs,
                     batch_size=chunksize,
                     update_conflicts=True,
                     unique_fields=KEY_FIELDS,
@@ -230,13 +289,13 @@ class Command(BaseCommand):
 
         after_count = Transfer.objects.count()
         created = max(after_count - before_count, 0)
-        updated = max(total_rows - created, 0)
+        updated = max(total_upserts - created, 0)
 
         report.source_row_count = total_rows
         report.set_counts(
             created=created,
             updated=updated,
-            flagged=unmatched_players + unresolved_clubs,
+            flagged=unmatched_players + unresolved_clubs + duplicate_event_keys,
         )
         if unresolved_club_names:
             report.add_section("unresolved_club_names", sorted(unresolved_club_names))
@@ -245,6 +304,7 @@ class Command(BaseCommand):
             {
                 "unmatched_players": unmatched_players,
                 "unresolved_clubs": unresolved_clubs,
+                "duplicate_event_keys_collapsed": duplicate_event_keys,
             },
         )
 
@@ -255,7 +315,8 @@ class Command(BaseCommand):
                 f"Imported {total_rows} transfer rows "
                 f"({created} created, {updated} updated, "
                 f"{unmatched_players} unmatched players, "
-                f"{unresolved_clubs} unresolved clubs). "
+                f"{unresolved_clubs} unresolved clubs, "
+                f"{duplicate_event_keys} duplicate-event-key rows collapsed). "
                 f"Report: {json_path}, {md_path}"
             )
         )
