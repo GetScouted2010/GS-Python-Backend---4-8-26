@@ -325,7 +325,7 @@ class Command(BaseCommand):
                     objs,
                     batch_size=chunksize,
                     update_conflicts=True,
-                    unique_fields=["unique_id"],
+                    unique_fields=['unique_id'],
                     update_fields=UPDATE_FIELDS,
                 )
 
