@@ -909,3 +909,131 @@ league_weights = {
     "SPL (Scotland)": 7.17,
 }
 
+
+# =========================================================================
+# MAIN FUNCTION (verbatim, impact_model_v4.1.py line ~2725)
+# =========================================================================
+def add_player_impact(df):
+    df = df.copy()
+    df = _ensure_minutes(df)
+
+    if "Main_Position" not in df.columns and "Position" in df.columns:
+        df["Main_Position"] = df["Position"]
+
+    df["Main_Position"] = df["Main_Position"].apply(normalise_position)
+
+    failed_rows = df.apply(_failed_actions, axis=1, result_type="expand")
+    for col in failed_rows.columns:
+        df[col] = failed_rows[col]
+
+    df["finishing_waste"] = (
+        df.get("xG per 90", 0).fillna(0).astype(float) -
+        df.get("Non-penalty goals per 90", 0).fillna(0).astype(float)
+    ).clip(lower=0)
+
+    metrics_needed = [
+        "Save rate, %", "Prevented goals per 90", "Clean sheets", "Shots against per 90",
+        "Exits per 90", "Aerial duels per 90", "Aerial duels won, %",
+        "Passes per 90", "Accurate passes, %", "Long passes per 90", "Accurate long passes, %",
+        "Average long pass length, m", "Back passes received as GK per 90",
+        "Conceded goals per 90", "xG against per 90",
+
+        "Successful defensive actions per 90", "Sliding tackles per 90", "Shots blocked per 90",
+        "Defensive duels per 90", "Defensive duels won, %", "Interceptions per 90",
+        "PAdj Interceptions", "Progressive passes per 90", "Accurate progressive passes, %",
+        "Passes to final third per 90", "Accurate passes to final third, %",
+        "Progressive runs per 90", "Accelerations per 90", "Crosses per 90",
+        "Accurate crosses, %", "Deep completed crosses per 90", "xA per 90",
+        "Key passes per 90", "Shot assists per 90", "Forward passes per 90",
+        "Accurate forward passes, %", "Received passes per 90", "Offensive duels per 90",
+        "Offensive duels won, %", "Short / medium passes per 90",
+        "Accurate short / medium passes, %", "Back passes per 90", "Accurate back passes, %",
+        "Duels won, %", "Fouls suffered per 90", "Smart passes per 90", "Through passes per 90",
+        "Passes to penalty area per 90", "Deep completions per 90", "Goals per 90",
+        "Non-penalty goals per 90", "xG per 90", "Shots per 90", "Touches in box per 90",
+        "Dribbles per 90", "Successful dribbles, %", "Received long passes per 90",
+        "Goal conversion, %", "Shots on target, %", "Head goals per 90",
+
+        "Fouls per 90", "Yellow cards per 90", "Red cards per 90",
+
+        "failed_simple_passes", "failed_passes", "failed_forward_passes", "failed_long_passes",
+        "failed_prog_passes", "failed_final_third_passes", "failed_penalty_area_passes",
+        "failed_through_passes", "failed_smart_passes", "failed_crosses", "failed_risky_passes",
+        "failed_dribbles", "lost_off_duels", "lost_def_duels", "lost_aerial_duels",
+        "finishing_waste",
+    ]
+
+    std_lookup = _build_std_lookup(df, metrics_needed, position_col="Main_Position")
+
+    raw_scores = []
+    pos_scores = []
+    neg_scores = []
+    reliability = []
+    component_rows = []
+
+    for idx, row in df.iterrows():
+        pos = normalise_position(row.get("Main_Position", row.get("Position", "")))
+
+        if pos == "GK":
+            raw, p, n, comps = _calc_gk_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos == "CB":
+            raw, p, n, comps = _calc_cb_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos in ["LB", "RB"]:
+            raw, p, n, comps = _calc_fb_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos == "CM":
+            raw, p, n, comps = _calc_cmf_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos == "DMF":
+            raw, p, n, comps = _calc_dmf_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos == "AMF":
+            raw, p, n, comps = _calc_amf_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos in ["LW", "RW"]:
+            raw, p, n, comps = _calc_winger_impact_raw(row, idx, std_lookup, return_components=True)
+        elif pos == "CF":
+            raw, p, n, comps = _calc_cf_impact_raw(row, idx, std_lookup, return_components=True)
+        else:
+            raw, p, n, comps = np.nan, np.nan, np.nan, {}
+
+        raw_scores.append(raw)
+        pos_scores.append(p)
+        neg_scores.append(n)
+        reliability.append(_reliability_flag(row.get("Minutes", 0)))
+        component_rows.append(comps)
+
+    df["Player Impact Raw"] = raw_scores
+    df["Player Impact Positive"] = pos_scores
+    df["Player Impact Negative"] = neg_scores
+    df["Impact Reliability"] = reliability
+    df["Player Impact"] = np.nan
+
+    for pos in ["GK", "CB", "LB", "RB", "CM", "DMF", "AMF", "LW", "RW", "CF"]:
+        mask = df["Main_Position"].apply(normalise_position) == pos
+        vals = df.loc[mask, "Player Impact Raw"]
+        if vals.notna().sum() == 0:
+            continue
+        df.loc[mask, "Player Impact"] = _position_percentile(vals).round(2)
+
+    components_df = pd.DataFrame(component_rows)
+
+    if not components_df.empty:
+        components_df = components_df.add_prefix("Impact Comp - ")
+        df = pd.concat([df.reset_index(drop=True), components_df.reset_index(drop=True)], axis=1)
+
+    return df
+
+
+# =========================================================================
+# ORACLE CONVENIENCE WRAPPER (new, this plan's addition -- not in source)
+# =========================================================================
+def compute_rmm_column(players_df: pd.DataFrame) -> pd.Series:
+    """Return the "Player Impact" (RMM) value per player, indexed by player_id.
+
+    Thin wrapper Plan 07's oracle generator imports so it never has to know
+    about `add_player_impact`'s internal column-naming/component-expansion
+    details -- just player_id -> RMM (0-100 or NaN).
+    """
+    assert_columns_present(players_df, ["player_id"], "compute_rmm_column input")
+
+    scored = add_player_impact(players_df)
+    result = scored.set_index("player_id")["Player Impact"]
+    result.name = "Player Impact"
+    return result
