@@ -4,10 +4,10 @@ milestone: v4.1
 milestone_name: milestone
 status: unknown
 stopped_at: Completed 02-03-PLAN.md (Phase 2 all plans executed, pending verification)
-last_updated: "2026-07-21T13:20:00.000Z"
+last_updated: "2026-07-21T14:16:20.020Z"
 progress:
   total_phases: 12
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
   completed_plans: 12
 ---
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 2 — auth-access-control
+**Current focus:** Phase 3 — scoring-engine-curation-&-correctness-oracle
 
 ## Current Position
 
-Phase: 2 (auth-access-control) — EXECUTING
-Plan: 3 of 3
+Phase: 2 (auth-access-control) — COMPLETE
+Next: Phase 3 (scoring-engine-curation-&-correctness-oracle) — not yet planned
 
 ## Performance Metrics
 
