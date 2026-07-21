@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "transfers",
     "core",
     "accounts",
+    "scoring",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
