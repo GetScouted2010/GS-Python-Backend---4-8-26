@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-08-PLAN.md (Transfer import, UniqueID-is-club trap avoided)
-last_updated: "2026-07-21T01:42:05.846Z"
+stopped_at: Completed 01-07-PLAN.md (Compatibility Score import, ~8.1M rows normalized)
+last_updated: "2026-07-21T02:12:09.049Z"
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 1 (Data Foundation) — EXECUTING
-Plan: 8 of 9
+Plan: 9 of 9
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: 8 of 9
 | Phase 01-data-foundation P05 | 25min | 2 tasks | 6 files |
 | Phase 01-data-foundation P06 | 18min | 2 tasks | 3 files |
 | Phase 01-data-foundation P08 | 12min | 2 tasks | 5 files |
+| Phase 01-data-foundation P07 | 35min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 01-data-foundation]: PlayerRoleScore full-scale row count is 230,139 (long format, one row per player-role), not the ~38,600 estimate in 01-RESEARCH.md/the plan's verification note -- that figure described the wide-format row sum across the 9 files, not the melted long-format total the must_haves truths require
 - [Phase 01-data-foundation]: Transfer.club resolved strictly via transferdata's Club NAME column; UniqueID stored only as source_unique_id for cross-source confirmation, never joined to Player.unique_id
 - [Phase 01-data-foundation]: Transfer player-name matching excludes non-unique (ambiguous) names from the match map entirely -- ambiguous treated identically to unmatched (player=None, logged), never guessed
+- [Phase 01-data-foundation]: PlayerClubCompatibility's idempotent upsert conflict target is (player, club_name_raw), never (player, club) -- club is null for unresolved headers and Postgres treats multiple NULLs as non-conflicting, so club_name_raw is mandatory to avoid duplicating null-club rows on re-run
+- [Phase 01-data-foundation]: Full-scale import_compatibility_scores run confirmed 8,188,712 PlayerClubCompatibility rows (9 files x ~212 club columns each), only 1 distinct unresolved club header ("St_DOT_ Louis City", not present in cs_field_mapping.json), 0 unmatched players; idempotent re-run left row count unchanged
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T01:42:05.844Z
-Stopped at: Completed 01-08-PLAN.md (Transfer import, UniqueID-is-club trap avoided)
+Last session: 2026-07-21T02:12:09.047Z
+Stopped at: Completed 01-07-PLAN.md (Compatibility Score import, ~8.1M rows normalized)
 Resume file: None

@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete (Plan 05) |
 | DATA-02 | Phase 1 | Complete (Plan 04) |
-| DATA-03 | Phase 1 | Complete (Player stats, Plan 05; role-score normalization, Plan 06) |
+| DATA-03 | Phase 1 | Complete (Player stats, Plan 05; role-score normalization, Plan 06; compatibility-score normalization, Plan 07) |
 | DATA-04 | Phase 1 | In Progress (Plan 5/9 done; transfer import pending Plan 08) |
 | DATA-05 | Phase 1 | In Progress (Club + Player import reports done, Plans 04-05; full pipeline report pending Plan 09) |
 | AUTH-01 | Phase 2 | Pending |

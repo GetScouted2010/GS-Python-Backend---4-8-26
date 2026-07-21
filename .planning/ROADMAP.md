@@ -44,7 +44,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 01-04-PLAN.md — Shared import utils + ImportReport + Club derivation import (wave 3)
 - [ ] 01-05-PLAN.md — Player import (idempotent, club FK, extended_stats, outlier flagging) (wave 4)
 - [ ] 01-06-PLAN.md — Position role-score import (wide->long normalization) (wave 5)
-- [ ] 01-07-PLAN.md — Compatibility-score import (~8.1M rows normalized) (wave 5)
+- [x] 01-07-PLAN.md — Compatibility-score import (~8.1M rows normalized) (wave 5)
 - [ ] 01-08-PLAN.md — Transfer import (UniqueID-is-club trap guarded) (wave 5)
 - [ ] 01-09-PLAN.md — import_all orchestrator + reconciliation + combined report (wave 6)
 
@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 7/9 | In Progress|  |
+| 1. Data Foundation | 8/9 | In Progress|  |
 | 2. Auth & Access Control | 0/TBD | Not started | - |
 | 3. Scoring Engine Curation & Correctness Oracle | 0/TBD | Not started | - |
 | 4. Scoring Engine Port | 0/TBD | Not started | - |
