@@ -4,6 +4,7 @@ Shared Django settings for the GetScouted backend.
 Split-settings layout: base.py (shared) -> local.py (dev) / production.py (deploy).
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -29,11 +30,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "clubs",
     "players",
     "transfers",
     "core",
+    "accounts",
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -92,4 +98,41 @@ STATIC_URL = "static/"
 DATASET_DIR = env(
     "DATASET_DIR",
     default=str(BASE_DIR.parent / "API-Updated-" / "dataset"),
+)
+
+# DRF: deny-by-default posture (AUTH-02/AUTH-03) — JWTAuthentication is the only
+# configured auth class, IsAuthenticated is the only default permission. Views that
+# must be public (register/login/refresh/password-reset) explicitly set
+# permission_classes = [AllowAny].
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
+# simplejwt lifetimes 15min/7days are a deliberate discretionary bump over simplejwt's
+# own defaults (5min/1day) for a demo SPA, avoiding painful silent-refresh churn without
+# meaningfully weakening security given there's no rate-limiting/lockout either way in v1.
+# BLACKLIST_AFTER_ROTATION=True is required for ROTATE_REFRESH_TOKENS to actually revoke
+# the prior refresh token on each rotation (otherwise rotation alone issues new tokens
+# without blacklisting the old one).
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.RoleTokenObtainPairSerializer",
+}
+
+# Password-reset (forgot password) uses Django's console/dev email backend for now —
+# no concrete email provider chosen yet (locked decision).
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
 )
