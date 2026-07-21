@@ -57,7 +57,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Attempting a write (watchlist, shortlist, squad plan, profile) without the correct role returns a permission-denied response, not a silent success.
   3. No write endpoint defaults to allow-by-default; every write path has an explicit, testable permission check.
   4. Legacy Supabase-authenticated users are not carried forward — new registration under Django auth is the only path in.
-**Plans**: TBD
+**Plans**: 3 plans
+- [x] 02-01-PLAN.md — Custom accounts.User model, DRF/JWT settings, AUTH_USER_MODEL dev-DB reset + re-import, test fixtures
+- [ ] 02-02-PLAN.md — Registration, login, password reset
+- [ ] 02-03-PLAN.md — Role-based permissions, admin user management
 
 ### Phase 3: Scoring Engine Curation & Correctness Oracle
 **Goal**: The authoritative logic inside the untested, duplicated 15,700-line scoring script is identified and characterized against real data before a single line is ported, so the port has a ground truth to be checked against.
@@ -175,7 +178,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 9/9 | Complete    | 2026-07-21 |
-| 2. Auth & Access Control | 0/TBD | Not started | - |
+| 2. Auth & Access Control | 1/3 | In Progress | - |
 | 3. Scoring Engine Curation & Correctness Oracle | 0/TBD | Not started | - |
 | 4. Scoring Engine Port | 0/TBD | Not started | - |
 | 5. Scoring Parity Testing | 0/TBD | Not started | - |

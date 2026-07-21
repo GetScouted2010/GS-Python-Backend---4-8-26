@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 2 context gathered
-last_updated: "2026-07-21T09:55:40.844Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-07-21T12:01:27.173Z"
 progress:
   total_phases: 12
   completed_phases: 1
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 12
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 1 — Data Foundation
+**Current focus:** Phase 2 — auth-access-control
 
 ## Current Position
 
-Phase: 1 (Data Foundation) — COMPLETE
-Plan: 9 of 9 (all plans complete)
+Phase: 2 (auth-access-control) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: 9 of 9 (all plans complete)
 | Phase 01-data-foundation P08 | 12min | 2 tasks | 5 files |
 | Phase 01-data-foundation P07 | 35min | 2 tasks | 4 files |
 | Phase 01-data-foundation P09 | 100min | 2 tasks | 6 files |
+| Phase 02 P01 | 25min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 01-data-foundation]: import_all reconciliation delegates Club/Transfer expected counts to each sub-command's own report section (club_derivation.distinct_clubs; transfer_import.duplicate_event_keys_collapsed) rather than recomputing independently, so the two calculations cannot drift apart
 - [Phase 01-data-foundation]: import_transfers now collapses same-composite-event-key rows within a chunk before bulk_create (last occurrence wins, logged) -- real transferdata final.csv has ~51 genuinely-duplicated rows that otherwise crash Postgres's ON CONFLICT DO UPDATE with a CardinalityViolation
 - [Phase 01-data-foundation]: Full real-dataset import_all phase-gate run reconciled to PASS: Club=1060, Player=41708, Transfer=47201 (47252 raw minus 51 collapsed duplicates), PlayerRoleScore=230139, PlayerClubCompatibility=8188712; Transfer.player unmatched rate is ~98% (46391/47252) by design given Player's per-season row granularity plus the never-guess-ambiguous-names policy
+- [Phase 02-auth-access-control]: Fully custom accounts.User(AbstractBaseUser, PermissionsMixin) with UUID PK, email login, role field is AUTH_USER_MODEL; required a one-time dev-DB reset (dropdb/createdb + fresh migrate) since Phase 1's migrate had already applied django.contrib.auth's own migrations creating a stock auth_user table
+- [Phase 02-auth-access-control]: DRF wired deny-by-default (JWTAuthentication only, IsAuthenticated only); simplejwt 5.5.1 pinned (patches CVE-2024-22513) with rotation+blacklist; full Phase 1 dataset re-imported post-reset with PASS reconciliation
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T09:55:40.840Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-auth-access-control/02-CONTEXT.md
+Last session: 2026-07-21T12:01:27.169Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

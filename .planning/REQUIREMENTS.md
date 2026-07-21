@@ -17,9 +17,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication & Access
 
-- [ ] **AUTH-01**: User can register and log in with role-based access (scout, analyst, director, admin)
+- [x] **AUTH-01**: User can register and log in with role-based access (scout, analyst, director, admin)
 - [ ] **AUTH-02**: All write endpoints (watchlist, shortlist, squad plan, profile) are gated by role-based permissions
-- [ ] **AUTH-03**: The 3 conflicting legacy auth models (JWT, disabled API-key, Supabase Auth) are reconciled into one Django system of record; existing Supabase-authenticated users are not migrated (clean re-registration)
+- [x] **AUTH-03**: The 3 conflicting legacy auth models (JWT, disabled API-key, Supabase Auth) are reconciled into one Django system of record; existing Supabase-authenticated users are not migrated (clean re-registration)
 
 ### Scoring Engine
 
@@ -98,9 +98,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-03 | Phase 1 | Complete (Player stats, Plan 05; role-score normalization, Plan 06; compatibility-score normalization, Plan 07) |
 | DATA-04 | Phase 1 | Complete (Plan 08) |
 | DATA-05 | Phase 1 | Complete (Plan 09 -- import_all combined report + reconciliation) |
-| AUTH-01 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Complete |
 | AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Complete |
 | SCORE-01 | Phase 4 | Pending |
 | SCORE-02 | Phase 4 | Pending |
 | SCORE-03 | Phase 4 | Pending |
