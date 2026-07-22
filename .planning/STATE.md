@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-06-PLAN.md
-last_updated: "2026-07-22T14:15:00.000Z"
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-07-22T13:47:02.011Z"
 progress:
   total_phases: 12
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 03 (scoring-engine-curation-correctness-oracle) — EXECUTING
-Plan: 7 of 7 (parallel wave execution — 03-01 through 03-06 have SUMMARY.md; 03-07 (wave 4, oracle assembly + curation map) in progress)
+Phase: 03 (scoring-engine-curation-correctness-oracle) — COMPLETE
+Plan: 7 of 7 — all plans (03-01 through 03-07) have SUMMARY.md; Phase 3's two headline deliverables (oracle snapshot, master curation map) landed in 03-07, completing all 4 Phase 3 Success Criteria. Next: Phase 04 (production port).
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Plan: 7 of 7 (parallel wave execution — 03-01 through 03-06 have SUMMARY.md; 0
 | Phase 03-scoring-engine-curation-correctness-oracle P04 | 15min | 2 tasks | 2 files |
 | Phase 03-scoring-engine-curation-correctness-oracle P05 | 25min | 2 tasks | 3 files |
 | Phase 03-scoring-engine-curation-correctness-oracle P03 | 18min | 2 tasks | 1 files |
+| Phase 03 P07 | 35min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,7 @@ Recent decisions affecting current work:
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-05]: Compatibility Score's role-fit guard now returns NaN (not the source's silent zero-fill) for clubs with all-NaN playing-style vectors; Transfer Probability confirmed as the deterministic 0.30/0.20/0.20/0.30 weighted formula (not the RandomForestRegressor, which is TFM); performance_score() takes Plan 04's player_impact (RMM) as a required anchor, NaN-propagating rather than zero-filling
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-03]: Escalated duplicate-function human decision: prepare_team_and_transfer_signal authoritative version is line 12192 (3-way functional majority); player_transfer_history authoritative version is line 12329 (3-way functional majority; 11488's extra length traced to formatting/docstring, not added logic) -- both Minutes->0 silent defaults deferred to the existing fix-threshold mechanism, not re-litigated here
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-06]: TFM (Financial Fit) sklearn artifact trained and versioned -- RandomForestRegressor(n_estimators=300,max_depth=12,min_samples_leaf=3,random_state=42) faithfully reproduced, joblib-dumped to scoring/ml_artifacts/tfm_value_model_v1.joblib (gitignored, regenerable via `manage.py train_tfm_model`); management command explicitly merges Plan 04's player_impact and Plan 05's compatibility_score/performance_score/role_pct onto players_df before feature-building, closing the cross-plan wiring gap the plan-checker flagged during planning; verified against real dev data: R²=0.921, MAE=~€2.34M, 1477 usable transfer rows, all 4 cross-plan features confirmed present in the trained feature set
+- [Phase 03-07]: TFM oracle predictions use the player's current club as both buying-club and selling-club aggregate context (no real transfer event exists for a non-moving player); CSV oracle snapshot is committed to the repo (not gitignored) since it is Phase 5's ground truth
 
 ### Pending Todos
 
@@ -113,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-22T06:02:58.452Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-07-22T13:47:02.009Z
+Stopped at: Completed 03-07-PLAN.md
 Resume file: None
