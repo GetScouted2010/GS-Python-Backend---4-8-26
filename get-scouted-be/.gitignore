@@ -4,3 +4,9 @@ __pycache__/
 db.sqlite3
 .venv/
 venv/
+
+# Trained ML artifacts (regenerable via `manage.py train_tfm_model`) --
+# keep the directory tracked via ml_artifacts/.gitkeep, but not the
+# generated binaries/metrics themselves.
+scoring/ml_artifacts/*.joblib
+scoring/ml_artifacts/*.metrics.json
