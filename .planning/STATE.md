@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-07-21T22:52:11.843Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-07-22T06:02:58.455Z"
 progress:
   total_phases: 12
   completed_phases: 2
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 03 (scoring-engine-curation-correctness-oracle) — EXECUTING
-Plan: 5 of 7 (parallel wave execution — 03-01, 03-02, 03-04, 03-05 have SUMMARY.md; 03-03/03-06/03-07 in progress)
+Plan: 6 of 7 (parallel wave execution — 03-01, 03-02, 03-03, 03-04, 03-05 have SUMMARY.md; 03-06/03-07 in progress)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Plan: 5 of 7 (parallel wave execution — 03-01, 03-02, 03-04, 03-05 have SUMMAR
 | Phase 03 P02 | 20min | 2 tasks | 2 files |
 | Phase 03-scoring-engine-curation-correctness-oracle P04 | 15min | 2 tasks | 2 files |
 | Phase 03-scoring-engine-curation-correctness-oracle P05 | 25min | 2 tasks | 3 files |
+| Phase 03-scoring-engine-curation-correctness-oracle P03 | 18min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,7 @@ Recent decisions affecting current work:
 - [Phase 03-02]: DUPLICATE_FUNCTIONS.md catalogues all 20 duplicate top-level names in impact_model_v4.1.py; 18 two-definition names mechanically resolved via last-wins (cross-checked against get_export_columns_for_position's byte-identical bodies; build_transfer_value_dataset and export_team_shortlist_xlsx directly confirmed to have provably-dead first definitions); pick_first_existing (required=True->False) and format_financial (value=->x=) signature drifts flagged for Phase 4 verification; prepare_team_and_transfer_signal and player_transfer_history (4 defs each) left ESCALATION PENDING for Plan 03; financial_fit_label documented as nested duplicated-logic, out of scope for last-wins
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-04]: RMM (Player Impact) characterized as a faithful verbatim port -- 8 position calculators + add_player_impact + compute_rmm_column(players_df); only fix applied was replacing the whole-column Minutes silent-default-to-0 with a ValueError guard (APPLIED_FIXES); verified against real 41,708-player population via manage.py shell: 99.998% RMM coverage, all 10 position groups covered, all values in [0.01,100.0]
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-05]: Compatibility Score's role-fit guard now returns NaN (not the source's silent zero-fill) for clubs with all-NaN playing-style vectors; Transfer Probability confirmed as the deterministic 0.30/0.20/0.20/0.30 weighted formula (not the RandomForestRegressor, which is TFM); performance_score() takes Plan 04's player_impact (RMM) as a required anchor, NaN-propagating rather than zero-filling
+- [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-03]: Escalated duplicate-function human decision: prepare_team_and_transfer_signal authoritative version is line 12192 (3-way functional majority); player_transfer_history authoritative version is line 12329 (3-way functional majority; 11488's extra length traced to formatting/docstring, not added logic) -- both Minutes->0 silent defaults deferred to the existing fix-threshold mechanism, not re-litigated here
 
 ### Pending Todos
 
@@ -110,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-21T23:49:55.000Z
-Stopped at: Completed 03-05-PLAN.md
-Resume file: None (parallel wave execution — 03-03/03-06/03-07 may still be in progress from other executor sessions)
+Last session: 2026-07-22T06:02:58.452Z
+Stopped at: Completed 03-03-PLAN.md
+Resume file: None
