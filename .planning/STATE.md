@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-07-22T06:02:58.455Z"
+stopped_at: Completed 03-06-PLAN.md
+last_updated: "2026-07-22T14:15:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 2
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 03 (scoring-engine-curation-correctness-oracle) — EXECUTING
-Plan: 6 of 7 (parallel wave execution — 03-01, 03-02, 03-03, 03-04, 03-05 have SUMMARY.md; 03-06/03-07 in progress)
+Plan: 7 of 7 (parallel wave execution — 03-01 through 03-06 have SUMMARY.md; 03-07 (wave 4, oracle assembly + curation map) in progress)
 
 ## Performance Metrics
 
@@ -99,6 +99,7 @@ Recent decisions affecting current work:
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-04]: RMM (Player Impact) characterized as a faithful verbatim port -- 8 position calculators + add_player_impact + compute_rmm_column(players_df); only fix applied was replacing the whole-column Minutes silent-default-to-0 with a ValueError guard (APPLIED_FIXES); verified against real 41,708-player population via manage.py shell: 99.998% RMM coverage, all 10 position groups covered, all values in [0.01,100.0]
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-05]: Compatibility Score's role-fit guard now returns NaN (not the source's silent zero-fill) for clubs with all-NaN playing-style vectors; Transfer Probability confirmed as the deterministic 0.30/0.20/0.20/0.30 weighted formula (not the RandomForestRegressor, which is TFM); performance_score() takes Plan 04's player_impact (RMM) as a required anchor, NaN-propagating rather than zero-filling
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-03]: Escalated duplicate-function human decision: prepare_team_and_transfer_signal authoritative version is line 12192 (3-way functional majority); player_transfer_history authoritative version is line 12329 (3-way functional majority; 11488's extra length traced to formatting/docstring, not added logic) -- both Minutes->0 silent defaults deferred to the existing fix-threshold mechanism, not re-litigated here
+- [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-06]: TFM (Financial Fit) sklearn artifact trained and versioned -- RandomForestRegressor(n_estimators=300,max_depth=12,min_samples_leaf=3,random_state=42) faithfully reproduced, joblib-dumped to scoring/ml_artifacts/tfm_value_model_v1.joblib (gitignored, regenerable via `manage.py train_tfm_model`); management command explicitly merges Plan 04's player_impact and Plan 05's compatibility_score/performance_score/role_pct onto players_df before feature-building, closing the cross-plan wiring gap the plan-checker flagged during planning; verified against real dev data: R²=0.921, MAE=~€2.34M, 1477 usable transfer rows, all 4 cross-plan features confirmed present in the trained feature set
 
 ### Pending Todos
 

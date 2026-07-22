@@ -73,12 +73,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A written curation map exists showing, per score, which original functions and columns feed it.
 **Plans**: 7 plans (3 waves)
 - [x] 03-01-PLAN.md — Foundation: scikit-learn/joblib deps, scoring app skeleton, ORM→script DataFrame reconstruction (wave 1)
-- [ ] 03-02-PLAN.md — Duplicate-function catalogue (20 names, last-wins resolution of 18, flag 2) (wave 2)
-- [ ] 03-03-PLAN.md — Escalation review + human decision for the 2 four-definition functions (wave 2, checkpoint)
-- [ ] 03-04-PLAN.md — RMM (Player Impact) calculator characterization (wave 2)
-- [ ] 03-05-PLAN.md — CS role-fit + deterministic Transfer Probability characterization (wave 2)
-- [ ] 03-06-PLAN.md — TFM sklearn model training + versioned joblib artifact (wave 2)
-- [ ] 03-07-PLAN.md — Full-population oracle snapshot + master curation map finalization (wave 3)
+- [x] 03-02-PLAN.md — Duplicate-function catalogue (20 names, last-wins resolution of 18, flag 2) (wave 2)
+- [x] 03-03-PLAN.md — Escalation review + human decision for the 2 four-definition functions (wave 2, checkpoint)
+- [x] 03-04-PLAN.md — RMM (Player Impact) calculator characterization (wave 2)
+- [x] 03-05-PLAN.md — CS role-fit + deterministic Transfer Probability characterization (wave 2)
+- [x] 03-06-PLAN.md — TFM sklearn model training + versioned joblib artifact (wave 3)
+- [ ] 03-07-PLAN.md — Full-population oracle snapshot + master curation map finalization (wave 4)
 
 ### Phase 4: Scoring Engine Port
 **Goal**: The curated, authoritative calculators for all four scores run as real Django/Python services and are reachable via API with full component breakdowns.
