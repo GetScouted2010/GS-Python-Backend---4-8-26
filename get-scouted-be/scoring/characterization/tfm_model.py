@@ -59,6 +59,7 @@ missing-value handling; nothing here introduces a fabricated zero.
 
 from __future__ import annotations
 
+import datetime
 import re
 
 import numpy as np
@@ -661,4 +662,150 @@ def add_value_labels(df: pd.DataFrame) -> pd.DataFrame:
             return "Fair Value"
 
     out["value_verdict"] = out.apply(label_row, axis=1)
+    return out
+
+
+# =========================================================================
+# ORACLE CONVENIENCE WRAPPER (new, this plan's addition -- not in source,
+# 03-07-PLAN.md Task 1)
+# =========================================================================
+def build_oracle_player_features(
+    players_df: pd.DataFrame,
+    transfers_df: pd.DataFrame,
+    as_of_year: int | None = None,
+) -> pd.DataFrame:
+    """One TFM feature row PER PLAYER, keyed by player_id -- NOT a port.
+
+    `build_transfer_value_dataset` (verbatim port, above) only produces a
+    feature row per MATCHED HISTORICAL transfer event (`transfers_df`
+    joined to `players_df` by Player+season) -- correct for training, but
+    useless for the oracle, which needs a `predicted_fee` for every real
+    player regardless of whether they were ever actually transferred.
+
+    This function instead reproduces the SAME club-aggregate engineering
+    `build_transfer_value_dataset` computes internally (arrivals/departures
+    profiles, position buy/sell profiles) from `transfers_df`, but keys the
+    lookup to each player's CURRENT club (`players_df["Team"]`, sourced
+    from `Player.club`) as BOTH the buying-club and selling-club context --
+    there is no real transfer event for a player who isn't actually moving,
+    so "what has this club historically paid/received for this position" is
+    evaluated against the player's own club, per 03-07-PLAN.md Task 1's
+    explicit "current club as buying-club context" instruction. This is a
+    documented approximation, not a fabricated value: every column with no
+    real underlying data (e.g. a club with zero recorded transfers) is left
+    NaN here and flows into the fitted Pipeline's SimpleImputer exactly
+    like any other missing value -- nothing is zero-filled in this
+    function.
+
+    Returns a DataFrame indexed by player_id carrying every feature name
+    `train_transfer_value_model`'s nominal `feature_cols` list can
+    reference (a superset); the caller selects whichever subset the loaded
+    artifact was actually trained on (its `.metrics.json` sidecar's
+    `feature_cols`) before calling `pipeline.predict`. A `_has_club_context`
+    boolean column flags players with no resolvable current club -- the
+    caller should treat predictions for those rows as NaN, not a value
+    manufactured from an all-NaN row.
+    """
+    if as_of_year is None:
+        as_of_year = datetime.date.today().year
+
+    players = players_df.copy()
+    transfers = transfers_df.copy()
+
+    # ---- club aggregate profiles (mirrors build_transfer_value_dataset's
+    # arrivals_profile / departures_profile / buy_position_profile /
+    # sell_position_profile, reproduced here because those are local
+    # variables inside that function, not separately importable) ----
+    transfers["actual_fee"] = transfers["Fee"].apply(parse_money_to_numeric)
+    transfers = transfers[transfers["actual_fee"].notna() & (transfers["actual_fee"] > 0)].copy()
+    transfers["age_numeric"] = pd.to_numeric(transfers["Age"], errors="coerce")
+
+    arrivals_profile = transfers.groupby("Club").agg(
+        club_avg_in_fee=("actual_fee", "mean"),
+        club_max_in_fee=("actual_fee", "max"),
+        club_median_in_fee=("actual_fee", "median"),
+        club_count_in=("actual_fee", "count"),
+        club_avg_in_age=("age_numeric", "mean"),
+    )
+    departures_profile = transfers.groupby("Dealing_Club").agg(
+        seller_hist_avg_out_fee=("actual_fee", "mean"),
+        seller_hist_max_out_fee=("actual_fee", "max"),
+        seller_hist_median_out_fee=("actual_fee", "median"),
+        seller_hist_count_out=("actual_fee", "count"),
+        seller_hist_avg_out_age=("age_numeric", "mean"),
+    )
+    buy_position_profile = (
+        transfers.groupby(["Club", "Position"])["actual_fee"]
+        .mean()
+        .rename("club_pos_avg_in_fee")
+        .reset_index()
+        .rename(columns={"Club": "_team", "Position": "_position"})
+    )
+    sell_position_profile = (
+        transfers.groupby(["Dealing_Club", "Position"])["actual_fee"]
+        .mean()
+        .rename("club_pos_avg_out_fee")
+        .reset_index()
+        .rename(columns={"Dealing_Club": "_team", "Position": "_position"})
+    )
+
+    # ---- per-player base features (verbatim engineering rules, applied
+    # per-player instead of per-matched-transfer-row) ----
+    age = pd.to_numeric(players.get("Age"), errors="coerce")
+
+    if "Market value" in players.columns:
+        market_value = players["Market value"].apply(parse_money_to_numeric)
+    else:
+        market_value = pd.Series(np.nan, index=players.index)
+
+    contract_expires = pd.to_datetime(players.get("Contract expires"), errors="coerce")
+    contract_years_left = (contract_expires.dt.year - as_of_year).clip(lower=0)
+    contract_years_left = contract_years_left.where(contract_expires.notna(), np.nan)
+
+    is_loan_raw = players.get("On loan")
+    if is_loan_raw is not None:
+        is_loan = pd.to_numeric(is_loan_raw, errors="coerce").fillna(0).astype(int)
+    else:
+        is_loan = pd.Series(0, index=players.index)
+
+    if "League" in players.columns:
+        from_league_weight = players["League"].map(LEAGUE_WEIGHTS)
+    else:
+        from_league_weight = pd.Series(np.nan, index=players.index)
+
+    position = players.get("Position", players.get("Main_Position"))
+    team = players.get("Team")
+
+    out = pd.DataFrame(
+        {
+            "player_id": players["player_id"],
+            "_team": team,
+            "_position": position,
+            "age": age,
+            "age_squared": age**2,
+            "u23_flag": np.where(age <= 23, 1, 0),
+            "prime_age_flag": np.where((age >= 24) & (age <= 28), 1, 0),
+            "older_flag": np.where(age >= 29, 1, 0),
+            "minutes_played": pd.to_numeric(players.get("Minutes played"), errors="coerce"),
+            "market_value": market_value,
+            "contract_years_left": contract_years_left,
+            "from_league_weight": from_league_weight,
+            "mv_to_fee_ratio": np.nan,
+            "is_loan": is_loan,
+            "position": position,
+        }
+    )
+
+    for col in ("player_impact", "compatibility_score", "performance_score", "role_pct"):
+        out[col] = players[col] if col in players.columns else np.nan
+
+    out = out.merge(arrivals_profile, left_on="_team", right_index=True, how="left")
+    out = out.merge(departures_profile, left_on="_team", right_index=True, how="left")
+    out = out.merge(buy_position_profile, on=["_team", "_position"], how="left")
+    out = out.merge(sell_position_profile, on=["_team", "_position"], how="left")
+
+    out["_has_club_context"] = out["_team"].notna() & (out["_team"].astype(str).str.strip() != "")
+
+    out = out.drop(columns=["_team", "_position"])
+    out = out.set_index("player_id")
     return out
