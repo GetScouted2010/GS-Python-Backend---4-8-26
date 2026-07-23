@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Foundation** - Real player, club, stats, and transfer data migrated into Postgres with a reviewed import report (completed 2026-07-21)
 - [x] **Phase 2: Auth & Access Control** - One Django system of record for identity, gating every write endpoint by role (completed 2026-07-21)
 - [x] **Phase 3: Scoring Engine Curation & Correctness Oracle** - The authoritative logic in the untested scoring script is characterized and snapshotted before any porting begins (completed 2026-07-22)
-- [ ] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns
+- [x] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns (completed 2026-07-23)
 - [ ] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group
 - [ ] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
@@ -96,7 +96,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 04-03-PLAN.md — Compatibility Score + deterministic Transfer Probability services + breakdowns (wave 2)
 - [x] 04-04-PLAN.md — Financial Fit (TFM) service: club-context override + np.expm1 money-scale unwrap + value verdict (wave 2)
 - [x] 04-05-PLAN.md — Combined summary orchestrator (all 4 scores, single reconstruction) + serializers contract (wave 3)
-- [ ] 04-06-PLAN.md — 5 authenticated DRF endpoints under /api/scoring/ + integration tests (wave 4)
+- [x] 04-06-PLAN.md — 5 authenticated DRF endpoints under /api/scoring/ + integration tests (wave 4)
 
 ### Phase 5: Scoring Parity Testing
 **Goal**: The Django port is proven numerically faithful to the original script, not just "runs without crashing."
@@ -193,7 +193,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Data Foundation | 9/9 | Complete    | 2026-07-21 |
 | 2. Auth & Access Control | 3/3 | Complete    | 2026-07-21 |
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
-| 4. Scoring Engine Port | 1/6 | In Progress|  |
+| 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
 | 5. Scoring Parity Testing | 0/TBD | Not started | - |
 | 6. Scoring Performance & Caching Layer | 0/TBD | Not started | - |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
