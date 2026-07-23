@@ -238,27 +238,60 @@ def test_null_envelope_when_no_club_context():
 # =========================================================================
 # Real-data tests -- money-scale regression, verdict shape, real
 # end-to-end club-override effect.
+#
+# `score_population` (RMM + CS/TP over the whole real 41,708-player
+# population) is expensive (~1 min) -- it is computed AT MOST ONCE for this
+# whole test module via `_real_scored_population`'s process-level cache,
+# then `reconstruct_population`/`score_population` are patched (still
+# exercising the real `get_financial_fit` entry point end-to-end, including
+# the real `resolve_club_name` DB lookup) so every test reuses it instead
+# of re-paying that cost.
 # =========================================================================
-def _first_priced_player_and_club():
-    """Return (player, club) for a real player whose `get_financial_fit`
-    result carries a non-null `predicted_fee`, or `(None, None)` if none of
-    the first handful of players/clubs resolve one."""
-    from clubs.models import Club
-    from players.models import Player
+_REAL_POP_CACHE: dict = {}
+
+
+def _real_scored_population():
+    if "data" not in _REAL_POP_CACHE:
+        from scoring.services.population import reconstruct_population, score_population
+
+        pop = reconstruct_population()
+        scored, cs_tp = score_population(pop, None)
+        _REAL_POP_CACHE["data"] = (pop, scored, cs_tp)
+    return _REAL_POP_CACHE["data"]
+
+
+@pytest.fixture
+def cached_real_population(real_data_available):
+    """Real `get_financial_fit` calls, minus the per-test reconstruction
+    cost -- `scoring.services.financial_fit.reconstruct_population`/
+    `score_population` are patched to return the module-cached real
+    population instead of recomputing it."""
+    pop, scored, cs_tp = _real_scored_population()
+    with (
+        patch("scoring.services.financial_fit.reconstruct_population", return_value=pop),
+        patch("scoring.services.financial_fit.score_population", return_value=(scored, cs_tp)),
+    ):
+        yield pop, scored, cs_tp
+
+
+def _first_priced_result(clubs, player):
     from scoring.services.financial_fit import get_financial_fit
 
-    club = Club.objects.first()
-    for player in Player.objects.all()[:25]:
+    for club in clubs:
         result = get_financial_fit(str(player.id), str(club.id))
         if result.get("predicted_fee") is not None:
-            return player, club, result
-    return None, None, None
+            return club, result
+    return None, None
 
 
 @pytest.mark.django_db
-def test_predicted_fee_is_money_scale_not_log_scale(real_data_available):
-    player, club, result = _first_priced_player_and_club()
-    if player is None:
+def test_predicted_fee_is_money_scale_not_log_scale(cached_real_population):
+    from clubs.models import Club
+    from players.models import Player
+
+    player = Player.objects.first()
+    club, result = _first_priced_result(Club.objects.all()[:10], player)
+    if club is None:
         pytest.skip("No real player/club combination produced a priced result to sample")
 
     fee = result["predicted_fee"]
@@ -267,9 +300,13 @@ def test_predicted_fee_is_money_scale_not_log_scale(real_data_available):
 
 
 @pytest.mark.django_db
-def test_value_verdict_and_market_value_present(real_data_available):
-    player, club, result = _first_priced_player_and_club()
-    if player is None:
+def test_value_verdict_and_market_value_present(cached_real_population):
+    from clubs.models import Club
+    from players.models import Player
+
+    player = Player.objects.first()
+    club, result = _first_priced_result(Club.objects.all()[:10], player)
+    if club is None:
         pytest.skip("No real player/club combination produced a priced result to sample")
 
     assert "market_value" in result
@@ -279,7 +316,7 @@ def test_value_verdict_and_market_value_present(real_data_available):
 
 
 @pytest.mark.django_db
-def test_requested_club_changes_prediction_real_data(real_data_available):
+def test_requested_club_changes_prediction_real_data(cached_real_population):
     from clubs.models import Club
     from players.models import Player
     from scoring.services.financial_fit import get_financial_fit
