@@ -95,7 +95,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 04-02-PLAN.md — RMM (Player Impact) service + full component breakdown (wave 2)
 - [x] 04-03-PLAN.md — Compatibility Score + deterministic Transfer Probability services + breakdowns (wave 2)
 - [x] 04-04-PLAN.md — Financial Fit (TFM) service: club-context override + np.expm1 money-scale unwrap + value verdict (wave 2)
-- [ ] 04-05-PLAN.md — Combined summary orchestrator (all 4 scores, single reconstruction) + serializers contract (wave 3)
+- [x] 04-05-PLAN.md — Combined summary orchestrator (all 4 scores, single reconstruction) + serializers contract (wave 3)
 - [ ] 04-06-PLAN.md — 5 authenticated DRF endpoints under /api/scoring/ + integration tests (wave 4)
 
 ### Phase 5: Scoring Parity Testing

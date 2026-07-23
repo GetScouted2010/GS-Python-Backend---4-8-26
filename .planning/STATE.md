@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-07-23T21:45:00.000Z"
+stopped_at: Completed 04-05-PLAN.md
+last_updated: "2026-07-23T22:30:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 3
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 04 (scoring-engine-port) — EXECUTING
-Plan: 4 of 6 — Wave 1 (04-01) and Wave 2 (04-02, 04-03, 04-04) complete; Wave 3 (04-05 summary+serializers) and Wave 4 (04-06 DRF endpoints) remain
+Plan: 5 of 6 — Waves 1-3 complete (04-01 through 04-05); Wave 4 (04-06 DRF endpoints) remains
 
 ## Performance Metrics
 
@@ -109,6 +109,7 @@ Recent decisions affecting current work:
 - [Phase 04-scoring-engine-port]: [Phase 04-04]: TFM's requested-club-context override is scoped to club-aggregate features only (club_pos_avg_in_fee, seller_hist_*, etc); the 4 upstream RMM/CS/TP features stay computed against each player's own club, matching oracle/training methodology; np.expm1 unwraps the confirmed log-scale pipeline.predict output, verified against real data (fees ~€597K-€1.29M across different requested clubs for the same player, not the log-scale [0,20] range)
 - [Phase 04-scoring-engine-port]: [Phase 04-02]: rmm.py's get_rmm/rmm_breakdown_from_scored read the breakdown strictly off add_player_impact's output (never compute_rmm_column); Impact Reliability is a categorical string (Very Low/Low/Medium/High), not numeric -- passed through as-is rather than float()-coerced
 - [Phase 04-scoring-engine-port]: [Phase 04-03]: get_compatibility merges pop.players_df with pop.role_scores_wide (on='player_id') BEFORE slicing player_row, replicating compute_cs_tp_for_pairs' own internal merge -- fixes a plan-checker-caught bug where role_fit_score/bonus would silently disagree with the real compatibility_score (a bare players_df row has no role-score columns, so calculate_subjective_role_fit_for_player_to_team/get_player_own_best_role would always degenerate to None/70.0); a new regression test asserts the breakdown mathematically reconstructs the score. get_transfer_probability re-exposes compute_cs_tp_for_pairs' 4 weighted terms directly (no reimplementation), contract_fit scaled *100 for display parity.
+- [Phase 04-scoring-engine-port]: [Phase 04-05]: get_summary reconstructs the population exactly once (verified by a mocked call_count==1 test) and reuses Plans 02-04's breakdown helpers, replicating Plan 03's role_scores_wide merge fix for its compatibility sub-object; financial_fit's 4 upstream TFM features are computed in the summary's shared club context rather than each player's own club (an accepted, documented efficiency tradeoff vs the standalone /financial-fit/ endpoint). serializers.py defines 5 thin DictField/JSONField-based serializers (RMM/Compatibility/FinancialFit/TransferProbability/Summary) with a nullable score + optional reason on every one. Verified end-to-end against one real player/club pair: CS breakdown reconstructed its own score exactly ((87.23+70.0)/2=78.62); TP's 4 contributions summed exactly to the reported transfer_probability (87.5).
 
 ### Pending Todos
 
@@ -122,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-23T21:45:00.000Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-07-23T22:30:00.000Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None
