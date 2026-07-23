@@ -71,7 +71,7 @@ def test_get_rmm_components_keys_unprefixed_and_numeric(real_data_available):
 
 
 @pytest.mark.django_db
-def test_get_rmm_unknown_player_raises_http404():
+def test_get_rmm_unknown_player_raises_http404(real_data_available):
     unknown_id = uuid.uuid4()
 
     with pytest.raises(Http404):
@@ -100,7 +100,10 @@ def test_rmm_breakdown_from_scored_returns_breakdown_dict_shape():
             "Player Impact": 72.5,
             "Player Impact Positive": 5.1,
             "Player Impact Negative": -1.2,
-            "Impact Reliability": 0.9,
+            # "Impact Reliability" is a categorical string
+            # ("Very Low"/"Low"/"Medium"/"High"), never a number -- see
+            # impact.py's `_reliability_flag`.
+            "Impact Reliability": "High",
             "Impact Comp - defensive_actions": 3.4,
             "Impact Comp - duel_dominance": 2.2,
         }
@@ -111,7 +114,7 @@ def test_rmm_breakdown_from_scored_returns_breakdown_dict_shape():
     assert result["rmm"] == 72.5
     assert result["positive"] == 5.1
     assert result["negative"] == -1.2
-    assert result["reliability"] == 0.9
+    assert result["reliability"] == "High"
     assert result["components"] == {
         "defensive_actions": 3.4,
         "duel_dominance": 2.2,
