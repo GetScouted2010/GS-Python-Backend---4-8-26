@@ -40,6 +40,102 @@ from django.http import Http404
 from scoring.characterization.role_fit import STYLE_COLUMNS
 
 # =========================================================================
+# Synthetic (DB-independent) regression guard -- proves the two
+# plan-checker-flagged properties even when the DB-backed tests below skip
+# against an empty pytest-django test DB.
+# =========================================================================
+def test_get_summary_composes_four_helpers_from_single_reconstruction_synthetic():
+    """Synthetic, DB-independent guard for the two things this plan exists
+    to get right: (1) `get_summary` calls `reconstruct_population`/
+    `score_population` exactly ONCE, never once per sub-score; (2) the
+    `player_row` passed to `cs_breakdown_from_row` carries the role-score
+    columns -- proving `pop.players_df` was merged with `pop.role_scores_wide`
+    before slicing, not a bare `pop.players_df` row (this fails hard if the
+    merge is ever dropped)."""
+    import pandas as pd
+
+    from scoring.services.population import Population
+
+    players_df = pd.DataFrame(
+        {
+            "player_id": ["p1", "p2"],
+            "Team": ["OwnClubP1", "OwnClubP2"],
+            "Main_Position": ["CF", "CB"],
+            "Position": ["CF", "CB"],
+        }
+    )
+    role_scores_wide = pd.DataFrame({"player_id": ["p1", "p2"], "Poacher": [90.0, None]})
+    pop = Population(
+        players_df=players_df,
+        role_scores_wide=role_scores_wide,
+        team_styles_df=pd.DataFrame({"Team": ["OwnClubP1"]}),
+        transfers_df=pd.DataFrame(),
+    )
+
+    scored = players_df[["player_id"]].copy()
+    scored["Player Impact"] = [55.0, 42.0]
+
+    cs_tp = pd.DataFrame(
+        {
+            "compatibility_score": [85.0, None],
+            "financial_score": [60.0, None],
+            "performance_score": [70.0, None],
+            "contract_fit": [0.8, None],
+            "role_pct": [80.0, None],
+            "transfer_probability": [75.0, None],
+        },
+        index=pd.Index(["p1", "p2"], name="player_id"),
+    )
+
+    captured: dict = {}
+
+    def _fake_cs_breakdown(cs_tp_row, player_row, club_name, team_styles_df):
+        captured["player_row"] = player_row
+        return {
+            "compatibility_score": 85.0,
+            "components": {"role_fit_score": 1.0, "similarity_pct": None, "bonus": 100.0},
+        }
+
+    with (
+        patch("scoring.services.summary.reconstruct_population", return_value=pop) as mock_reconstruct,
+        patch("scoring.services.summary.score_population", return_value=(scored, cs_tp)) as mock_score,
+        patch("scoring.services.summary.resolve_club_name", return_value="OwnClubP1"),
+        patch("scoring.services.summary.cs_breakdown_from_row", side_effect=_fake_cs_breakdown),
+        patch("scoring.services.summary.rmm_breakdown_from_scored", return_value={"rmm": 55.0}),
+        patch(
+            "scoring.services.summary.financial_fit_from_population",
+            return_value={"predicted_fee": 1_000_000.0},
+        ),
+        patch(
+            "scoring.services.summary.tp_breakdown_from_row",
+            return_value={"transfer_probability": 75.0},
+        ),
+    ):
+        from scoring.services.summary import get_summary
+
+        result = get_summary("p1", "club-uuid")
+
+    assert mock_reconstruct.call_count == 1
+    assert mock_score.call_count == 1
+    assert result == {
+        "rmm": {"rmm": 55.0},
+        "compatibility": {
+            "compatibility_score": 85.0,
+            "components": {"role_fit_score": 1.0, "similarity_pct": None, "bonus": 100.0},
+        },
+        "financial_fit": {"predicted_fee": 1_000_000.0},
+        "transfer_probability": {"transfer_probability": 75.0},
+    }
+
+    # The regression guard: player_row passed to cs_breakdown_from_row must
+    # carry the role-score column ("Poacher") -- proving the
+    # players_df/role_scores_wide merge happened before slicing, not a bare
+    # pop.players_df row.
+    assert "Poacher" in captured["player_row"].index
+    assert captured["player_row"]["Poacher"] == 90.0
+
+
+# =========================================================================
 # Real-data caches (module scope)
 # =========================================================================
 _REAL_POP_CACHE: dict = {}
