@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-07-23T17:07:05.616Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-07-23T21:45:00.000Z"
 progress:
   total_phases: 12
   completed_phases: 3
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 04 (scoring-engine-port) — EXECUTING
-Plan: 2 of 6
+Plan: 4 of 6 — Wave 1 (04-01) and Wave 2 (04-02, 04-03, 04-04) complete; Wave 3 (04-05 summary+serializers) and Wave 4 (04-06 DRF endpoints) remain
 
 ## Performance Metrics
 
@@ -108,6 +108,7 @@ Recent decisions affecting current work:
 - [Phase 04-scoring-engine-port]: [Phase 04-01]: score_population uses add_player_impact (full RMM breakdown) not compute_rmm_column, so downstream summary/RMM (04-06) gets Impact component columns for free; get_tfm_pipeline resolves artifact/sidecar paths via settings.BASE_DIR (matching tfm_model.py's existing convention) rather than a __file__-relative path
 - [Phase 04-scoring-engine-port]: [Phase 04-04]: TFM's requested-club-context override is scoped to club-aggregate features only (club_pos_avg_in_fee, seller_hist_*, etc); the 4 upstream RMM/CS/TP features stay computed against each player's own club, matching oracle/training methodology; np.expm1 unwraps the confirmed log-scale pipeline.predict output, verified against real data (fees ~€597K-€1.29M across different requested clubs for the same player, not the log-scale [0,20] range)
 - [Phase 04-scoring-engine-port]: [Phase 04-02]: rmm.py's get_rmm/rmm_breakdown_from_scored read the breakdown strictly off add_player_impact's output (never compute_rmm_column); Impact Reliability is a categorical string (Very Low/Low/Medium/High), not numeric -- passed through as-is rather than float()-coerced
+- [Phase 04-scoring-engine-port]: [Phase 04-03]: get_compatibility merges pop.players_df with pop.role_scores_wide (on='player_id') BEFORE slicing player_row, replicating compute_cs_tp_for_pairs' own internal merge -- fixes a plan-checker-caught bug where role_fit_score/bonus would silently disagree with the real compatibility_score (a bare players_df row has no role-score columns, so calculate_subjective_role_fit_for_player_to_team/get_player_own_best_role would always degenerate to None/70.0); a new regression test asserts the breakdown mathematically reconstructs the score. get_transfer_probability re-exposes compute_cs_tp_for_pairs' 4 weighted terms directly (no reimplementation), contract_fit scaled *100 for display parity.
 
 ### Pending Todos
 
@@ -121,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-23T17:07:05.610Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-07-23T21:45:00.000Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None

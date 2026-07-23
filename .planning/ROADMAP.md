@@ -91,10 +91,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Requesting a Player via API returns a real computed Transfer Probability.
   5. Every score response includes a breakdown of its contributing components, not just a final number.
 **Plans**: 6 plans (4 waves)
-- [ ] 04-01-PLAN.md — Foundation: population reconstruction + RMM-first scoring sequence, memoized TFM loader, club-name resolver, null+reason envelope (wave 1)
-- [ ] 04-02-PLAN.md — RMM (Player Impact) service + full component breakdown (wave 2)
-- [ ] 04-03-PLAN.md — Compatibility Score + deterministic Transfer Probability services + breakdowns (wave 2)
-- [ ] 04-04-PLAN.md — Financial Fit (TFM) service: club-context override + np.expm1 money-scale unwrap + value verdict (wave 2)
+- [x] 04-01-PLAN.md — Foundation: population reconstruction + RMM-first scoring sequence, memoized TFM loader, club-name resolver, null+reason envelope (wave 1)
+- [x] 04-02-PLAN.md — RMM (Player Impact) service + full component breakdown (wave 2)
+- [x] 04-03-PLAN.md — Compatibility Score + deterministic Transfer Probability services + breakdowns (wave 2)
+- [x] 04-04-PLAN.md — Financial Fit (TFM) service: club-context override + np.expm1 money-scale unwrap + value verdict (wave 2)
 - [ ] 04-05-PLAN.md — Combined summary orchestrator (all 4 scores, single reconstruction) + serializers contract (wave 3)
 - [ ] 04-06-PLAN.md — 5 authenticated DRF endpoints under /api/scoring/ + integration tests (wave 4)
 
