@@ -1,8 +1,8 @@
 ---
 phase: 04
 slug: scoring-engine-port
-status: draft
-nyquist_compliant: false
+status: ready
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-23
 ---
@@ -36,28 +36,33 @@ created: 2026-07-23
 
 ## Per-Task Verification Map
 
+Each plan's Task 1 (RED) creates its test file first (Wave 0 within that plan), then Task 2+ (GREEN) implements against it.
+
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 04-01-01 | TBD | 0 | SCORE-01 | unit | `pytest scoring/tests/test_services_rmm.py -x` | ❌ W0 | ⬜ pending |
-| 04-01-02 | TBD | TBD | SCORE-01 | integration | `pytest scoring/tests/test_views.py::test_rmm_endpoint_returns_real_score -x` | ❌ W0 | ⬜ pending |
-| 04-01-03 | TBD | TBD | SCORE-02 | unit+integration | `pytest scoring/tests/test_services_compatibility.py -x` / `test_views.py::test_compatibility_endpoint -x` | ❌ W0 | ⬜ pending |
-| 04-01-04 | TBD | TBD | SCORE-03 | unit+integration | `pytest scoring/tests/test_services_financial_fit.py -x` / `test_views.py::test_financial_fit_endpoint -x` | ❌ W0 | ⬜ pending |
-| 04-01-05 | TBD | TBD | SCORE-04 | unit+integration | `pytest scoring/tests/test_services_transfer_probability.py -x` / `test_views.py::test_transfer_probability_endpoint -x` | ❌ W0 | ⬜ pending |
-| 04-01-06 | TBD | TBD | SCORE-05 | unit | `pytest scoring/tests/test_services_*.py -k breakdown -x` | ❌ W0 | ⬜ pending |
-| 04-01-07 | TBD | TBD | cross-cutting | integration | `pytest scoring/tests/test_views.py::test_endpoints_require_authentication -x` | ❌ W0 | ⬜ pending |
+| population substrate | 04-01 | 1 | SCORE-01..05 (substrate) | unit | `pytest scoring/tests/test_services_population.py -x` | 🔨 04-01 T1 | ⬜ pending |
+| RMM service + breakdown | 04-02 | 2 | SCORE-01, SCORE-05 | unit | `pytest scoring/tests/test_services_rmm.py -x` | 🔨 04-02 T1 | ⬜ pending |
+| Compatibility (CS) + breakdown | 04-03 | 2 | SCORE-02, SCORE-05 | unit+integration | `pytest scoring/tests/test_services_compatibility.py -x` | 🔨 04-03 T1 | ⬜ pending |
+| Transfer Probability (TP) + 4-term breakdown | 04-03 | 2 | SCORE-04, SCORE-05 | unit+integration | `pytest scoring/tests/test_services_transfer_probability.py -x` | 🔨 04-03 T1 | ⬜ pending |
+| Financial Fit (TFM) + money-scale unwrap | 04-04 | 2 | SCORE-03, SCORE-05 | unit+integration | `pytest scoring/tests/test_services_financial_fit.py -x` | 🔨 04-04 T1 | ⬜ pending |
+| Combined summary orchestration | 04-05 | 3 | SCORE-01..05 | unit | `pytest scoring/tests/test_services_summary.py -x` | 🔨 04-05 T1 | ⬜ pending |
+| 5 DRF endpoints + auth gate | 04-06 | 4 | cross-cutting + SCORE-01..05 | integration | `pytest scoring/tests/test_views.py -x` | 🔨 04-06 T1 | ⬜ pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*File Exists: 🔨 = created by that plan's Task 1 (RED) during execution · Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `scoring/tests/test_services_rmm.py` — covers SCORE-01, SCORE-05 (RMM breakdown)
-- [ ] `scoring/tests/test_services_compatibility.py` — covers SCORE-02, SCORE-05 (CS breakdown + null+reason envelope)
-- [ ] `scoring/tests/test_services_financial_fit.py` — covers SCORE-03, SCORE-05 (TFM breakdown, feature_cols contract test against `.metrics.json`, money-scale unwrap regression test — must catch the log-scale `np.expm1()` bug the research flagged)
-- [ ] `scoring/tests/test_services_transfer_probability.py` — covers SCORE-04, SCORE-05 (4-term weighted breakdown)
-- [ ] `scoring/tests/test_services_summary.py` — covers the combined summary endpoint's service orchestration
-- [ ] `scoring/tests/test_views.py` — DRF `APIClient`-level integration tests for all 5 endpoints, plus the shared "requires authentication" cross-cutting test
+Each is created as the first (RED) task of the plan noted:
+
+- [ ] `scoring/tests/test_services_population.py` (04-01) — covers the shared reconstruct→RMM-first→CS/TP substrate + resolve_club_name + null envelope
+- [ ] `scoring/tests/test_services_rmm.py` (04-02) — covers SCORE-01, SCORE-05 (RMM breakdown)
+- [ ] `scoring/tests/test_services_compatibility.py` (04-03) — covers SCORE-02, SCORE-05 (CS breakdown that RECONSTRUCTS compatibility_score via the role_scores_wide-merged player_row + null+reason envelope)
+- [ ] `scoring/tests/test_services_transfer_probability.py` (04-03) — covers SCORE-04, SCORE-05 (4-term weighted breakdown)
+- [ ] `scoring/tests/test_services_financial_fit.py` (04-04) — covers SCORE-03, SCORE-05 (TFM breakdown, feature_cols contract test against `.metrics.json`, money-scale unwrap regression test — must catch the log-scale `np.expm1()` bug the research flagged)
+- [ ] `scoring/tests/test_services_summary.py` (04-05) — covers the combined summary endpoint's service orchestration (single reconstruction + CS-reconstruction consistency)
+- [ ] `scoring/tests/test_views.py` (04-06) — DRF `APIClient`-level integration tests for all 5 endpoints, plus the shared "requires authentication" cross-cutting test
 - [ ] No new pytest fixtures/framework install needed — `scoring/tests/conftest.py`'s `real_data_available` fixture (Phase 3) is directly reusable; synthetic-fixture-only tests don't need DB access at all, following `test_deterministic_scores.py`'s existing pattern
 
 ---
@@ -73,11 +78,11 @@ created: 2026-07-23
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready — plans validated for execution
