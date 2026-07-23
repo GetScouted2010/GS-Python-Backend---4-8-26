@@ -90,7 +90,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Requesting a Player-Club pairing via API returns a real computed Financial Fit (TFM).
   4. Requesting a Player via API returns a real computed Transfer Probability.
   5. Every score response includes a breakdown of its contributing components, not just a final number.
-**Plans**: TBD
+**Plans**: 6 plans (4 waves)
+- [ ] 04-01-PLAN.md — Foundation: population reconstruction + RMM-first scoring sequence, memoized TFM loader, club-name resolver, null+reason envelope (wave 1)
+- [ ] 04-02-PLAN.md — RMM (Player Impact) service + full component breakdown (wave 2)
+- [ ] 04-03-PLAN.md — Compatibility Score + deterministic Transfer Probability services + breakdowns (wave 2)
+- [ ] 04-04-PLAN.md — Financial Fit (TFM) service: club-context override + np.expm1 money-scale unwrap + value verdict (wave 2)
+- [ ] 04-05-PLAN.md — Combined summary orchestrator (all 4 scores, single reconstruction) + serializers contract (wave 3)
+- [ ] 04-06-PLAN.md — 5 authenticated DRF endpoints under /api/scoring/ + integration tests (wave 4)
 
 ### Phase 5: Scoring Parity Testing
 **Goal**: The Django port is proven numerically faithful to the original script, not just "runs without crashing."
@@ -187,7 +193,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Data Foundation | 9/9 | Complete    | 2026-07-21 |
 | 2. Auth & Access Control | 3/3 | Complete    | 2026-07-21 |
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
-| 4. Scoring Engine Port | 0/TBD | Not started | - |
+| 4. Scoring Engine Port | 0/6 | Not started | - |
 | 5. Scoring Parity Testing | 0/TBD | Not started | - |
 | 6. Scoring Performance & Caching Layer | 0/TBD | Not started | - |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
