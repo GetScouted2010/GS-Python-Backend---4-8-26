@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-07-23T16:38:29.543Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-07-23T17:06:57.978Z"
 progress:
   total_phases: 12
   completed_phases: 3
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 22
 ---
 
 # Project State
@@ -63,6 +63,8 @@ Plan: 2 of 6
 | Phase 03-scoring-engine-curation-correctness-oracle P03 | 18min | 2 tasks | 1 files |
 | Phase 03 P07 | 35min | 2 tasks | 6 files |
 | Phase 04-scoring-engine-port P01 | 18min | 2 tasks | 4 files |
+| Phase 04-scoring-engine-port P04 | 30min | 2 tasks | 2 files |
+| Phase 04-scoring-engine-port P02 | 24min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -104,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 03-scoring-engine-curation-correctness-oracle]: [Phase 03-06]: TFM (Financial Fit) sklearn artifact trained and versioned -- RandomForestRegressor(n_estimators=300,max_depth=12,min_samples_leaf=3,random_state=42) faithfully reproduced, joblib-dumped to scoring/ml_artifacts/tfm_value_model_v1.joblib (gitignored, regenerable via `manage.py train_tfm_model`); management command explicitly merges Plan 04's player_impact and Plan 05's compatibility_score/performance_score/role_pct onto players_df before feature-building, closing the cross-plan wiring gap the plan-checker flagged during planning; verified against real dev data: R²=0.921, MAE=~€2.34M, 1477 usable transfer rows, all 4 cross-plan features confirmed present in the trained feature set
 - [Phase 03-07]: TFM oracle predictions use the player's current club as both buying-club and selling-club aggregate context (no real transfer event exists for a non-moving player); CSV oracle snapshot is committed to the repo (not gitignored) since it is Phase 5's ground truth
 - [Phase 04-scoring-engine-port]: [Phase 04-01]: score_population uses add_player_impact (full RMM breakdown) not compute_rmm_column, so downstream summary/RMM (04-06) gets Impact component columns for free; get_tfm_pipeline resolves artifact/sidecar paths via settings.BASE_DIR (matching tfm_model.py's existing convention) rather than a __file__-relative path
+- [Phase 04-scoring-engine-port]: [Phase 04-04]: TFM's requested-club-context override is scoped to club-aggregate features only (club_pos_avg_in_fee, seller_hist_*, etc); the 4 upstream RMM/CS/TP features stay computed against each player's own club, matching oracle/training methodology; np.expm1 unwraps the confirmed log-scale pipeline.predict output, verified against real data (fees ~€597K-€1.29M across different requested clubs for the same player, not the log-scale [0,20] range)
+- [Phase 04-scoring-engine-port]: [Phase 04-02]: rmm.py's get_rmm/rmm_breakdown_from_scored read the breakdown strictly off add_player_impact's output (never compute_rmm_column); Impact Reliability is a categorical string (Very Low/Low/Medium/High), not numeric -- passed through as-is rather than float()-coerced
 
 ### Pending Todos
 
@@ -117,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-23T16:38:29.539Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-07-23T17:05:29.886Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
