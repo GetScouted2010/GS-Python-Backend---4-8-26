@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Foundation** - Real player, club, stats, and transfer data migrated into Postgres with a reviewed import report (completed 2026-07-21)
 - [x] **Phase 2: Auth & Access Control** - One Django system of record for identity, gating every write endpoint by role (completed 2026-07-21)
 - [x] **Phase 3: Scoring Engine Curation & Correctness Oracle** - The authoritative logic in the untested scoring script is characterized and snapshotted before any porting begins (completed 2026-07-22)
-- [x] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns (completed 2026-07-23)
+- [ ] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns
 - [ ] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group
 - [ ] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
