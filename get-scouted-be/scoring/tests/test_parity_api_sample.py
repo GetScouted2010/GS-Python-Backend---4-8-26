@@ -338,15 +338,19 @@ def test_summary_service_parity(player_case):
     orchestrator's own reconstruct+score pass (and its `role_scores_wide`
     merge for CS) agrees with both the individual services AND the
     oracle."""
+    from players.models import Player
     from scoring.services.summary import get_summary
 
     pid, group = player_case
     oracle = load_oracle_df()
     own_club_id = _own_club_id(pid)
 
+    if Player.objects.filter(financial_fit_score__isnull=False).count() == 0:
+        pytest.skip("Player.financial_fit_score not populated -- run manage.py recompute_scores first")
+
     with (
         patch("scoring.services.summary.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.summary.score_population", return_value=_scored(None)),
+        patch("scoring.services.summary.get_scored_population", return_value=_scored(None)),
     ):
         result = get_summary(pid, own_club_id)
 
@@ -403,6 +407,8 @@ def test_endpoint_parity(endpoint_case, auth_client):
         patch("scoring.services.financial_fit.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.transfer_probability.reconstruct_population", return_value=_pop()),
         patch("scoring.services.transfer_probability.get_scored_population", return_value=_scored(None)),
+        patch("scoring.services.summary.reconstruct_population", return_value=_pop()),
+        patch("scoring.services.summary.get_scored_population", return_value=_scored(None)),
     ):
         resp = auth_client.get(f"/api/scoring/players/{pid}/impact/")
         assert resp.status_code == 200

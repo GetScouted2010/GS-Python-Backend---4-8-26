@@ -148,6 +148,7 @@ def _patched_services():
         patch("scoring.services.transfer_probability.get_scored_population", return_value=(scored_none, cs_tp_none)),
         patch("scoring.services.summary.reconstruct_population", return_value=pop),
         patch("scoring.services.summary.score_population", return_value=(scored_club, cs_tp_club)),
+        patch("scoring.services.summary.get_scored_population", return_value=(scored_none, cs_tp_none)),
     ):
         yield
 

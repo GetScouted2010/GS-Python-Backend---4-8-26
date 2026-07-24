@@ -39,8 +39,14 @@ from __future__ import annotations
 from django.http import Http404
 
 from scoring.services.compatibility import cs_breakdown_from_row
-from scoring.services.financial_fit import financial_fit_from_population
-from scoring.services.population import reconstruct_population, resolve_club_name, score_population
+from scoring.services.financial_fit import _financial_fit_own_club, financial_fit_from_population
+from scoring.services.population import (
+    get_scored_population,
+    is_own_club,
+    reconstruct_population,
+    resolve_club_name,
+    score_population,
+)
 from scoring.services.rmm import rmm_breakdown_from_scored
 from scoring.services.transfer_probability import tp_breakdown_from_row
 
@@ -59,7 +65,11 @@ def get_summary(player_id, club_id) -> dict:
     club_name = resolve_club_name(club_id)  # Http404 on unknown club
 
     pop = reconstruct_population()
-    scored, cs_tp = score_population(pop, club_name)
+    own = is_own_club(player_id, club_id)
+    if own:
+        scored, cs_tp = get_scored_population()
+    else:
+        scored, cs_tp = score_population(pop, club_name)
 
     # Replicate compute_cs_tp_for_pairs' internal merge (deterministic_scores.py:354)
     # so player_row carries the role-score columns cs_breakdown_from_row's
@@ -85,9 +95,17 @@ def get_summary(player_id, club_id) -> dict:
         raise Http404(f"Player {player_id} not found")
     cs_tp_row = cs_tp_indexed_str.loc[str(player_id)]
 
+    # Financial Fit: own-club reads the denormalized O(1) field; arbitrary
+    # club re-uses this summary's own scored/cs_tp (no extra reconstruction),
+    # matching the prior within-scope efficiency reuse.
+    if own:
+        financial = _financial_fit_own_club(player_id, club_name)
+    else:
+        financial = financial_fit_from_population(player_id, club_name, pop, scored, cs_tp)
+
     return {
         "rmm": rmm_breakdown_from_scored(scored_row),
         "compatibility": cs_breakdown_from_row(cs_tp_row, player_row, club_name, pop.team_styles_df),
-        "financial_fit": financial_fit_from_population(player_id, club_name, pop, scored, cs_tp),
+        "financial_fit": financial,
         "transfer_probability": tp_breakdown_from_row(cs_tp_row),
     }
