@@ -140,10 +140,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can retrieve a single Player's full profile, season-by-season stats, and score breakdowns.
   4. User can retrieve a single Club's full profile, squad overview, and transfer behaviour aggregates.
   5. User can fetch multiple players or clubs by ID in one request for side-by-side comparison.
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 - [x] 07-01-PLAN.md — Foundation: django-filter dependency + REST_FRAMEWORK filter/pagination wiring, shared capped/ids-bypass pagination classes, Wave-0 real_data_available test fixtures (wave 1)
 - [x] 07-02-PLAN.md — Players read API: list filter/sort/paginate, detail (profile + season + score breakdowns, club=None branch), ?ids= multi-fetch (wave 2)
-- [ ] 07-03-PLAN.md — Clubs read API: list filter/paginate, detail (profile + squad overview + transfer aggregates from market_value_at_transfer), ?ids= multi-fetch (wave 3)
+- [x] 07-03-PLAN.md — Clubs read API: list filter/paginate, detail (profile + squad overview + transfer aggregates from market_value_at_transfer), ?ids= multi-fetch (wave 3)
 
 ### Phase 8: User Workspace CRUD
 **Goal**: Authenticated users can build and manage their own scouting workspace on top of real player/club data.
@@ -210,7 +210,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
 | 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
-| 7. Core CRUD - Players & Clubs | 2/3 | In Progress | - |
+| 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
 | 8. User Workspace CRUD | 0/TBD | Not started | - |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
 | 10. AI Grounded Report Generation | 0/TBD | Not started | - |

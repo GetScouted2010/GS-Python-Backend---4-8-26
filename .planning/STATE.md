@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 07-02-PLAN.md
-last_updated: "2026-07-24T23:33:13.936Z"
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-07-25T00:40:49.000Z"
 progress:
   total_phases: 12
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 39
-  completed_plans: 38
+  completed_plans: 39
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 07 — core-crud-players-clubs
+**Current focus:** Phase 07 — core-crud-players-clubs (all plans executed; pending goal-backward verification)
 
 ## Current Position
 
-Phase: 07 (core-crud-players-clubs) — EXECUTING
-Plan: 3 of 3 (07-01 complete: django-filter/pagination/test-fixtures foundation; 07-02 complete: Players CRUD list/detail/ids; 07-03 Clubs CRUD remains)
+Phase: 07 (core-crud-players-clubs) — PLANS COMPLETE, READY FOR VERIFICATION
+Plan: 3 of 3 (07-01 complete: django-filter/pagination/test-fixtures foundation; 07-02 complete: Players CRUD list/detail/ids; 07-03 complete: Clubs CRUD list/detail/squad/transfer-aggregates/ids)
 
 ## Performance Metrics
 
@@ -79,6 +79,7 @@ Plan: 3 of 3 (07-01 complete: django-filter/pagination/test-fixtures foundation;
 | Phase 06 P07 | 25min | 2 tasks | 3 files |
 | Phase 07-core-crud-players-clubs P01 | 3min | 3 tasks | 5 files |
 | Phase 07 P02 | 7min | 3 tasks | 7 files |
+| Phase 07 P03 | 5min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -139,10 +140,12 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06-07 gap-closure]: test_live_scoring_performance.py proves the 5 live services (get_rmm/get_compatibility/get_transfer_probability/get_financial_fit/get_summary) are sub-second warm AND structurally never invoke add_player_impact/score_population/build_oracle_player_features per own-club request. Corrected the plan's own verbatim mock patch targets from the definition modules (scoring.characterization.impact/tfm_model, which are silent no-ops) to the caller's own import bindings (scoring.services.population/financial_fit) -- verified via live object-identity checks and two simulated-regression runs against the real dev DB that only the corrected targets actually intercept the call. Also fixed a latent 06-06 regression in test_services_summary.py's synthetic test (is_own_club now mocked). 06-live-wiring-DECISIONS.md records the own-club/arbitrary-club design + explicit Yes answer to 06-VERIFICATION.md's flagged scope question. SCORE-07 still NOT marked complete -- phase re-verification is the next step.
 - [Phase 07-core-crud-players-clubs]: [Phase 07-01]: django-filter + capped DRF pagination (25/page, 100 max, ?ids= bypass variant) wired additively into REST_FRAMEWORK, preserving Phase 2's deny-by-default auth posture; per-app real_data_available fixtures added to players/tests and clubs/tests since pytest only auto-discovers conftest fixtures within their own dir or descendants
 - [Phase 07]: [Phase 07-core-crud-players-clubs]: [Phase 07-02]: Players CRUD list/detail/ids wired -- PlayerListView (filter/sort/paginate via PlayerFilter + IdsBypassPagination) and PlayerDetailView (full profile + get_summary breakdowns) live under /api/players/; position filter strictly bound to Player.position (not main_position); PlayerDetailView branches explicitly on club_id is None before calling get_summary (which would raise a misleading Http404), instead computing RMM via rmm.get_rmm and returning null_with_reason(..., "player_has_no_club") for the 3 club-dependent scores; PlayerListSerializer confirmed reusable as 07-03's Club squad-overview shape
+- [Phase 07]: [Phase 07-core-crud-players-clubs]: [Phase 07-03]: Clubs CRUD list/detail/squad/transfer-aggregates/ids wired -- ClubListView (filter by league/country/playing-style thresholds via ClubFilter + IdsBypassPagination) and ClubDetailView (full profile + squad via players.serializers.PlayerListSerializer over club.players.all() + transfer_aggregates) live under /api/clubs/, appended after (not replacing) 07-02's api/players/ include; transfer_aggregates strictly sourced from Transfer.market_value_at_transfer (clean BigInteger), never Transfer.fee (free-text) -- live-verified against the real dev DB (avg_market_value_at_transfer returned a real numeric average without raising). CRUD-02/04/05 functionally complete; requirements-mark-complete deferred to the phase verifier per this plan's explicit instruction. Pre-existing unrelated test failure discovered (accounts/tests/test_permissions.py::test_director_read_only_visibility, caused by 07-01's project-wide pagination change, confirmed to predate 07-03) logged to 07-core-crud-players-clubs/deferred-items.md, not fixed (out of scope).
 
 ### Pending Todos
 
-None yet.
+- Fix accounts/tests/test_permissions.py::test_director_read_only_visibility (paginated response.data["results"] indexing) -- pre-existing regression from 07-01's pagination wiring, tracked in .planning/phases/07-core-crud-players-clubs/deferred-items.md
+- Phase 07 goal-backward verification (all 3 plans executed; CRUD-02/04/05 completion in REQUIREMENTS.md is the verifier's call)
 
 ### Blockers/Concerns
 
@@ -153,6 +156,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T23:33:13.933Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-07-25T00:40:49.000Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None
