@@ -30,6 +30,19 @@ class Player(models.Model):
     # output Phase 4-6 computes. Kept as a Phase 5 parity sanity-check baseline.
     legacy_total_score = models.FloatField(null=True, blank=True)
 
+    # --- Phase 6 denormalized "own current club" final scores (SCORE-07) ---
+    # Computed against each player's OWN current club — the same context the
+    # Phase 3 oracle and Phase 4 services default to when no club_id is given,
+    # and the context Phase 5 already proved correct. Written by the
+    # `recompute_scores` management command, NOT per-request. Kept null=True so
+    # a structurally-null score (e.g. a GK's/LB's/RB's CS/TP, confirmed in
+    # Phase 5) stays genuinely NULL, never zero-filled. DISTINCT from
+    # legacy_total_score above (the OLD pre-Django system).
+    impact_score = models.FloatField(null=True, blank=True)               # RMM (Player Impact)
+    compatibility_score = models.FloatField(null=True, blank=True)        # CS vs own club
+    financial_fit_score = models.FloatField(null=True, blank=True)        # TFM, money-scale (np.expm1 applied), NOT raw log-scale
+    transfer_probability_score = models.FloatField(null=True, blank=True) # deterministic Transfer Probability vs own club
+
     # --- Profile fields ---
     league = models.CharField(max_length=255, null=True, blank=True)
     positions = models.CharField(max_length=255, null=True, blank=True)
@@ -162,6 +175,13 @@ class Player(models.Model):
             models.Index(fields=["age"]),
             models.Index(fields=["market_value"]),
             models.Index(fields=["club"]),
+            # transfer_probability_score is intentionally left unindexed -- it
+            # is a display/grounding value, not a primary sort/filter key for
+            # Phase 7 CRUD-01, and every added index slows the bulk_update
+            # write path in Plan 03.
+            models.Index(fields=["-impact_score"]),
+            models.Index(fields=["-compatibility_score"]),
+            models.Index(fields=["-financial_fit_score"]),
         ]
 
     def __str__(self):
