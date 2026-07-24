@@ -126,7 +126,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06-02-PLAN.md — In-process aggregate caching: memoize reconstruct_population + get_scored_population + clear_scoring_caches (wave 1)
 - [x] 06-03-PLAN.md — recompute_scores management command: atomic bulk_update of the 4 denormalized fields, money-scale TFM, cache clear (wave 2)
 - [x] 06-04-PLAN.md — Timing verification test: O(1) denormalized read + warm cache vs cold recompute, order-of-magnitude assertion (wave 3)
-- [ ] 06-05-PLAN.md — GAP CLOSURE: wire RMM/Compatibility/Transfer-Probability live services to the memoized get_scored_population() own-club fast path (wave 1)
+- [x] 06-05-PLAN.md — GAP CLOSURE: wire RMM/Compatibility/Transfer-Probability live services to the memoized get_scored_population() own-club fast path (wave 1)
 - [ ] 06-06-PLAN.md — GAP CLOSURE: Financial Fit O(1) denormalized-field read + Summary own-club fast path; arbitrary-club live fallback preserved (wave 2)
 - [ ] 06-07-PLAN.md — GAP CLOSURE: warm-process sub-second regression test for the 5 live services + live-wiring design decisions doc (wave 3)
 
@@ -206,7 +206,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
 | 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
-| 6. Scoring Performance & Caching Layer | 3/4 | In Progress|  |
+| 6. Scoring Performance & Caching Layer | 5/7 | In Progress|  |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
 | 8. User Workspace CRUD | 0/TBD | Not started | - |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
