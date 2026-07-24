@@ -27,11 +27,12 @@ DB to a fresh (usually empty) test DB the moment the first
 from a raw collection-time query would silently diff against player ids
 the real test-time connection can no longer see (verified live during this
 plan's own execution). `pytest.mark.parametrize(..., indirect=True)` is
-therefore applied over a STATIC index range (`SAMPLE_SLOTS`, a generous
-fixed upper bound) with the real, DB-dependent sample resolved lazily
-inside the `player_case` fixture -- unused slots (or an entirely empty DB)
-skip cleanly with the same message `real_data_available` uses elsewhere in
-this suite, while every present slot still reports as its OWN individual
+therefore applied over a STATIC index range (`SAMPLE_SLOTS`/
+`ENDPOINT_SLOTS`, a generous fixed upper bound) with the real,
+DB-dependent sample resolved lazily inside the `player_case`/
+`endpoint_case` fixtures -- unused slots (or an entirely empty DB) skip
+cleanly with the same message `real_data_available` uses elsewhere in this
+suite, while every present slot still reports as its OWN individual
 pytest pass/fail (a single mismatching player is a single failing test
 case, not an opaque loop).
 
@@ -50,12 +51,14 @@ service/view code happens to pass in.
 
 from __future__ import annotations
 
+import uuid
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
 from django.db.models import Count
+from rest_framework.test import APIClient
 
 from scoring.tests._parity_helpers import (
     GROUPS_WITH_NULL_CS_TP,
@@ -72,11 +75,12 @@ TOP_CLUB_COUNT = 10
 PER_NON_NULL_GROUP = 4
 NON_NULL_GROUPS = [g for g in POSITION_GROUPS if g not in GROUPS_WITH_NULL_CS_TP]
 
-# Generous, FIXED upper bound for the indirect-parametrize index range --
+# Generous, FIXED upper bounds for the indirect-parametrize index ranges --
 # the real sample size (up to 3 null-group + up to 7*PER_NON_NULL_GROUP
 # non-null-group players, ~31) is resolved at test-run time from the
-# actual DB; unused slots skip cleanly (see `player_case`).
+# actual DB; unused slots skip cleanly (see `player_case`/`endpoint_case`).
 SAMPLE_SLOTS = 40
+ENDPOINT_SLOTS = 6
 
 _NO_DATA_MESSAGE = (
     "No real Player data in the dev DB -- run Phase 1's import_all "
@@ -169,6 +173,38 @@ def player_case(sample, request):
     if idx >= len(sample):
         pytest.skip(_NO_DATA_MESSAGE)
     return sample[idx]
+
+
+@pytest.fixture(scope="module")
+def endpoint_sample(sample):
+    """~5 players for the DRF endpoint parity subset: 1 GK/LB/RB (null
+    CS/TP -- checks the endpoint returns the null envelope gracefully, not
+    a 500) plus a handful of non-null-group players."""
+    null_group_cases = [c for c in sample if c[1] in GROUPS_WITH_NULL_CS_TP][:1]
+    non_null_cases = [c for c in sample if c[1] not in GROUPS_WITH_NULL_CS_TP][:4]
+    return null_group_cases + non_null_cases
+
+
+@pytest.fixture
+def endpoint_case(endpoint_sample, request):
+    idx = request.param
+    if idx >= len(endpoint_sample):
+        pytest.skip(_NO_DATA_MESSAGE)
+    return endpoint_sample[idx]
+
+
+@pytest.fixture
+def auth_client():
+    """A DRF APIClient force-authenticated as a real accounts.User --
+    copied verbatim from test_views.py's `auth_client` fixture (still
+    exercises the same global IsAuthenticated permission gate a real
+    Bearer token would)."""
+    from accounts.models import User
+
+    user = User.objects.create_user(email="parity-tester@example.com", password="testpass123")
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
 
 
 # ---------------------------------------------------------------------------
@@ -329,3 +365,63 @@ def test_summary_service_parity(player_case):
         assert _is_null(oracle_tp)
         assert _is_null(port_tp)
     assert compare_scalar(oracle_tp, port_tp, atol=RMM_CS_TP_ATOL)
+
+
+# =========================================================================
+# Task 2: DRF endpoint parity for a handful of sampled players
+# =========================================================================
+def test_endpoints_require_authentication():
+    """Cross-cutting auth-gate check (mirrors test_views.py) -- an
+    unauthenticated GET to a scoring endpoint returns 401, confirming the
+    parity suite also proves the auth gate stays intact end-to-end."""
+    client = APIClient()
+    placeholder_id = uuid.uuid4()
+    response = client.get(f"/api/scoring/players/{placeholder_id}/impact/")
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("endpoint_case", range(ENDPOINT_SLOTS), indirect=True)
+def test_endpoint_parity(endpoint_case, auth_client):
+    pid, group = endpoint_case
+    oracle = load_oracle_df()
+    own_club_id = _own_club_id(pid)
+
+    with (
+        patch("scoring.services.rmm.reconstruct_population", return_value=_pop()),
+        patch("scoring.services.compatibility.reconstruct_population", return_value=_pop()),
+        patch("scoring.services.compatibility.score_population", return_value=_scored(None)),
+        patch("scoring.services.financial_fit.reconstruct_population", return_value=_pop()),
+        patch("scoring.services.financial_fit.score_population", return_value=_scored(None)),
+        patch("scoring.services.transfer_probability.reconstruct_population", return_value=_pop()),
+        patch("scoring.services.transfer_probability.score_population", return_value=_scored(None)),
+    ):
+        resp = auth_client.get(f"/api/scoring/players/{pid}/impact/")
+        assert resp.status_code == 200
+        assert compare_scalar(oracle.loc[str(pid), "rmm"], resp.json()["rmm"], atol=RMM_CS_TP_ATOL)
+
+        resp = auth_client.get(f"/api/scoring/players/{pid}/clubs/{own_club_id}/compatibility/")
+        assert resp.status_code == 200
+        oracle_cs = oracle.loc[str(pid), "cs"]
+        port_cs = resp.json().get("compatibility_score")
+        if group in GROUPS_WITH_NULL_CS_TP:
+            assert _is_null(oracle_cs)
+            assert _is_null(port_cs)
+        assert compare_scalar(oracle_cs, port_cs, atol=RMM_CS_TP_ATOL)
+
+        resp = auth_client.get(f"/api/scoring/players/{pid}/clubs/{own_club_id}/financial-fit/")
+        assert resp.status_code == 200
+        oracle_tfm_log = oracle.loc[str(pid), "tfm"]
+        oracle_money = None if _is_null(oracle_tfm_log) else float(np.expm1(oracle_tfm_log))
+        assert compare_scalar(oracle_money, resp.json().get("predicted_fee"), rtol=TFM_RTOL)
+
+        resp = auth_client.get(f"/api/scoring/players/{pid}/clubs/{own_club_id}/transfer-probability/")
+        assert resp.status_code == 200
+        oracle_tp = oracle.loc[str(pid), "transfer_probability"]
+        port_tp = resp.json().get("transfer_probability")
+        if group in GROUPS_WITH_NULL_CS_TP:
+            assert _is_null(oracle_tp)
+            assert _is_null(port_tp)
+        assert compare_scalar(oracle_tp, port_tp, atol=RMM_CS_TP_ATOL)
+
+        resp = auth_client.get(f"/api/scoring/players/{pid}/summary/?club_id={own_club_id}")
+        assert resp.status_code == 200
