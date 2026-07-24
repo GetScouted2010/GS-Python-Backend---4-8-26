@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Scoring Engine Curation & Correctness Oracle** - The authoritative logic in the untested scoring script is characterized and snapshotted before any porting begins (completed 2026-07-22)
 - [x] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns (completed 2026-07-23)
 - [x] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group (completed 2026-07-24)
-- [ ] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates
+- [x] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates (completed 2026-07-24)
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
 - [ ] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export
 - [ ] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface
@@ -127,8 +127,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06-03-PLAN.md — recompute_scores management command: atomic bulk_update of the 4 denormalized fields, money-scale TFM, cache clear (wave 2)
 - [x] 06-04-PLAN.md — Timing verification test: O(1) denormalized read + warm cache vs cold recompute, order-of-magnitude assertion (wave 3)
 - [x] 06-05-PLAN.md — GAP CLOSURE: wire RMM/Compatibility/Transfer-Probability live services to the memoized get_scored_population() own-club fast path (wave 1)
-- [ ] 06-06-PLAN.md — GAP CLOSURE: Financial Fit O(1) denormalized-field read + Summary own-club fast path; arbitrary-club live fallback preserved (wave 2)
-- [ ] 06-07-PLAN.md — GAP CLOSURE: warm-process sub-second regression test for the 5 live services + live-wiring design decisions doc (wave 3)
+- [x] 06-06-PLAN.md — GAP CLOSURE: Financial Fit O(1) denormalized-field read + Summary own-club fast path; arbitrary-club live fallback preserved (wave 2)
+- [x] 06-07-PLAN.md — GAP CLOSURE: warm-process sub-second regression test for the 5 live services + live-wiring design decisions doc (wave 3)
 
 ### Phase 7: Core CRUD - Players & Clubs
 **Goal**: Users can browse, filter, and inspect real player and club data, including their scores, through a full API surface.
@@ -206,7 +206,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
 | 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
-| 6. Scoring Performance & Caching Layer | 5/7 | In Progress|  |
+| 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
 | 8. User Workspace CRUD | 0/TBD | Not started | - |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
