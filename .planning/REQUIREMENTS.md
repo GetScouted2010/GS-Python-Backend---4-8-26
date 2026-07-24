@@ -106,7 +106,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCORE-03 | Phase 4 | Complete |
 | SCORE-04 | Phase 4 | Complete |
 | SCORE-05 | Phase 4 | Complete |
-| SCORE-06 | Phase 5 | In progress (Plan 01 — shared helpers only) |
+| SCORE-06 | Phase 5 | In progress (Plans 01, 02 complete — shared helpers + bulk parity; not yet marked complete pending all 4 plans + verifier) |
 | SCORE-07 | Phase 6 | Pending |
 | CRUD-01 | Phase 7 | Pending |
 | CRUD-02 | Phase 7 | Pending |
