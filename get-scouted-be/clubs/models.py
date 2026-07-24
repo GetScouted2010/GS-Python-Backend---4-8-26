@@ -4,7 +4,8 @@ from django.db import models
 
 
 class Club(models.Model):
-    """A football club.
+    """
+    A football club.
 
     No dedicated source CSV exists for clubs — this table is derived from the
     union of Players.csv's Team_within_selected_timeframe values and
