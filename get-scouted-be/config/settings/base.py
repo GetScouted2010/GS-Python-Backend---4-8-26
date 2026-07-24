@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "django_filters",
     "clubs",
     "players",
     "transfers",
@@ -132,6 +133,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsPagination",
+    "PAGE_SIZE": 25,
 }
 
 # simplejwt lifetimes 15min/7days are a deliberate discretionary bump over simplejwt's
