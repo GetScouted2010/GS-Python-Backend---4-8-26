@@ -51,12 +51,17 @@ class Population(NamedTuple):
     transfers_df: pd.DataFrame
 
 
+@lru_cache(maxsize=1)
 def reconstruct_population() -> Population:
-    """Build the four script-shaped DataFrames from the ORM, once.
+    """Build the four script-shaped DataFrames from the ORM, once per
+    process (memoized -- see `clear_scoring_caches()`).
 
     The single reconstruction point every downstream score service reuses
     instead of independently calling `characterization.reconstruct`'s
-    `build_*` functions (which each re-query the DB).
+    `build_*` functions (which each re-query the DB). Subsequent calls in
+    the same process return the cached result instead of re-querying
+    Postgres; call `clear_scoring_caches()` after a data refresh to force a
+    fresh rebuild.
     """
     return Population(
         players_df=build_players_df(),
@@ -114,6 +119,24 @@ def score_population(pop: Population, club_name: str | None) -> tuple[pd.DataFra
     return scored, cs_tp
 
 
+@lru_cache(maxsize=1)
+def get_scored_population() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Memoized own-club (club_context=None) whole-population scoring.
+
+    Runs score_population(reconstruct_population(), None) at most once per
+    process -- the ~74-115s full-population pass -- and hands back the cached
+    (scored, cs_tp) every subsequent call. This is the precomputed
+    aggregate SCORE-07 Success Criterion 2 requires: the recompute_scores
+    command (writes the denormalized Player fields) and any own-club live
+    path both read this instead of re-scoring 41,708 players per request.
+
+    Invalidated by clear_scoring_caches() after a data refresh. Callers
+    MUST treat the returned DataFrames as read-only (copy/merge before
+    mutating), exactly as reconstruct_population's callers already do.
+    """
+    return score_population(reconstruct_population(), None)
+
+
 def resolve_club_name(club_id) -> str:
     """Resolve a Club UUID to its `name` string, raising `Http404` if
     unknown.
@@ -153,3 +176,13 @@ def get_tfm_pipeline() -> tuple[object, list[str]]:
         feature_cols = json.load(f)["feature_cols"]
 
     return pipeline, feature_cols
+
+
+def clear_scoring_caches() -> None:
+    """Invalidate every in-process scoring aggregate cache so the next
+    call rebuilds against fresh data. Call this after any data refresh
+    (Phase 1's import_all) and at the end of the recompute_scores command.
+    Does NOT clear get_tfm_pipeline -- the joblib artifact only changes via
+    train_tfm_model, not a data refresh."""
+    reconstruct_population.cache_clear()
+    get_scored_population.cache_clear()
