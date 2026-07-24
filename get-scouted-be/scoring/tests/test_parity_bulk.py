@@ -25,6 +25,8 @@ this file reuses the same result.
 
 from __future__ import annotations
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from scoring.tests._parity_helpers import (
@@ -32,6 +34,7 @@ from scoring.tests._parity_helpers import (
     POSITION_GROUPS,
     RMM_CS_TP_ATOL,
     compare_series,
+    compare_tfm_series,
     load_oracle_df,
     to_str_index,
     write_mismatch_report,
@@ -137,3 +140,46 @@ def test_tp_parity_per_group(oracle_and_port, group):
     if len(mism):
         write_mismatch_report(f"bulk_tp_{group}", mism)
     assert len(mism) == 0, f"{len(mism)} TP mismatches in group {group} (see _parity_reports/bulk_tp_{group}.csv)"
+
+
+# =========================================================================
+# Bulk TFM parity -- raw log-scale predict, replicating
+# generate_scoring_oracle.py Steps 3-4 EXACTLY. Reuses `bulk_scored`; no
+# second reconstruct_population()/score_population() call.
+# =========================================================================
+def test_tfm_parity_bulk(bulk_scored):
+    from scoring.characterization.tfm_model import build_oracle_player_features
+    from scoring.services.financial_fit import _merge_tfm_feature_columns
+    from scoring.services.population import get_tfm_pipeline
+
+    pop, scored, cs_tp = bulk_scored
+
+    # Merge the 4 upstream feature columns (player_impact/compatibility_score/
+    # performance_score/role_pct) onto players_df -- build_oracle_player_features
+    # reads them straight off columns; absent -> NaN -> imputed -> degraded.
+    players_df = _merge_tfm_feature_columns(pop.players_df, scored, cs_tp)
+
+    pipeline, feature_cols = get_tfm_pipeline()
+    features = build_oracle_player_features(players_df, pop.transfers_df)
+    for c in [c for c in feature_cols if c not in features.columns]:
+        features[c] = np.nan
+    X = features[feature_cols]
+
+    # RAW predict == LOG-scale == exactly what generate_scoring_oracle.py
+    # wrote into the oracle's tfm column (no expm1 here).
+    port_log = pd.Series(pipeline.predict(X), index=features.index)
+    port_log = port_log.where(features["_has_club_context"], np.nan)  # never fabricate with no club context
+
+    # The ONE place expm1 is applied in this file -- converts the port's
+    # log-scale prediction to money so both sides feed compare_tfm_series
+    # money-scale (that helper converts the oracle's log-scale tfm column
+    # to money internally). String-cast (features.index carries UUID
+    # player_id) before reindexing against the oracle's string index.
+    port_money = to_str_index(np.expm1(port_log))
+
+    oracle = load_oracle_df()
+    ids = oracle.index  # str
+    mism = compare_tfm_series(oracle_log=oracle.loc[ids, "tfm"], port_money=port_money.reindex(ids))
+    if len(mism):
+        write_mismatch_report("bulk_tfm", mism)
+    assert len(mism) == 0, f"{len(mism)} TFM mismatches (see _parity_reports/bulk_tfm.csv)"
