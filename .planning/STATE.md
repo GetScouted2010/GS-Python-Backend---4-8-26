@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-07-24T21:10:48.551Z"
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-07-24T21:28:00.922Z"
 progress:
   total_phases: 12
   completed_phases: 5
   total_plans: 36
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 06 (scoring-performance-caching-layer) — GAP CLOSURE IN PROGRESS
-Plan: 5 of 7 complete (06-01, 06-02, 06-03, 06-04, 06-05 done; 06-06, 06-07 remaining)
+Plan: 6 of 7 complete (06-01, 06-02, 06-03, 06-04, 06-05, 06-06 done; 06-07 remaining)
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Plan: 5 of 7 complete (06-01, 06-02, 06-03, 06-04, 06-05 done; 06-06, 06-07 rema
 | Phase 06 P03 | 17min | 2 tasks | 2 files |
 | Phase 06 P04 | 12min | 1 tasks | 1 files |
 | Phase 06 P05 | 25min | 2 tasks | 6 files |
+| Phase 06-scoring-performance-caching-layer P06 | 25min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -131,6 +132,7 @@ Recent decisions affecting current work:
 - [Phase 06-03]: recompute_scores management command reuses generate_scoring_oracle.py's raw build_*/compute_* functions directly (not Plan 02's Population/score_population wrapper), only reusing get_tfm_pipeline(); financial_fit_score written money-scale via np.expm1; atomic bulk_update with NaN coerced to None; caches cleared before and after; live-verified against real 41,708-player dev DB: impact_score 41707 non-null, compatibility_score/transfer_probability_score 15051 non-null (26657 null by design, GK/LB/RB), financial_fit_score 41708 non-null ranging ~€496K-€26.4M
 - [Phase 06]: [Phase 06-04]: test_scoring_performance.py hard-asserts SCORE-07's flat/O(1) retrieval claim; pytest itself skips cleanly against the empty test DB (Django tears down test_getscouted each session), so real timings were live-verified via manage.py shell against the dev DB: cold get_scored_population() 92.04s vs warm 0.0000s (~58M x speedup), denormalized PK read 0.569ms/read, flatness ratio 0.87x across N=100/1000/10000
 - [Phase 06]: [Phase 06-05 gap-closure]: get_own_club_id/is_own_club helpers added to population.py; get_rmm now unconditionally reads the memoized get_scored_population() aggregate (no club context needed); get_compatibility/get_transfer_probability branch is_own_club() -> memoized get_scored_population() vs arbitrary-club live score_population(pop, club_name) fallback (Phase 12's future "rank clubs for a player" preserved). Live-verified against the real 41,708-player dev DB via manage.py shell: get_rmm 9.15s -> 0.05s, get_compatibility(own club) 44.2s -> 0.15s, both byte-identical to a fresh live computation for the same player/club; arbitrary-other-club fallback confirmed still functional (44.6s, correctly returned null envelope). SCORE-07 still NOT marked complete -- 06-06 (financial_fit/summary wiring) and 06-07 (regression test) remain before phase re-verification.
+- [Phase 06-scoring-performance-caching-layer]: [Phase 06-06 gap-closure]: _financial_fit_own_club(player_id, club_name) added to financial_fit.py -- O(1) indexed read of the denormalized money-scale Player.financial_fit_score (first production consumer of the field Plans 06-01/06-03 built), re-deriving value_verdict via the same add_value_labels logic. get_financial_fit/get_summary both branch is_own_club(): own-club reads the denormalized field / memoized get_scored_population(); arbitrary-other-club keeps the live score_population(pop, club_name) fallback (Phase 12 preserved). Live-verified against the real 41,708-player dev DB via manage.py shell: get_financial_fit(own club) 0.0059s cold / 0.0024s warm (exact match to denormalized field); get_summary(own club) 0.2324s cold / 0.198s warm; strict negative-control confirmed neither call ever invokes build_oracle_player_features or the TFM pipeline for own-club. SCORE-07 still NOT marked complete -- 06-07 (regression test) and phase re-verification remain.
 
 ### Pending Todos
 
@@ -145,6 +147,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T21:10:00.000Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-07-24T21:28:00.918Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None
