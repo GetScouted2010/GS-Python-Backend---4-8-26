@@ -175,6 +175,27 @@ _PLAYERS_REQUIRED_COLUMNS = [
     "Market value",
 ]
 
+# Phase 6 denormalized final-score fields (players/models.py::Player) are
+# pipeline OUTPUTS written by the recompute_scores command, never scoring
+# INPUTS -- population reconstruction must NEVER read them back. Excluding
+# them here is load-bearing: `compatibility_score` in particular collides
+# with the freshly-computed cs_tp["compatibility_score"] that
+# generate_scoring_oracle.py:177, train_tfm_model.py:98, and
+# financial_fit.py::_merge_tfm_feature_columns merge back onto players_df
+# `on="player_id"`. If the raw field leaked in, that merge would silently
+# yield compatibility_score_x/_y suffix columns -> KeyError in the oracle
+# and a silent NaN TFM feature in the live Financial Fit path
+# (tfm_model.py:799). See this module's docstring: fail-loud, never
+# silently-corrupt.
+_DENORMALIZED_SCORE_FIELDS = frozenset(
+    {
+        "impact_score",
+        "compatibility_score",
+        "financial_fit_score",
+        "transfer_probability_score",
+    }
+)
+
 
 def build_players_df() -> pd.DataFrame:
     """One row per Player, columns renamed to impact_model_v4.1.py's literals.
@@ -183,7 +204,11 @@ def build_players_df() -> pd.DataFrame:
     Postgres -- the script itself has no stable id, only the non-unique
     `Player` display-name string.
     """
-    field_names = [f.name for f in Player._meta.fields]
+    field_names = [
+        f.name
+        for f in Player._meta.fields
+        if f.name not in _DENORMALIZED_SCORE_FIELDS
+    ]
     qs = Player.objects.select_related("club").values(*field_names, "club__name")
     df = pd.DataFrame.from_records(list(qs))
 

@@ -56,3 +56,30 @@ def test_build_transfers_df_has_required_columns(real_data_available):
     for col in ["Player", "Year", "Fee", "Dealing_Club"]:
         assert col in df.columns
     assert not df.empty
+
+
+@pytest.mark.django_db
+def test_build_players_df_excludes_denormalized_output_fields(real_data_available):
+    df = build_players_df()
+    leaked = {"impact_score", "compatibility_score",
+              "financial_fit_score", "transfer_probability_score"} & set(df.columns)
+    assert not leaked, f"denormalized OUTPUT fields leaked into reconstruction: {leaked}"
+
+
+@pytest.mark.django_db
+def test_cs_tp_merge_stays_single_compatibility_score_column(real_data_available):
+    import pandas as pd
+    players_df = build_players_df()
+    # cs_tp-shaped frame exactly as compute_cs_tp_for_pairs returns before
+    # generate_scoring_oracle.py:177 / financial_fit.py:57 merge it back on.
+    cs_tp = pd.DataFrame(
+        {"player_id": players_df["player_id"], "compatibility_score": 1.0}
+    )
+    merged = players_df.merge(cs_tp, on="player_id", how="left")
+    assert "compatibility_score" in merged.columns
+    assert "compatibility_score_x" not in merged.columns
+    assert "compatibility_score_y" not in merged.columns
+    # single, unsuffixed column -> generate_scoring_oracle.py:215's
+    # players_df[[..., "compatibility_score"]] and tfm_model.py:799's
+    # `col in players.columns` both stay correct post-migration.
+    assert list(merged.columns).count("compatibility_score") == 1
