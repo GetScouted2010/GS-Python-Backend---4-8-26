@@ -23,11 +23,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Scoring Engine
 
-- [ ] **SCORE-01**: Player Score (RMM) is computed via a curated, faithful port of `impact_model_v4.1.py`'s per-position calculators, exposed via API
-- [ ] **SCORE-02**: Compatibility Score (CS) between a player and a specific club is computed and exposed via API
-- [ ] **SCORE-03**: Financial Fit (TFM) between a player's value/cost and a club's spending profile is computed and exposed via API
-- [ ] **SCORE-04**: Transfer Probability is computed and exposed via API
-- [ ] **SCORE-05**: All four scores return a breakdown of contributing components, not just a final number
+- [x] **SCORE-01**: Player Score (RMM) is computed via a curated, faithful port of `impact_model_v4.1.py`'s per-position calculators, exposed via API
+- [x] **SCORE-02**: Compatibility Score (CS) between a player and a specific club is computed and exposed via API
+- [x] **SCORE-03**: Financial Fit (TFM) between a player's value/cost and a club's spending profile is computed and exposed via API
+- [x] **SCORE-04**: Transfer Probability is computed and exposed via API
+- [x] **SCORE-05**: All four scores return a breakdown of contributing components, not just a final number
 - [ ] **SCORE-06**: The Django port passes a numerical parity test suite against the original script's real output, within an agreed tolerance, for every position group
 - [ ] **SCORE-07**: Live per-entity scoring runs in O(1) time against precomputed/cached aggregates — no full-dataset pandas operations inside a request cycle
 
@@ -101,11 +101,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 2 | Complete |
 | AUTH-02 | Phase 2 | Complete |
 | AUTH-03 | Phase 2 | Complete |
-| SCORE-01 | Phase 4 | In progress (Plan 1/6 — substrate only, no API endpoints yet) |
-| SCORE-02 | Phase 4 | In progress (Plan 1/6 — substrate only, no API endpoints yet) |
-| SCORE-03 | Phase 4 | In progress (Plan 1/6 — substrate only, no API endpoints yet) |
-| SCORE-04 | Phase 4 | In progress (Plan 1/6 — substrate only, no API endpoints yet) |
-| SCORE-05 | Phase 4 | In progress (Plan 1/6 — substrate only, no API endpoints yet) |
+| SCORE-01 | Phase 4 | Complete |
+| SCORE-02 | Phase 4 | Complete |
+| SCORE-03 | Phase 4 | Complete |
+| SCORE-04 | Phase 4 | Complete |
+| SCORE-05 | Phase 4 | Complete |
 | SCORE-06 | Phase 5 | Pending |
 | SCORE-07 | Phase 6 | Pending |
 | CRUD-01 | Phase 7 | Pending |
