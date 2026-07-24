@@ -206,3 +206,73 @@ def test_missing_club_player_cs_parity(real_data_gate, oracle):
     assert compare_scalar(oracle_cs, port_cs, atol=RMM_CS_TP_ATOL), (
         f"club-less player {p.id} CS mismatch: oracle={oracle_cs} port={port_cs}"
     )
+
+
+# =========================================================================
+# Boundary ages -- youngest (age>0) / oldest; RMM is the age-sensitive score
+# =========================================================================
+@pytest.mark.parametrize("boundary", ["youngest", "oldest"])
+def test_boundary_age_players_parity(real_data_gate, oracle, boundary):
+    """The youngest player with a genuine age (age > 0 -- age==0 is a
+    data-quality placeholder, handled separately below) and the oldest
+    player are both scored by the port and must match the oracle's RMM,
+    the age-sensitive score, at these extremes."""
+    from players.models import Player
+
+    if boundary == "youngest":
+        p = Player.objects.exclude(age=0).filter(age__isnull=False).order_by("age").first()
+    else:
+        p = Player.objects.filter(age__isnull=False).order_by("-age").first()
+
+    if p is None:
+        pytest.skip(f"no {boundary}-age player in current data")
+
+    result = _get_rmm(p.id)
+    oracle_rmm = oracle.loc[str(p.id), "rmm"]
+    assert compare_scalar(oracle_rmm, result["rmm"], atol=RMM_CS_TP_ATOL), (
+        f"{boundary}-age player {p.id} (age={p.age}) RMM mismatch: "
+        f"oracle={oracle_rmm} port={result['rmm']}"
+    )
+
+
+def test_age_zero_placeholder_parity(real_data_gate, oracle):
+    """`age == 0` is a data-quality placeholder (22 real players), not a
+    genuine "0-year-old" -- per 05-RESEARCH's Open Question 2, this is
+    treated as an invalid-placeholder input whose port behavior must still
+    equal the oracle's (whatever that is: a real computed RMM or NaN),
+    never silently diverge or crash."""
+    from players.models import Player
+
+    p = Player.objects.filter(age=0).first()
+    if p is None:
+        pytest.skip("no age==0 placeholder player in current data")
+
+    result = _get_rmm(p.id)  # must not raise
+    oracle_rmm = oracle.loc[str(p.id), "rmm"]
+    assert compare_scalar(oracle_rmm, result["rmm"], atol=RMM_CS_TP_ATOL), (
+        f"age==0 placeholder player {p.id} RMM mismatch: oracle={oracle_rmm} port={result['rmm']}"
+    )
+
+
+# =========================================================================
+# Invalid position label -- both-null RMM parity (garbage main_position=="0")
+# =========================================================================
+def test_invalid_position_player_parity(real_data_gate, oracle):
+    """`normalise_position("0")` doesn't land in any of the 10 real
+    position groups, and `add_player_impact` has no calculator branch for
+    it -- the oracle's rmm is NaN for this player. The port must ALSO
+    report null rmm (both-null parity via compare_scalar) rather than
+    fabricating a number for an unrecognized position, and must not crash
+    on the garbage input."""
+    from players.models import Player
+
+    p = Player.objects.filter(main_position="0").first()
+    if p is None:
+        pytest.skip('no main_position=="0" player in current data')
+
+    result = _get_rmm(p.id)  # must not raise on garbage input
+    oracle_rmm = oracle.loc[str(p.id), "rmm"]
+    assert compare_scalar(oracle_rmm, result["rmm"], atol=RMM_CS_TP_ATOL), (
+        f"invalid-position player {p.id} RMM both-null-parity mismatch: "
+        f"oracle={oracle_rmm} port={result['rmm']}"
+    )
