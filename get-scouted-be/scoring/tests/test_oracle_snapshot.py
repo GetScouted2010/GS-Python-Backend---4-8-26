@@ -21,6 +21,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from scoring.tests._parity_helpers import find_latest_oracle_csv
+
 ORACLE_DIR = Path(__file__).resolve().parents[1] / "oracle"
 MANIFEST_PATH = ORACLE_DIR / "MANIFEST.md"
 
@@ -35,18 +37,11 @@ EXPECTED_COLUMNS = [
 ]
 
 
-def _find_latest_oracle_csv() -> Path | None:
-    if not ORACLE_DIR.exists():
-        return None
-    candidates = sorted(ORACLE_DIR.glob("scoring_oracle_v1_*.csv"))
-    return candidates[-1] if candidates else None
-
-
 @pytest.mark.django_db
 def test_snapshot_coverage(real_data_available):
     from players.models import Player
 
-    csv_path = _find_latest_oracle_csv()
+    csv_path = find_latest_oracle_csv()
     if csv_path is None:
         pytest.skip(
             "No oracle CSV found in scoring/oracle/ -- run "
