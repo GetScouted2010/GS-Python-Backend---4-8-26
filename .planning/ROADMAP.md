@@ -109,7 +109,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans (2 waves)
 - [x] 05-01-PLAN.md — Shared parity helpers: version-agnostic oracle discovery, 10-group bucketing, both-null-aware tolerance comparator, mismatch-report writer (wave 1)
 - [x] 05-02-PLAN.md — Tier-1 full-population bulk parity (RMM/CS/TP/TFM) parametrized over the 10 real position groups (wave 2)
-- [ ] 05-03-PLAN.md — Tier-2 API-sample parity: seeded stratified ~30-player sample through the real per-request services + DRF endpoints (wave 2)
+- [x] 05-03-PLAN.md — Tier-2 API-sample parity: seeded stratified ~30-player sample through the real per-request services + DRF endpoints (wave 2)
 - [x] 05-04-PLAN.md — Edge-case parity: zero-minutes, missing stats, boundary ages, invalid position (dynamically mined) (wave 2)
 
 ### Phase 6: Scoring Performance & Caching Layer
