@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-07-24T12:15:38.908Z"
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-07-24T14:05:56.843Z"
 progress:
   total_phases: 12
   completed_phases: 4
   total_plans: 29
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 05 (scoring-parity-testing) — EXECUTING
-Plan: 2 of 4
+Plan: 04 of 4 complete (wave 2, parallel); Plans 02-03 (wave 2, parallel) still pending execution
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Plan: 2 of 4
 | Phase 04-scoring-engine-port P02 | 24min | 2 tasks | 2 files |
 | Phase 04-scoring-engine-port P06 | 16min | 2 tasks | 4 files |
 | Phase 05-scoring-parity-testing P01 | 15min | 2 tasks | 3 files |
+| Phase 05 P04 | 45min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,7 @@ Recent decisions affecting current work:
 - [Phase 04-scoring-engine-port]: [Phase 04-05]: get_summary reconstructs the population exactly once (verified by a mocked call_count==1 test) and reuses Plans 02-04's breakdown helpers, replicating Plan 03's role_scores_wide merge fix for its compatibility sub-object; financial_fit's 4 upstream TFM features are computed in the summary's shared club context rather than each player's own club (an accepted, documented efficiency tradeoff vs the standalone /financial-fit/ endpoint). serializers.py defines 5 thin DictField/JSONField-based serializers (RMM/Compatibility/FinancialFit/TransferProbability/Summary) with a nullable score + optional reason on every one. Verified end-to-end against one real player/club pair: CS breakdown reconstructed its own score exactly ((87.23+70.0)/2=78.62); TP's 4 contributions summed exactly to the reported transfer_probability (87.5).
 - [Phase 04-scoring-engine-port]: [Phase 04-06]: All 5 scoring endpoints wired thin under /api/scoring/ -- views call Response(service_function(...)) directly (no serializers.py class instantiated, per the plan's literal task-2 code); service calls never wrapped in try/except so Http404 (unknown player/club) and reconstruction ValueError both propagate naturally (404/500), never swallowed into a fabricated null; verified end-to-end against the real 41,708-player dev DB via manage.py shell (real RMM score, 401 unauthenticated, 404 unknown player, 400 missing club_id on /summary/)
 - [Phase 05-scoring-parity-testing]: [05-01]: _parity_helpers.py centralizes oracle discovery/load, the UUID->str port-id-cast convention, and a both-null-aware tolerance comparator (both-null=pass, one-null=hard fail, abs 0.01 RMM/CS/TP, rel 0.1% TFM); compare_tfm_series reconciles the oracle's verified log-scale tfm column to money scale via np.expm1 before applying the relative tolerance -- single source of truth Plans 02-04 import from rather than each re-implementing
+- [Phase 05]: [Phase 05-scoring-parity-testing]: [05-04]: 7 dynamically-mined edge-case parity tests (zero-minutes, missing market_value, missing club, youngest/oldest age boundary, age==0 placeholder, invalid main_position=='0') all live-verified exact-match against the real 41,708-player dev DB via manage.py shell (pytest's own test DB is empty so the file skips cleanly there, matching the established real-data-test pattern); missing-club CS parity reads directly off score_population(pop, None) rather than a per-request service since a club-less player has no valid own-club id to drive one
 
 ### Pending Todos
 
@@ -127,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T12:15:38.905Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-07-24T14:05:56.840Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None

@@ -107,10 +107,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The full parity suite passes for all position groups before the port is considered done.
   3. Edge cases (missing stats, boundary ages, zero-appearance players) are covered by the parity suite and pass.
 **Plans**: 4 plans (2 waves)
-- [ ] 05-01-PLAN.md — Shared parity helpers: version-agnostic oracle discovery, 10-group bucketing, both-null-aware tolerance comparator, mismatch-report writer (wave 1)
+- [x] 05-01-PLAN.md — Shared parity helpers: version-agnostic oracle discovery, 10-group bucketing, both-null-aware tolerance comparator, mismatch-report writer (wave 1)
 - [ ] 05-02-PLAN.md — Tier-1 full-population bulk parity (RMM/CS/TP/TFM) parametrized over the 10 real position groups (wave 2)
 - [ ] 05-03-PLAN.md — Tier-2 API-sample parity: seeded stratified ~30-player sample through the real per-request services + DRF endpoints (wave 2)
-- [ ] 05-04-PLAN.md — Edge-case parity: zero-minutes, missing stats, boundary ages, invalid position (dynamically mined) (wave 2)
+- [x] 05-04-PLAN.md — Edge-case parity: zero-minutes, missing stats, boundary ages, invalid position (dynamically mined) (wave 2)
 
 ### Phase 6: Scoring Performance & Caching Layer
 **Goal**: Live scoring is fast and safe under real concurrency — no full-dataset pandas operation ever runs inside a request.
@@ -198,7 +198,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Auth & Access Control | 3/3 | Complete    | 2026-07-21 |
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
 | 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
-| 5. Scoring Parity Testing | 0/TBD | Not started | - |
+| 5. Scoring Parity Testing | 2/4 | In Progress|  |
 | 6. Scoring Performance & Caching Layer | 0/TBD | Not started | - |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
 | 8. User Workspace CRUD | 0/TBD | Not started | - |
