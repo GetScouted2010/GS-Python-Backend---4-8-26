@@ -1,7 +1,11 @@
 """Shared DRF pagination for the Phase 7 read layer (CRUD-01, CRUD-05).
 
-StandardResultsPagination is the project-wide default (config/settings/base.py
-DEFAULT_PAGINATION_CLASS): 25 rows/page, client-adjustable via ?page_size=,
+Not wired as a project-wide DEFAULT_PAGINATION_CLASS — that would retroactively
+paginate every existing ListAPIView (e.g. Phase 2's /api/auth/admin/users/,
+which returns a plain list). Instead, each Phase 7 list view sets
+`pagination_class` explicitly.
+
+StandardResultsPagination: 25 rows/page, client-adjustable via ?page_size=,
 hard-capped at 100 so no caller can request an unbounded page across the
 41,708-player table.
 

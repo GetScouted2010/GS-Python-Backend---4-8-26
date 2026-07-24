@@ -137,8 +137,13 @@ REST_FRAMEWORK = {
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsPagination",
-    "PAGE_SIZE": 25,
+    # No DEFAULT_PAGINATION_CLASS here deliberately: setting one project-wide
+    # retroactively paginates every existing ListAPIView, including Phase 2's
+    # /api/auth/admin/users/ (which returns a plain list and isn't written to
+    # expect a paginated {count,next,previous,results} envelope). The Phase 7
+    # read layer's list views (players/clubs) explicitly set their own
+    # `pagination_class = core.pagination.IdsBypassPagination` instead, so no
+    # global default is needed for them either.
 }
 
 # simplejwt lifetimes 15min/7days are a deliberate discretionary bump over simplejwt's
