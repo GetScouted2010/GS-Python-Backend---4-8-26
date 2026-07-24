@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **SCORE-04**: Transfer Probability is computed and exposed via API
 - [x] **SCORE-05**: All four scores return a breakdown of contributing components, not just a final number
 - [x] **SCORE-06**: The Django port passes a numerical parity test suite against the original script's real output, within an agreed tolerance, for every position group
-- [ ] **SCORE-07**: Live per-entity scoring runs in O(1) time against precomputed/cached aggregates — no full-dataset pandas operations inside a request cycle
+- [x] **SCORE-07**: Live per-entity scoring runs in O(1) time against precomputed/cached aggregates — no full-dataset pandas operations inside a request cycle
 
 ### Core CRUD & Data Access
 
@@ -107,7 +107,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCORE-04 | Phase 4 | Complete |
 | SCORE-05 | Phase 4 | Complete |
 | SCORE-06 | Phase 5 | Complete (Plans 01-04: shared helpers, bulk parity across 10 real position groups, API-sample parity, edge-case parity — verified against real 41,708-player dev DB, goal-backward verification passed 3/3) |
-| SCORE-07 | Phase 6 | Pending |
+| SCORE-07 | Phase 6 | Complete (Plans 01-04 built the caching/denormalization infrastructure; gap-closure Plans 05-07 wired the 5 live services to the memoized aggregate/denormalized fields for the own-club case, live-verified against the real 41,708-player dev DB: get_rmm 9.15s→0.06s, get_compatibility 44.2s→0.16s, get_financial_fit→0.004s, get_summary→0.20s; arbitrary-other-club ranking path intentionally remains live-computed, deferred to Phase 12 per 06-live-wiring-DECISIONS.md) |
 | CRUD-01 | Phase 7 | Pending |
 | CRUD-02 | Phase 7 | Pending |
 | CRUD-03 | Phase 7 | Pending |
