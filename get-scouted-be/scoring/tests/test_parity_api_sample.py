@@ -250,7 +250,7 @@ def test_rmm_service_parity(player_case):
     pid, _group = player_case
     oracle = load_oracle_df()
 
-    with patch("scoring.services.rmm.reconstruct_population", return_value=_pop()):
+    with patch("scoring.services.rmm.get_scored_population", return_value=_scored(None)):
         result = get_rmm(pid)
 
     assert compare_scalar(oracle.loc[str(pid), "rmm"], result.get("rmm"), atol=RMM_CS_TP_ATOL), (
@@ -387,7 +387,7 @@ def test_endpoint_parity(endpoint_case, auth_client):
     own_club_id = _own_club_id(pid)
 
     with (
-        patch("scoring.services.rmm.reconstruct_population", return_value=_pop()),
+        patch("scoring.services.rmm.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.compatibility.reconstruct_population", return_value=_pop()),
         patch("scoring.services.compatibility.score_population", return_value=_scored(None)),
         patch("scoring.services.financial_fit.reconstruct_population", return_value=_pop()),

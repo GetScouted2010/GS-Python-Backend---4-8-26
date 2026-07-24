@@ -137,7 +137,7 @@ def _patched_services():
     scored_none, cs_tp_none = _real_scored(None)
 
     with (
-        patch("scoring.services.rmm.reconstruct_population", return_value=pop),
+        patch("scoring.services.rmm.get_scored_population", return_value=(scored_none, cs_tp_none)),
         patch("scoring.services.compatibility.reconstruct_population", return_value=pop),
         patch("scoring.services.compatibility.score_population", return_value=(scored_club, cs_tp_club)),
         patch("scoring.services.financial_fit.reconstruct_population", return_value=pop),

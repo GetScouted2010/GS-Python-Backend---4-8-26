@@ -152,6 +152,34 @@ def resolve_club_name(club_id) -> str:
     return get_object_or_404(Club, id=club_id).name
 
 
+def get_own_club_id(player_id):
+    """Return the player's OWN current club_id (a Club UUID) or None.
+
+    A cheap, indexed single-row PK lookup -- the O(1) primitive the live
+    score services use to decide between the own-club fast path (read the
+    memoized get_scored_population() aggregate / denormalized Player field)
+    and the arbitrary-other-club live path (score_population(pop, name)).
+    Returns None if the player has no club (SET_NULL FK) or does not exist;
+    callers treat "no own club" as "not the requested club" and fall through
+    to the live path, which then raises the real Http404.
+    """
+    from players.models import Player
+
+    return Player.objects.filter(id=player_id).values_list("club_id", flat=True).first()
+
+
+def is_own_club(player_id, club_id) -> bool:
+    """True iff `club_id` is the player's OWN current club.
+
+    The own-club case is the common one (Phase 4's default context, the one
+    Phase 5's oracle proved) and the one served from the precomputed
+    aggregate / denormalized fields. String-compare so a UUID object and its
+    URL string form match.
+    """
+    own = get_own_club_id(player_id)
+    return own is not None and str(own) == str(club_id)
+
+
 def _tfm_artifact_path() -> Path:
     from django.conf import settings
 

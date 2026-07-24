@@ -16,9 +16,8 @@ from __future__ import annotations
 import pandas as pd
 from django.http import Http404
 
-from scoring.characterization.impact import add_player_impact
 from scoring.exceptions import null_with_reason
-from scoring.services.population import reconstruct_population
+from scoring.services.population import get_scored_population
 
 
 def rmm_breakdown_from_scored(row: pd.Series) -> dict:
@@ -49,16 +48,25 @@ def rmm_breakdown_from_scored(row: pd.Series) -> dict:
 
 def get_rmm(player_id) -> dict:
     """Return the real computed RMM (Player Impact) + full breakdown for a
-    single player, sourced from `add_player_impact` -- never the thin
-    oracle-only RMM value wrapper, which discards the component breakdown.
+    single player.
+
+    O(1) on a warm process: reads the memoized `get_scored_population()`
+    `scored` frame (which is `add_player_impact(...)` over the whole
+    population, computed at most once per process) and slices the single
+    player's row -- it does NOT run a fresh full-population `add_player_impact`
+    pass per request (the pre-Phase-6 behavior the verifier measured at 9.15s).
+    RMM is position-relative and context-free, so there is no own-club/other-club
+    branch here. The breakdown is still complete: `scored` carries every
+    "Impact Comp - <name>" / "Player Impact *" column `rmm_breakdown_from_scored`
+    reads.
 
     Raises `Http404` if `player_id` is absent from the population.
     """
-    pop = reconstruct_population()
-    scored = add_player_impact(pop.players_df.copy())
+    scored, _cs_tp = get_scored_population()
 
     # players_df's "player_id" holds Player UUID objects; the URL id arrives
     # as a string -- coerce both to str before matching.
+    scored = scored.copy()
     scored["_pid_str"] = scored["player_id"].astype(str)
     match = scored[scored["_pid_str"] == str(player_id)]
 
