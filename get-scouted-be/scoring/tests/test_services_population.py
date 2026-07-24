@@ -19,13 +19,17 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
+from unittest.mock import patch
 
+import pandas as pd
 import pytest
 from django.conf import settings
 from django.http import Http404
 
 from scoring.exceptions import null_with_reason
 from scoring.services.population import (
+    clear_scoring_caches,
+    get_scored_population,
     get_tfm_pipeline,
     reconstruct_population,
     resolve_club_name,
@@ -106,3 +110,55 @@ def test_score_population_rmm_first_wiring(real_data_available):
     # player collapsing to NaN as they would if player_impact were an
     # empty/all-missing series.
     assert cs_tp["performance_score"].notna().any()
+
+
+def test_reconstruct_population_is_memoized_and_clear_scoring_caches_invalidates():
+    """Mock-backed, no DB required: proves reconstruct_population() only
+    re-runs the 4 build_* ORM queries once per process (cache hit on the
+    second call), and clear_scoring_caches() forces a fresh rebuild."""
+    empty_df = pd.DataFrame({"player_id": []})
+
+    # Defensive: another test may have already warmed the real cache.
+    clear_scoring_caches()
+
+    try:
+        with (
+            patch(
+                "scoring.services.population.build_players_df", return_value=empty_df
+            ) as mock_players,
+            patch(
+                "scoring.services.population.build_role_scores_wide",
+                return_value=empty_df,
+            ) as mock_roles,
+            patch(
+                "scoring.services.population.build_team_styles_df",
+                return_value=empty_df,
+            ) as mock_styles,
+            patch(
+                "scoring.services.population.build_transfers_df", return_value=empty_df
+            ) as mock_transfers,
+        ):
+            reconstruct_population()
+            reconstruct_population()
+
+            assert mock_players.call_count == 1
+            assert mock_roles.call_count == 1
+            assert mock_styles.call_count == 1
+            assert mock_transfers.call_count == 1
+
+            clear_scoring_caches()
+            reconstruct_population()
+
+            assert mock_players.call_count == 2
+            assert mock_roles.call_count == 2
+            assert mock_styles.call_count == 2
+            assert mock_transfers.call_count == 2
+    finally:
+        clear_scoring_caches()
+
+
+def test_clear_scoring_caches_resets_cache_info_currsize():
+    clear_scoring_caches()
+
+    assert reconstruct_population.cache_info().currsize == 0
+    assert get_scored_population.cache_info().currsize == 0
