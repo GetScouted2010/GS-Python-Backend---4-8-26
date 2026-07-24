@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 7 context gathered
-last_updated: "2026-07-24T22:52:46.759Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-07-24T23:22:25.767Z"
 progress:
   total_phases: 12
   completed_phases: 6
-  total_plans: 36
-  completed_plans: 36
+  total_plans: 39
+  completed_plans: 37
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 06 — scoring-performance-caching-layer
+**Current focus:** Phase 07 — core-crud-players-clubs
 
 ## Current Position
 
-Phase: 06 (scoring-performance-caching-layer) — GAP CLOSURE COMPLETE, PENDING RE-VERIFICATION
-Plan: 7 of 7 complete (06-01 through 06-07 all done). Phase re-verification against 06-VERIFICATION.md's original 2 gaps is the next step -- not yet run.
+Phase: 07 (core-crud-players-clubs) — EXECUTING
+Plan: 2 of 3 (07-01 complete: django-filter/pagination/test-fixtures foundation; 07-02 Players CRUD and 07-03 Clubs CRUD remain)
 
 ## Performance Metrics
 
@@ -77,6 +77,7 @@ Plan: 7 of 7 complete (06-01 through 06-07 all done). Phase re-verification agai
 | Phase 06 P05 | 25min | 2 tasks | 6 files |
 | Phase 06-scoring-performance-caching-layer P06 | 25min | 2 tasks | 4 files |
 | Phase 06 P07 | 25min | 2 tasks | 3 files |
+| Phase 07-core-crud-players-clubs P01 | 3min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,7 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06-05 gap-closure]: get_own_club_id/is_own_club helpers added to population.py; get_rmm now unconditionally reads the memoized get_scored_population() aggregate (no club context needed); get_compatibility/get_transfer_probability branch is_own_club() -> memoized get_scored_population() vs arbitrary-club live score_population(pop, club_name) fallback (Phase 12's future "rank clubs for a player" preserved). Live-verified against the real 41,708-player dev DB via manage.py shell: get_rmm 9.15s -> 0.05s, get_compatibility(own club) 44.2s -> 0.15s, both byte-identical to a fresh live computation for the same player/club; arbitrary-other-club fallback confirmed still functional (44.6s, correctly returned null envelope). SCORE-07 still NOT marked complete -- 06-06 (financial_fit/summary wiring) and 06-07 (regression test) remain before phase re-verification.
 - [Phase 06-scoring-performance-caching-layer]: [Phase 06-06 gap-closure]: _financial_fit_own_club(player_id, club_name) added to financial_fit.py -- O(1) indexed read of the denormalized money-scale Player.financial_fit_score (first production consumer of the field Plans 06-01/06-03 built), re-deriving value_verdict via the same add_value_labels logic. get_financial_fit/get_summary both branch is_own_club(): own-club reads the denormalized field / memoized get_scored_population(); arbitrary-other-club keeps the live score_population(pop, club_name) fallback (Phase 12 preserved). Live-verified against the real 41,708-player dev DB via manage.py shell: get_financial_fit(own club) 0.0059s cold / 0.0024s warm (exact match to denormalized field); get_summary(own club) 0.2324s cold / 0.198s warm; strict negative-control confirmed neither call ever invokes build_oracle_player_features or the TFM pipeline for own-club. SCORE-07 still NOT marked complete -- 06-07 (regression test) and phase re-verification remain.
 - [Phase 06]: [Phase 06-07 gap-closure]: test_live_scoring_performance.py proves the 5 live services (get_rmm/get_compatibility/get_transfer_probability/get_financial_fit/get_summary) are sub-second warm AND structurally never invoke add_player_impact/score_population/build_oracle_player_features per own-club request. Corrected the plan's own verbatim mock patch targets from the definition modules (scoring.characterization.impact/tfm_model, which are silent no-ops) to the caller's own import bindings (scoring.services.population/financial_fit) -- verified via live object-identity checks and two simulated-regression runs against the real dev DB that only the corrected targets actually intercept the call. Also fixed a latent 06-06 regression in test_services_summary.py's synthetic test (is_own_club now mocked). 06-live-wiring-DECISIONS.md records the own-club/arbitrary-club design + explicit Yes answer to 06-VERIFICATION.md's flagged scope question. SCORE-07 still NOT marked complete -- phase re-verification is the next step.
+- [Phase 07-core-crud-players-clubs]: [Phase 07-01]: django-filter + capped DRF pagination (25/page, 100 max, ?ids= bypass variant) wired additively into REST_FRAMEWORK, preserving Phase 2's deny-by-default auth posture; per-app real_data_available fixtures added to players/tests and clubs/tests since pytest only auto-discovers conftest fixtures within their own dir or descendants
 
 ### Pending Todos
 
@@ -149,6 +151,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T22:52:46.755Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-core-crud-players-clubs/07-CONTEXT.md
+Last session: 2026-07-24T23:22:25.764Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
