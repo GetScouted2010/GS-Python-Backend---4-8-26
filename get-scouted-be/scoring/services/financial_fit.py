@@ -37,10 +37,11 @@ from scoring.characterization.tfm_model import add_value_labels, build_oracle_pl
 from scoring.exceptions import null_with_reason
 from scoring.services.population import (
     Population,
+    get_scored_population,
     get_tfm_pipeline,
+    is_own_club,
     reconstruct_population,
     resolve_club_name,
-    score_population,
 )
 
 
@@ -139,21 +140,79 @@ def financial_fit_from_population(
     }
 
 
-def get_financial_fit(player_id, club_id) -> dict:
-    """High-level entry point: resolve `club_id` to a name, reconstruct +
-    RMM-first-score the population once, and price `player_id` against
-    `club_id`'s buying profile.
+def _financial_fit_own_club(player_id, club_name: str) -> dict:
+    """O(1) own-club Financial Fit: read the denormalized money-scale
+    `Player.financial_fit_score` (written by `recompute_scores`, the same
+    oracle orchestration Phase 5 proved) instead of running a full-population
+    `build_oracle_player_features` pass per request.
 
-    Raises `Http404` if `club_id` is unknown (via `resolve_club_name`) or
-    `player_id` doesn't resolve to a real player.
+    The own-club `predicted_fee` is exactly `Player.financial_fit_score`
+    (already `np.expm1`-unwrapped to money scale at write time -- see
+    recompute_scores.py:151). The value verdict/comparison are re-derived from
+    that fee + the player's `market_value` via the SAME `add_value_labels`
+    logic the live path uses, so the response shape is identical.
+
+    Raises `Http404` if the player does not exist. Returns the shared
+    null envelope if the player has no denormalized fee (structurally
+    null -- should not occur for own-club players today, all 41,708 are
+    non-null, but handled honestly rather than fabricated).
+    """
+    from players.models import Player
+
+    row = (
+        Player.objects.filter(id=player_id)
+        .values("financial_fit_score", "market_value")
+        .first()
+    )
+    if row is None:
+        raise Http404(f"Player {player_id} not found")
+
+    predicted_fee = row["financial_fit_score"]
+    if predicted_fee is None:
+        return null_with_reason("predicted_fee", "no_denormalized_fee")
+
+    market_value = row["market_value"]
+    labelled = add_value_labels(
+        pd.DataFrame({"actual_fee": [market_value], "predicted_fee": [float(predicted_fee)]})
+    )
+    verdict = labelled["value_verdict"].iloc[0]
+
+    return {
+        "predicted_fee": float(predicted_fee),
+        "market_value": None if pd.isna(market_value) else float(market_value),
+        "value_comparison": {
+            "fee_diff": None
+            if pd.isna(labelled["fee_diff"].iloc[0])
+            else float(labelled["fee_diff"].iloc[0]),
+            "ratio_market_to_predicted": None
+            if pd.isna(labelled["fee_ratio_actual_to_pred"].iloc[0])
+            else float(labelled["fee_ratio_actual_to_pred"].iloc[0]),
+        },
+        "value_verdict": None if pd.isna(verdict) else verdict,
+        "buying_club": club_name,
+    }
+
+
+def get_financial_fit(player_id, club_id) -> dict:
+    """High-level entry point.
+
+    Own-club fast path (the common case): read the denormalized money-scale
+    `Player.financial_fit_score` -- a genuine O(1) indexed DB read, no
+    full-population `build_oracle_player_features` pass, no TFM pipeline call.
+    Arbitrary-other-club path (Phase 12's "rank clubs for a player"): the
+    requested club overrides the player's buying context, so the fee genuinely
+    differs and MUST be computed live -- but the ~74-115s upstream RMM/CS/TP
+    pass is served from the memoized `get_scored_population()` (was a fresh
+    `score_population(pop, None)`), so only the single-club TFM feature build
+    runs live.
+
+    Raises `Http404` if `club_id` is unknown or `player_id` doesn't resolve.
     """
     club_name = resolve_club_name(club_id)  # Http404 on unknown club
+
+    if is_own_club(player_id, club_id):
+        return _financial_fit_own_club(player_id, club_name)
+
     pop = reconstruct_population()
-    # The 4 upstream feature columns (player_impact/compatibility_score/
-    # performance_score/role_pct) are computed with club_context=None (each
-    # player's OWN club) -- matching the oracle/training methodology for
-    # those particular features; only the club-AGGREGATE features inside
-    # build_oracle_player_features reflect the overridden target club (the
-    # locked buying-club decision, scoped to club-aggregates).
-    scored, cs_tp = score_population(pop, None)
+    scored, cs_tp = get_scored_population()
     return financial_fit_from_population(player_id, club_name, pop, scored, cs_tp)

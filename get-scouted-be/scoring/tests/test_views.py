@@ -142,7 +142,7 @@ def _patched_services():
         patch("scoring.services.compatibility.score_population", return_value=(scored_club, cs_tp_club)),
         patch("scoring.services.compatibility.get_scored_population", return_value=(scored_none, cs_tp_none)),
         patch("scoring.services.financial_fit.reconstruct_population", return_value=pop),
-        patch("scoring.services.financial_fit.score_population", return_value=(scored_none, cs_tp_none)),
+        patch("scoring.services.financial_fit.get_scored_population", return_value=(scored_none, cs_tp_none)),
         patch("scoring.services.transfer_probability.reconstruct_population", return_value=pop),
         patch("scoring.services.transfer_probability.score_population", return_value=(scored_club, cs_tp_club)),
         patch("scoring.services.transfer_probability.get_scored_population", return_value=(scored_none, cs_tp_none)),

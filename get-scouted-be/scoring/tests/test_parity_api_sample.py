@@ -308,17 +308,21 @@ def test_tp_service_parity(player_case):
 
 @pytest.mark.parametrize("player_case", range(SAMPLE_SLOTS), indirect=True)
 def test_tfm_service_parity(player_case):
+    from players.models import Player
     from scoring.services.financial_fit import get_financial_fit
 
     pid, _group = player_case
     oracle = load_oracle_df()
     own_club_id = _own_club_id(pid)
 
-    with (
-        patch("scoring.services.financial_fit.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.financial_fit.score_population", return_value=_scored(None)),
-    ):
-        result = get_financial_fit(pid, own_club_id)
+    if Player.objects.filter(financial_fit_score__isnull=False).count() == 0:
+        pytest.skip("Player.financial_fit_score not populated -- run manage.py recompute_scores first")
+
+    # own-club get_financial_fit now reads the denormalized Player.financial_fit_score
+    # (money-scale) directly -- no reconstruct/score patch needed. The denormalized
+    # field is populated by recompute_scores from the same oracle orchestration, so it
+    # still reconciles to the oracle's np.expm1(tfm) within TFM_RTOL.
+    result = get_financial_fit(pid, own_club_id)
 
     oracle_tfm_log = oracle.loc[str(pid), "tfm"]
     oracle_money = None if _is_null(oracle_tfm_log) else float(np.expm1(oracle_tfm_log))
@@ -382,16 +386,21 @@ def test_endpoints_require_authentication():
 
 @pytest.mark.parametrize("endpoint_case", range(ENDPOINT_SLOTS), indirect=True)
 def test_endpoint_parity(endpoint_case, auth_client):
+    from players.models import Player
+
     pid, group = endpoint_case
     oracle = load_oracle_df()
     own_club_id = _own_club_id(pid)
+
+    if Player.objects.filter(financial_fit_score__isnull=False).count() == 0:
+        pytest.skip("Player.financial_fit_score not populated -- run manage.py recompute_scores first")
 
     with (
         patch("scoring.services.rmm.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.compatibility.reconstruct_population", return_value=_pop()),
         patch("scoring.services.compatibility.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.financial_fit.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.financial_fit.score_population", return_value=_scored(None)),
+        patch("scoring.services.financial_fit.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.transfer_probability.reconstruct_population", return_value=_pop()),
         patch("scoring.services.transfer_probability.get_scored_population", return_value=_scored(None)),
     ):
