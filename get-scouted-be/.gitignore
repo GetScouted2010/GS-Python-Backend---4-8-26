@@ -10,3 +10,8 @@ venv/
 # generated binaries/metrics themselves.
 scoring/ml_artifacts/*.joblib
 scoring/ml_artifacts/*.metrics.json
+
+# Per-group parity mismatch-detail reports (write_mismatch_report in
+# scoring/tests/_parity_helpers.py) -- regenerated on every failing
+# parity test run, never committed.
+scoring/tests/_parity_reports/

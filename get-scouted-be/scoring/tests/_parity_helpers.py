@@ -36,6 +36,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -103,3 +104,83 @@ def load_oracle_df() -> pd.DataFrame:
     df["position_group"] = df["main_position"].apply(normalise_position)
     df["player_id"] = df["player_id"].astype(str)
     return df.set_index("player_id", drop=False)
+
+
+# =========================================================================
+# Tolerance comparator (both-null-aware) + mismatch-report writer
+# =========================================================================
+
+RMM_CS_TP_ATOL = 0.01
+TFM_RTOL = 0.001
+
+
+def compare_scalar(oracle_val, port_val, *, atol=None, rtol=None) -> bool:
+    """Both-null-aware scalar tolerance comparison (05-CONTEXT.md locked
+    policy):
+
+    - both null -> pass (both sides correctly abstained)
+    - exactly one null -> HARD failure (a fabricated-or-dropped value)
+    - otherwise -> compare within atol (absolute) or rtol (relative)
+    """
+    o_null = oracle_val is None or (isinstance(oracle_val, float) and np.isnan(oracle_val)) or pd.isna(oracle_val)
+    p_null = port_val is None or (isinstance(port_val, float) and np.isnan(port_val)) or pd.isna(port_val)
+    if o_null and p_null:
+        return True  # both abstained -> pass
+    if o_null != p_null:
+        return False  # one null, one not -> HARD failure (fabricated-or-dropped value)
+    o, p = float(oracle_val), float(port_val)
+    if atol is not None:
+        return abs(o - p) <= atol
+    if rtol is not None:
+        return abs(o - p) <= rtol * abs(o)
+    raise ValueError("compare_scalar requires exactly one of atol/rtol")
+
+
+def compare_series(oracle: pd.Series, port: pd.Series, *, atol=None, rtol=None) -> pd.DataFrame:
+    """Align `oracle` and `port` on their shared (string) index and compare
+    row-by-row via `compare_scalar`. Callers must have already passed the
+    port side through `to_str_index()` -- id-normalization responsibility
+    stays in exactly one place, this function does not re-cast.
+
+    Returns a DataFrame of ONLY the mismatched rows with columns
+    ["player_id", "oracle", "port", "diff"] (diff = port - oracle where
+    both non-null, else the string "null_mismatch"). An empty DataFrame
+    means every row matched. Never raises -- the caller asserts on
+    `len(result) == 0`.
+    """
+    shared_index = oracle.index.intersection(port.index)
+    rows = []
+    for pid in shared_index:
+        o_val = oracle.loc[pid]
+        p_val = port.loc[pid]
+        if not compare_scalar(o_val, p_val, atol=atol, rtol=rtol):
+            o_null = o_val is None or (isinstance(o_val, float) and np.isnan(o_val)) or pd.isna(o_val)
+            p_null = p_val is None or (isinstance(p_val, float) and np.isnan(p_val)) or pd.isna(p_val)
+            diff = "null_mismatch" if (o_null or p_null) else (float(p_val) - float(o_val))
+            rows.append({"player_id": pid, "oracle": o_val, "port": p_val, "diff": diff})
+    return pd.DataFrame(rows, columns=["player_id", "oracle", "port", "diff"])
+
+
+def compare_tfm_series(oracle_log: pd.Series, port_money: pd.Series) -> pd.DataFrame:
+    """TFM-specific convenience: the oracle `tfm` column is LOG-scale
+    (13-17), while the per-request service's `predicted_fee` is already
+    money-scale. This is the single place that reconciles the two scales
+    (via `np.expm1` on the oracle side) -- no test file re-derives the
+    conversion. Compares with rtol=TFM_RTOL (0.1%, money scale).
+    """
+    oracle_money = np.expm1(oracle_log)
+    return compare_series(oracle_money, port_money, rtol=TFM_RTOL)
+
+
+def write_mismatch_report(name: str, mismatches: pd.DataFrame) -> Path:
+    """Write a per-group mismatch-detail report so a failing parity
+    assertion gives a developer a debuggable CSV (player_id, score,
+    oracle, port, diff) instead of a bare assert. Called by the caller's
+    failing assertion; if `mismatches` is empty, still returns the path
+    but does not write meaningful rows.
+    """
+    reports_dir = Path(__file__).resolve().parent / "_parity_reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    path = reports_dir / f"{name}.csv"
+    mismatches.to_csv(path, index=False)
+    return path
