@@ -15,8 +15,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Foundation** - Real player, club, stats, and transfer data migrated into Postgres with a reviewed import report (completed 2026-07-21)
 - [x] **Phase 2: Auth & Access Control** - One Django system of record for identity, gating every write endpoint by role (completed 2026-07-21)
 - [x] **Phase 3: Scoring Engine Curation & Correctness Oracle** - The authoritative logic in the untested scoring script is characterized and snapshotted before any porting begins (completed 2026-07-22)
-- [ ] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns
-- [ ] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group
+- [x] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns (completed 2026-07-23)
+- [x] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group (completed 2026-07-24)
 - [ ] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
 - [ ] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export
@@ -38,15 +38,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Transfer history records (fee, date, source/destination club, market value at transfer time) are stored and queryable.
   5. Running the migration produces a written import report listing every field-mapping mismatch or dropped/defaulted value found, instead of migrating silently.
 **Plans**: 9 plans (6 waves)
-- [ ] 01-01-PLAN.md — Django project scaffolding + FIELD_MAPPING.md deliverable (wave 1)
-- [ ] 01-02-PLAN.md — pytest-django test infra + seeded fixture CSVs (wave 2)
-- [ ] 01-03-PLAN.md — Club/Player/RoleScore/Compatibility/Transfer models + migrations (wave 2)
+- [x] 01-01-PLAN.md — Django project scaffolding + FIELD_MAPPING.md deliverable (wave 1)
+- [x] 01-02-PLAN.md — pytest-django test infra + seeded fixture CSVs (wave 2)
+- [x] 01-03-PLAN.md — Club/Player/RoleScore/Compatibility/Transfer models + migrations (wave 2)
 - [x] 01-04-PLAN.md — Shared import utils + ImportReport + Club derivation import (wave 3)
-- [ ] 01-05-PLAN.md — Player import (idempotent, club FK, extended_stats, outlier flagging) (wave 4)
-- [ ] 01-06-PLAN.md — Position role-score import (wide->long normalization) (wave 5)
+- [x] 01-05-PLAN.md — Player import (idempotent, club FK, extended_stats, outlier flagging) (wave 4)
+- [x] 01-06-PLAN.md — Position role-score import (wide->long normalization) (wave 5)
 - [x] 01-07-PLAN.md — Compatibility-score import (~8.1M rows normalized) (wave 5)
-- [ ] 01-08-PLAN.md — Transfer import (UniqueID-is-club trap guarded) (wave 5)
-- [ ] 01-09-PLAN.md — import_all orchestrator + reconciliation + combined report (wave 6)
+- [x] 01-08-PLAN.md — Transfer import (UniqueID-is-club trap guarded) (wave 5)
+- [x] 01-09-PLAN.md — import_all orchestrator + reconciliation + combined report (wave 6)
 
 ### Phase 2: Auth & Access Control
 **Goal**: A single Django system of record for identity and permissions replaces the 3 conflicting legacy auth models, gating every write endpoint by role.
