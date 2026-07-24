@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 5 context gathered
-last_updated: "2026-07-24T11:19:38.241Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-07-24T12:15:38.908Z"
 progress:
   total_phases: 12
   completed_phases: 4
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 29
+  completed_plans: 26
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 04 — scoring-engine-port
+**Current focus:** Phase 05 — scoring-parity-testing
 
 ## Current Position
 
-Phase: 04 (scoring-engine-port) — All plans executed, pending goal-backward verification
-Plan: 6 of 6 — Waves 1-4 complete (04-01 through 04-06); DRF API surface for all 5 scoring endpoints live under /api/scoring/
+Phase: 05 (scoring-parity-testing) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Plan: 6 of 6 — Waves 1-4 complete (04-01 through 04-06); DRF API surface for a
 | Phase 04-scoring-engine-port P04 | 30min | 2 tasks | 2 files |
 | Phase 04-scoring-engine-port P02 | 24min | 2 tasks | 2 files |
 | Phase 04-scoring-engine-port P06 | 16min | 2 tasks | 4 files |
+| Phase 05-scoring-parity-testing P01 | 15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,7 @@ Recent decisions affecting current work:
 - [Phase 04-scoring-engine-port]: [Phase 04-03]: get_compatibility merges pop.players_df with pop.role_scores_wide (on='player_id') BEFORE slicing player_row, replicating compute_cs_tp_for_pairs' own internal merge -- fixes a plan-checker-caught bug where role_fit_score/bonus would silently disagree with the real compatibility_score (a bare players_df row has no role-score columns, so calculate_subjective_role_fit_for_player_to_team/get_player_own_best_role would always degenerate to None/70.0); a new regression test asserts the breakdown mathematically reconstructs the score. get_transfer_probability re-exposes compute_cs_tp_for_pairs' 4 weighted terms directly (no reimplementation), contract_fit scaled *100 for display parity.
 - [Phase 04-scoring-engine-port]: [Phase 04-05]: get_summary reconstructs the population exactly once (verified by a mocked call_count==1 test) and reuses Plans 02-04's breakdown helpers, replicating Plan 03's role_scores_wide merge fix for its compatibility sub-object; financial_fit's 4 upstream TFM features are computed in the summary's shared club context rather than each player's own club (an accepted, documented efficiency tradeoff vs the standalone /financial-fit/ endpoint). serializers.py defines 5 thin DictField/JSONField-based serializers (RMM/Compatibility/FinancialFit/TransferProbability/Summary) with a nullable score + optional reason on every one. Verified end-to-end against one real player/club pair: CS breakdown reconstructed its own score exactly ((87.23+70.0)/2=78.62); TP's 4 contributions summed exactly to the reported transfer_probability (87.5).
 - [Phase 04-scoring-engine-port]: [Phase 04-06]: All 5 scoring endpoints wired thin under /api/scoring/ -- views call Response(service_function(...)) directly (no serializers.py class instantiated, per the plan's literal task-2 code); service calls never wrapped in try/except so Http404 (unknown player/club) and reconstruction ValueError both propagate naturally (404/500), never swallowed into a fabricated null; verified end-to-end against the real 41,708-player dev DB via manage.py shell (real RMM score, 401 unauthenticated, 404 unknown player, 400 missing club_id on /summary/)
+- [Phase 05-scoring-parity-testing]: [05-01]: _parity_helpers.py centralizes oracle discovery/load, the UUID->str port-id-cast convention, and a both-null-aware tolerance comparator (both-null=pass, one-null=hard fail, abs 0.01 RMM/CS/TP, rel 0.1% TFM); compare_tfm_series reconciles the oracle's verified log-scale tfm column to money scale via np.expm1 before applying the relative tolerance -- single source of truth Plans 02-04 import from rather than each re-implementing
 
 ### Pending Todos
 
@@ -125,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T11:19:38.234Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-scoring-parity-testing/05-CONTEXT.md
+Last session: 2026-07-24T12:15:38.905Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
