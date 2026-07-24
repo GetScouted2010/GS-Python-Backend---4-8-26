@@ -106,7 +106,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. An automated parity test suite runs the Django port against the Phase 3 oracle snapshot for every position group and reports pass/fail within an agreed numerical tolerance.
   2. The full parity suite passes for all position groups before the port is considered done.
   3. Edge cases (missing stats, boundary ages, zero-appearance players) are covered by the parity suite and pass.
-**Plans**: TBD
+**Plans**: 4 plans (2 waves)
+- [ ] 05-01-PLAN.md — Shared parity helpers: version-agnostic oracle discovery, 10-group bucketing, both-null-aware tolerance comparator, mismatch-report writer (wave 1)
+- [ ] 05-02-PLAN.md — Tier-1 full-population bulk parity (RMM/CS/TP/TFM) parametrized over the 10 real position groups (wave 2)
+- [ ] 05-03-PLAN.md — Tier-2 API-sample parity: seeded stratified ~30-player sample through the real per-request services + DRF endpoints (wave 2)
+- [ ] 05-04-PLAN.md — Edge-case parity: zero-minutes, missing stats, boundary ages, invalid position (dynamically mined) (wave 2)
 
 ### Phase 6: Scoring Performance & Caching Layer
 **Goal**: Live scoring is fast and safe under real concurrency — no full-dataset pandas operation ever runs inside a request.
