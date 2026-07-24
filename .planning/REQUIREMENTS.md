@@ -33,11 +33,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Core CRUD & Data Access
 
-- [ ] **CRUD-01**: User can list/filter/sort/paginate Players by position, age, market value, league, score thresholds
-- [ ] **CRUD-02**: User can list/filter Clubs by league, country, playing style
-- [ ] **CRUD-03**: User can retrieve a single Player's full profile, season-by-season stats, and score breakdowns
-- [ ] **CRUD-04**: User can retrieve a single Club's full profile, squad overview, and transfer behaviour aggregates
-- [ ] **CRUD-05**: User can fetch multiple players/clubs by ID in one request for side-by-side comparison
+- [x] **CRUD-01**: User can list/filter/sort/paginate Players by position, age, market value, league, score thresholds
+- [x] **CRUD-02**: User can list/filter Clubs by league, country, playing style
+- [x] **CRUD-03**: User can retrieve a single Player's full profile, season-by-season stats, and score breakdowns
+- [x] **CRUD-04**: User can retrieve a single Club's full profile, squad overview, and transfer behaviour aggregates
+- [x] **CRUD-05**: User can fetch multiple players/clubs by ID in one request for side-by-side comparison
 - [ ] **CRUD-06**: User can save/remove players to/from a personal Watchlist
 - [ ] **CRUD-07**: User can create, name, and manage Shortlists tied to a club context
 - [ ] **CRUD-08**: User can create and manage Squad Plans (formation, current squad, proposed changes)
@@ -108,11 +108,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCORE-05 | Phase 4 | Complete |
 | SCORE-06 | Phase 5 | Complete (Plans 01-04: shared helpers, bulk parity across 10 real position groups, API-sample parity, edge-case parity — verified against real 41,708-player dev DB, goal-backward verification passed 3/3) |
 | SCORE-07 | Phase 6 | Complete (Plans 01-04 built the caching/denormalization infrastructure; gap-closure Plans 05-07 wired the 5 live services to the memoized aggregate/denormalized fields for the own-club case, live-verified against the real 41,708-player dev DB: get_rmm 9.15s→0.06s, get_compatibility 44.2s→0.16s, get_financial_fit→0.004s, get_summary→0.20s; arbitrary-other-club ranking path intentionally remains live-computed, deferred to Phase 12 per 06-live-wiring-DECISIONS.md) |
-| CRUD-01 | Phase 7 | Pending |
-| CRUD-02 | Phase 7 | Pending |
-| CRUD-03 | Phase 7 | Pending |
-| CRUD-04 | Phase 7 | Pending |
-| CRUD-05 | Phase 7 | Pending |
+| CRUD-01 | Phase 7 | Complete (position filter on `Player.position`, not `main_position`; age/market_value/score-threshold range filters; sort; paginated) |
+| CRUD-02 | Phase 7 | Complete (league/country/playing-style filters; `country` is NULL for all real clubs, a Phase 1 data limitation, not a filter defect) |
+| CRUD-03 | Phase 7 | Complete (full profile + real single-season snapshot + score breakdowns via `get_summary()`; explicit club=None fallback) |
+| CRUD-04 | Phase 7 | Complete (full profile + squad via `PlayerListSerializer` + transfer aggregates from `market_value_at_transfer`, never `fee`) |
+| CRUD-05 | Phase 7 | Complete (`?ids=` reuses list endpoints for both Players and Clubs, unpaginated, capped at 100) |
 | CRUD-06 | Phase 8 | Pending |
 | CRUD-07 | Phase 8 | Pending |
 | CRUD-08 | Phase 8 | Pending |
