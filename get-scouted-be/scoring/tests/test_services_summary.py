@@ -100,6 +100,13 @@ def test_get_summary_composes_four_helpers_from_single_reconstruction_synthetic(
         patch("scoring.services.summary.reconstruct_population", return_value=pop) as mock_reconstruct,
         patch("scoring.services.summary.score_population", return_value=(scored, cs_tp)) as mock_score,
         patch("scoring.services.summary.resolve_club_name", return_value="OwnClubP1"),
+        # Plan 06-06 added an is_own_club(player_id, club_id) branch to get_summary,
+        # which performs a real ORM lookup -- this test's player_id/club_id are
+        # synthetic non-UUID strings ("p1"/"club-uuid"), so is_own_club must be
+        # mocked (never hitting the DB). False routes through the arbitrary-club
+        # path this test's other mocks (score_population/financial_fit_from_population)
+        # already assume, matching the pre-06-06 test design exactly.
+        patch("scoring.services.summary.is_own_club", return_value=False),
         patch("scoring.services.summary.cs_breakdown_from_row", side_effect=_fake_cs_breakdown),
         patch("scoring.services.summary.rmm_breakdown_from_scored", return_value={"rmm": 55.0}),
         patch(
