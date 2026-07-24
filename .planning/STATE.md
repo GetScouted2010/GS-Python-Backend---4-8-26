@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-07-24T19:45:29.101Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-07-24T21:08:46.000Z"
 progress:
   total_phases: 12
   completed_phases: 5
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # Project State
@@ -24,15 +24,15 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 06 (scoring-performance-caching-layer) — EXECUTING
-Plan: 2 of 4 complete (06-01, 06-02 done)
+Plan: 3 of 4 complete (06-01, 06-02, 06-03 done)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
-- Average duration: 21 min
-- Total execution time: 1.05 hours
+- Total plans completed: 4
+- Average duration: 20 min
+- Total execution time: 1.33 hours
 
 **By Phase:**
 
@@ -72,6 +72,7 @@ Plan: 2 of 4 complete (06-01, 06-02 done)
 | Phase 05 P03 | 55min | 2 tasks | 1 files |
 | Phase 06 P02 | 15min | 2 tasks | 2 files |
 | Phase 06 P01 | 7min | 3 tasks | 4 files |
+| Phase 06 P03 | 17min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,7 @@ Recent decisions affecting current work:
 - [Phase 05]: [Phase 05-scoring-parity-testing]: [05-03]: test_parity_api_sample.py's per-player sample MUST be built inside a django_db_setup-gated module-scope fixture, never at collection time -- pytest-django repoints the ORM connection from the dev DB to a separate (usually empty) test DB the moment the first django_db_setup-dependent fixture runs, so a collection-time-built sample silently diffs against ids the real test-time connection can no longer see; per-player fan-out uses pytest.mark.parametrize(indirect=True) over a fixed static slot range resolved lazily against the real sample so a single mismatching player is still a single failing test case. Live-verified against the real dev DB via manage.py shell (pytest's own test DB is empty here, matching the rest of the suite): 6 service-level players (GK/LB/RB/CB x3) and 5 endpoint-level players (GK + CB x4, plus 401 unauthenticated) all passed RMM/CS/TP/TFM/summary/endpoint parity.
 - [Phase 06]: [Phase 06-02]: get_scored_population() wraps score_population(reconstruct_population(), None) as a new function rather than adding lru_cache directly to score_population, since score_population's pop argument is an unhashable Population(DataFrames) tuple; clear_scoring_caches() intentionally excludes get_tfm_pipeline since the TFM artifact's lifecycle is tied to train_tfm_model, not a data refresh
 - [Phase 06-01]: Denormalized 4 own-club scores as nullable indexed Player FloatFields; transfer_probability_score left unindexed; no RunPython backfill (Plan 03 populates); build_players_df() hardened with a _DENORMALIZED_SCORE_FIELDS exclusion set to prevent the compatibility_score column-name collision from corrupting the oracle/TFM/financial_fit merge sites
+- [Phase 06-03]: recompute_scores management command reuses generate_scoring_oracle.py's raw build_*/compute_* functions directly (not Plan 02's Population/score_population wrapper), only reusing get_tfm_pipeline(); financial_fit_score written money-scale via np.expm1; atomic bulk_update with NaN coerced to None; caches cleared before and after; live-verified against real 41,708-player dev DB: impact_score 41707 non-null, compatibility_score/transfer_probability_score 15051 non-null (26657 null by design, GK/LB/RB), financial_fit_score 41708 non-null ranging ~€496K-€26.4M
 
 ### Pending Todos
 
@@ -139,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T19:45:29.098Z
-Stopped at: Completed 06-01-PLAN.md and 06-02-PLAN.md
+Last session: 2026-07-24T21:08:46.000Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None

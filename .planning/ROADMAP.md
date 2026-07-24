@@ -203,7 +203,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
 | 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
-| 6. Scoring Performance & Caching Layer | 2/4 | In Progress|  |
+| 6. Scoring Performance & Caching Layer | 3/4 | In Progress|  |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
 | 8. User Workspace CRUD | 0/TBD | Not started | - |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
