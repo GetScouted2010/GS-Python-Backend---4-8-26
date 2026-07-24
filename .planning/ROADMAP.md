@@ -121,11 +121,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Precomputed aggregates (std_lookup, team-style vectors, team-position references) are rebuilt on data change, not per request.
   3. Final scores are denormalized onto model fields so list/browse/sort endpoints never invoke scoring math directly.
   4. A timing check confirms per-entity score retrieval stays flat as dataset size grows, rather than scaling linearly with player count.
-**Plans**: 4/4 plans complete
+**Plans**: 7 plans (3 original waves + gap closure 06-05..06-07 wiring the live API to the caching layer)
 - [x] 06-01-PLAN.md — Denormalize 4 final scores onto Player (nullable indexed FloatFields) + migration (wave 1)
 - [x] 06-02-PLAN.md — In-process aggregate caching: memoize reconstruct_population + get_scored_population + clear_scoring_caches (wave 1)
 - [x] 06-03-PLAN.md — recompute_scores management command: atomic bulk_update of the 4 denormalized fields, money-scale TFM, cache clear (wave 2)
 - [x] 06-04-PLAN.md — Timing verification test: O(1) denormalized read + warm cache vs cold recompute, order-of-magnitude assertion (wave 3)
+- [ ] 06-05-PLAN.md — GAP CLOSURE: wire RMM/Compatibility/Transfer-Probability live services to the memoized get_scored_population() own-club fast path (wave 1)
+- [ ] 06-06-PLAN.md — GAP CLOSURE: Financial Fit O(1) denormalized-field read + Summary own-club fast path; arbitrary-club live fallback preserved (wave 2)
+- [ ] 06-07-PLAN.md — GAP CLOSURE: warm-process sub-second regression test for the 5 live services + live-wiring design decisions doc (wave 3)
 
 ### Phase 7: Core CRUD - Players & Clubs
 **Goal**: Users can browse, filter, and inspect real player and club data, including their scores, through a full API surface.
