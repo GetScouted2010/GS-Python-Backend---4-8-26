@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-07-24T14:16:47.775Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-07-24T14:35:06.980Z"
 progress:
   total_phases: 12
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 29
-  completed_plans: 28
+  completed_plans: 29
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 05 (scoring-parity-testing) — EXECUTING
-Plan: 02 and 04 of 4 complete (wave 2, parallel); Plan 03 (wave 2, parallel) still pending execution
+Phase: 05 (scoring-parity-testing) — all 4 plans executed (01-04); pending goal-backward verification before being marked complete
+Plan: 4 of 4 complete
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Plan: 02 and 04 of 4 complete (wave 2, parallel); Plan 03 (wave 2, parallel) sti
 | Phase 05-scoring-parity-testing P01 | 15min | 2 tasks | 3 files |
 | Phase 05 P04 | 45min | 2 tasks | 1 files |
 | Phase 05 P02 | 25min | 2 tasks | 1 files |
+| Phase 05 P03 | 55min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,7 @@ Recent decisions affecting current work:
 - [Phase 05]: [Phase 05-scoring-parity-testing]: [05-04]: 7 dynamically-mined edge-case parity tests (zero-minutes, missing market_value, missing club, youngest/oldest age boundary, age==0 placeholder, invalid main_position=='0') all live-verified exact-match against the real 41,708-player dev DB via manage.py shell (pytest's own test DB is empty so the file skips cleanly there, matching the established real-data-test pattern); missing-club CS parity reads directly off score_population(pop, None) rather than a per-request service since a club-less player has no valid own-club id to drive one
 - [Phase 05-scoring-parity-testing]: [05-02]: test_parity_bulk.py runs score_population(pop, None) exactly once (module-scope django_db_blocker.unblock() fixture) and diffs against the oracle CSV parametrized over the 10 real position groups for RMM/CS/TP (30 tests) plus one whole-population TFM check (raw log-scale pipeline.predict, replicating generate_scoring_oracle.py Steps 3-4 exactly); GK/LB/RB CS/TP explicitly asserted both-sides-null, not just incidentally passing; verified against the real dev DB via the project's own .venv (ambient pyenv Python lacks scikit-learn): 31/31 passed
 - [Phase 05]: 05-02: test_parity_bulk.py runs score_population(pop, None) once (module-scope django_db_blocker.unblock() fixture) and diffs against the oracle CSV parametrized over the 10 real position groups for RMM/CS/TP (30 tests) plus one whole-population raw-log-scale TFM check replicating generate_scoring_oracle.py Steps 3-4; GK/LB/RB CS/TP explicitly asserted both-sides-null; verified against the real dev DB via the project's .venv (ambient interpreter lacks scikit-learn): 31/31 passed
+- [Phase 05]: [Phase 05-scoring-parity-testing]: [05-03]: test_parity_api_sample.py's per-player sample MUST be built inside a django_db_setup-gated module-scope fixture, never at collection time -- pytest-django repoints the ORM connection from the dev DB to a separate (usually empty) test DB the moment the first django_db_setup-dependent fixture runs, so a collection-time-built sample silently diffs against ids the real test-time connection can no longer see; per-player fan-out uses pytest.mark.parametrize(indirect=True) over a fixed static slot range resolved lazily against the real sample so a single mismatching player is still a single failing test case. Live-verified against the real dev DB via manage.py shell (pytest's own test DB is empty here, matching the rest of the suite): 6 service-level players (GK/LB/RB/CB x3) and 5 endpoint-level players (GK + CB x4, plus 401 unauthenticated) all passed RMM/CS/TP/TFM/summary/endpoint parity.
 
 ### Pending Todos
 
@@ -132,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T14:16:47.771Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-07-24T14:35:06.976Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
