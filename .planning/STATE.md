@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 6 context gathered
-last_updated: "2026-07-24T18:10:05.539Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-07-24T19:45:29.101Z"
 progress:
   total_phases: 12
   completed_phases: 5
-  total_plans: 29
-  completed_plans: 29
+  total_plans: 33
+  completed_plans: 31
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 05 — scoring-parity-testing
+**Current focus:** Phase 06 — scoring-performance-caching-layer
 
 ## Current Position
 
-Phase: 05 (scoring-parity-testing) — all 4 plans executed (01-04); pending goal-backward verification before being marked complete
-Plan: 4 of 4 complete
+Phase: 06 (scoring-performance-caching-layer) — EXECUTING
+Plan: 2 of 4 complete (06-01, 06-02 done)
 
 ## Performance Metrics
 
@@ -70,6 +70,8 @@ Plan: 4 of 4 complete
 | Phase 05 P04 | 45min | 2 tasks | 1 files |
 | Phase 05 P02 | 25min | 2 tasks | 1 files |
 | Phase 05 P03 | 55min | 2 tasks | 1 files |
+| Phase 06 P02 | 15min | 2 tasks | 2 files |
+| Phase 06 P01 | 7min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -121,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 05-scoring-parity-testing]: [05-02]: test_parity_bulk.py runs score_population(pop, None) exactly once (module-scope django_db_blocker.unblock() fixture) and diffs against the oracle CSV parametrized over the 10 real position groups for RMM/CS/TP (30 tests) plus one whole-population TFM check (raw log-scale pipeline.predict, replicating generate_scoring_oracle.py Steps 3-4 exactly); GK/LB/RB CS/TP explicitly asserted both-sides-null, not just incidentally passing; verified against the real dev DB via the project's own .venv (ambient pyenv Python lacks scikit-learn): 31/31 passed
 - [Phase 05]: 05-02: test_parity_bulk.py runs score_population(pop, None) once (module-scope django_db_blocker.unblock() fixture) and diffs against the oracle CSV parametrized over the 10 real position groups for RMM/CS/TP (30 tests) plus one whole-population raw-log-scale TFM check replicating generate_scoring_oracle.py Steps 3-4; GK/LB/RB CS/TP explicitly asserted both-sides-null; verified against the real dev DB via the project's .venv (ambient interpreter lacks scikit-learn): 31/31 passed
 - [Phase 05]: [Phase 05-scoring-parity-testing]: [05-03]: test_parity_api_sample.py's per-player sample MUST be built inside a django_db_setup-gated module-scope fixture, never at collection time -- pytest-django repoints the ORM connection from the dev DB to a separate (usually empty) test DB the moment the first django_db_setup-dependent fixture runs, so a collection-time-built sample silently diffs against ids the real test-time connection can no longer see; per-player fan-out uses pytest.mark.parametrize(indirect=True) over a fixed static slot range resolved lazily against the real sample so a single mismatching player is still a single failing test case. Live-verified against the real dev DB via manage.py shell (pytest's own test DB is empty here, matching the rest of the suite): 6 service-level players (GK/LB/RB/CB x3) and 5 endpoint-level players (GK + CB x4, plus 401 unauthenticated) all passed RMM/CS/TP/TFM/summary/endpoint parity.
+- [Phase 06]: [Phase 06-02]: get_scored_population() wraps score_population(reconstruct_population(), None) as a new function rather than adding lru_cache directly to score_population, since score_population's pop argument is an unhashable Population(DataFrames) tuple; clear_scoring_caches() intentionally excludes get_tfm_pipeline since the TFM artifact's lifecycle is tied to train_tfm_model, not a data refresh
+- [Phase 06-01]: Denormalized 4 own-club scores as nullable indexed Player FloatFields; transfer_probability_score left unindexed; no RunPython backfill (Plan 03 populates); build_players_df() hardened with a _DENORMALIZED_SCORE_FIELDS exclusion set to prevent the compatibility_score column-name collision from corrupting the oracle/TFM/financial_fit merge sites
 
 ### Pending Todos
 
@@ -131,9 +135,10 @@ None yet.
 - Scoring engine curation (Phase 3) requires direct manual review of impact_model_v4.1.py to identify authoritative duplicated functions — no external pattern to follow, flagged by research as needing deeper analysis during planning.
 - RESOLVED (03-05): Transfer Probability (SCORE-04) is confirmed a fully deterministic, non-ML weighted formula (0.30*compat + 0.20*perf + 0.20*financial + 0.30*contract_fit) — the RandomForestRegressor in impact_model_v4.1.py is the Financial Fit (TFM) artifact instead (Plan 06's concern), not Transfer Probability. No sklearn-parity risk for SCORE-04 itself; TFM (financial_score's ML sibling) still needs Phase 5 parity/quality validation.
 - AI layer (Phases 9-10) LLM library/API surface should get a fresh check at build time given how fast that space moves.
+- RESOLVED (06-01): The migration get-scouted-be/players/migrations/0002_denormalized_scores.py (from Plan 06-01's Player model change) was briefly knocked untracked by a git race between the two parallel wave-1 executors (06-01/06-02); committed cleanly as 5d71090, manage.py showmigrations confirms it applied. See 06-scoring-performance-caching-layer/deferred-items.md.
 
 ## Session Continuity
 
-Last session: 2026-07-24T18:10:05.534Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-scoring-performance-caching-layer/06-CONTEXT.md
+Last session: 2026-07-24T19:45:29.098Z
+Stopped at: Completed 06-01-PLAN.md and 06-02-PLAN.md
+Resume file: None
