@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-07-24T21:08:46.000Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-07-24T20:19:20.973Z"
 progress:
   total_phases: 12
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 33
-  completed_plans: 32
+  completed_plans: 33
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 06 (scoring-performance-caching-layer) — EXECUTING
-Plan: 3 of 4 complete (06-01, 06-02, 06-03 done)
+Phase: 06 (scoring-performance-caching-layer) — READY FOR VERIFICATION
+Plan: 4 of 4 complete (06-01, 06-02, 06-03, 06-04 done)
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Plan: 3 of 4 complete (06-01, 06-02, 06-03 done)
 | Phase 06 P02 | 15min | 2 tasks | 2 files |
 | Phase 06 P01 | 7min | 3 tasks | 4 files |
 | Phase 06 P03 | 17min | 2 tasks | 2 files |
+| Phase 06 P04 | 12min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,7 @@ Recent decisions affecting current work:
 - [Phase 06]: [Phase 06-02]: get_scored_population() wraps score_population(reconstruct_population(), None) as a new function rather than adding lru_cache directly to score_population, since score_population's pop argument is an unhashable Population(DataFrames) tuple; clear_scoring_caches() intentionally excludes get_tfm_pipeline since the TFM artifact's lifecycle is tied to train_tfm_model, not a data refresh
 - [Phase 06-01]: Denormalized 4 own-club scores as nullable indexed Player FloatFields; transfer_probability_score left unindexed; no RunPython backfill (Plan 03 populates); build_players_df() hardened with a _DENORMALIZED_SCORE_FIELDS exclusion set to prevent the compatibility_score column-name collision from corrupting the oracle/TFM/financial_fit merge sites
 - [Phase 06-03]: recompute_scores management command reuses generate_scoring_oracle.py's raw build_*/compute_* functions directly (not Plan 02's Population/score_population wrapper), only reusing get_tfm_pipeline(); financial_fit_score written money-scale via np.expm1; atomic bulk_update with NaN coerced to None; caches cleared before and after; live-verified against real 41,708-player dev DB: impact_score 41707 non-null, compatibility_score/transfer_probability_score 15051 non-null (26657 null by design, GK/LB/RB), financial_fit_score 41708 non-null ranging ~€496K-€26.4M
+- [Phase 06]: [Phase 06-04]: test_scoring_performance.py hard-asserts SCORE-07's flat/O(1) retrieval claim; pytest itself skips cleanly against the empty test DB (Django tears down test_getscouted each session), so real timings were live-verified via manage.py shell against the dev DB: cold get_scored_population() 92.04s vs warm 0.0000s (~58M x speedup), denormalized PK read 0.569ms/read, flatness ratio 0.87x across N=100/1000/10000
 
 ### Pending Todos
 
@@ -141,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-24T21:08:46.000Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-07-24T20:19:20.969Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None

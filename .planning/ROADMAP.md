@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Scoring Engine Curation & Correctness Oracle** - The authoritative logic in the untested scoring script is characterized and snapshotted before any porting begins (completed 2026-07-22)
 - [ ] **Phase 4: Scoring Engine Port** - Curated calculators for RMM, CS, TFM, and Transfer Probability run as real Django services with component breakdowns
 - [ ] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group
-- [ ] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates
+- [x] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates (completed 2026-07-24)
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
 - [ ] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export
 - [ ] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface
@@ -121,11 +121,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Precomputed aggregates (std_lookup, team-style vectors, team-position references) are rebuilt on data change, not per request.
   3. Final scores are denormalized onto model fields so list/browse/sort endpoints never invoke scoring math directly.
   4. A timing check confirms per-entity score retrieval stays flat as dataset size grows, rather than scaling linearly with player count.
-**Plans**: 4 plans (3 waves)
+**Plans**: 4/4 plans complete
 - [x] 06-01-PLAN.md — Denormalize 4 final scores onto Player (nullable indexed FloatFields) + migration (wave 1)
 - [x] 06-02-PLAN.md — In-process aggregate caching: memoize reconstruct_population + get_scored_population + clear_scoring_caches (wave 1)
-- [ ] 06-03-PLAN.md — recompute_scores management command: atomic bulk_update of the 4 denormalized fields, money-scale TFM, cache clear (wave 2)
-- [ ] 06-04-PLAN.md — Timing verification test: O(1) denormalized read + warm cache vs cold recompute, order-of-magnitude assertion (wave 3)
+- [x] 06-03-PLAN.md — recompute_scores management command: atomic bulk_update of the 4 denormalized fields, money-scale TFM, cache clear (wave 2)
+- [x] 06-04-PLAN.md — Timing verification test: O(1) denormalized read + warm cache vs cold recompute, order-of-magnitude assertion (wave 3)
 
 ### Phase 7: Core CRUD - Players & Clubs
 **Goal**: Users can browse, filter, and inspect real player and club data, including their scores, through a full API surface.
