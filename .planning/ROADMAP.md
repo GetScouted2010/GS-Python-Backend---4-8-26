@@ -121,7 +121,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Precomputed aggregates (std_lookup, team-style vectors, team-position references) are rebuilt on data change, not per request.
   3. Final scores are denormalized onto model fields so list/browse/sort endpoints never invoke scoring math directly.
   4. A timing check confirms per-entity score retrieval stays flat as dataset size grows, rather than scaling linearly with player count.
-**Plans**: TBD
+**Plans**: 4 plans (3 waves)
+- [ ] 06-01-PLAN.md — Denormalize 4 final scores onto Player (nullable indexed FloatFields) + migration (wave 1)
+- [ ] 06-02-PLAN.md — In-process aggregate caching: memoize reconstruct_population + get_scored_population + clear_scoring_caches (wave 1)
+- [ ] 06-03-PLAN.md — recompute_scores management command: atomic bulk_update of the 4 denormalized fields, money-scale TFM, cache clear (wave 2)
+- [ ] 06-04-PLAN.md — Timing verification test: O(1) denormalized read + warm cache vs cold recompute, order-of-magnitude assertion (wave 3)
 
 ### Phase 7: Core CRUD - Players & Clubs
 **Goal**: Users can browse, filter, and inspect real player and club data, including their scores, through a full API surface.
@@ -199,7 +203,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Scoring Engine Curation & Correctness Oracle | 7/7 | Complete    | 2026-07-22 |
 | 4. Scoring Engine Port | 6/6 | Complete   | 2026-07-23 |
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
-| 6. Scoring Performance & Caching Layer | 0/TBD | Not started | - |
+| 6. Scoring Performance & Caching Layer | 0/4 | Not started | - |
 | 7. Core CRUD - Players & Clubs | 0/TBD | Not started | - |
 | 8. User Workspace CRUD | 0/TBD | Not started | - |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
