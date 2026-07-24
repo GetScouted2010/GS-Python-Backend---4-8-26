@@ -268,7 +268,7 @@ def test_cs_service_parity(player_case):
 
     with (
         patch("scoring.services.compatibility.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.compatibility.score_population", return_value=_scored(None)),
+        patch("scoring.services.compatibility.get_scored_population", return_value=_scored(None)),
     ):
         result = get_compatibility(pid, own_club_id)
 
@@ -292,7 +292,7 @@ def test_tp_service_parity(player_case):
 
     with (
         patch("scoring.services.transfer_probability.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.transfer_probability.score_population", return_value=_scored(None)),
+        patch("scoring.services.transfer_probability.get_scored_population", return_value=_scored(None)),
     ):
         result = get_transfer_probability(pid, own_club_id)
 
@@ -389,11 +389,11 @@ def test_endpoint_parity(endpoint_case, auth_client):
     with (
         patch("scoring.services.rmm.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.compatibility.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.compatibility.score_population", return_value=_scored(None)),
+        patch("scoring.services.compatibility.get_scored_population", return_value=_scored(None)),
         patch("scoring.services.financial_fit.reconstruct_population", return_value=_pop()),
         patch("scoring.services.financial_fit.score_population", return_value=_scored(None)),
         patch("scoring.services.transfer_probability.reconstruct_population", return_value=_pop()),
-        patch("scoring.services.transfer_probability.score_population", return_value=_scored(None)),
+        patch("scoring.services.transfer_probability.get_scored_population", return_value=_scored(None)),
     ):
         resp = auth_client.get(f"/api/scoring/players/{pid}/impact/")
         assert resp.status_code == 200

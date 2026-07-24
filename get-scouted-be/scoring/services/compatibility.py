@@ -38,7 +38,13 @@ from scoring.characterization.role_fit import (
     normalise_position,
 )
 from scoring.exceptions import null_with_reason
-from scoring.services.population import reconstruct_population, resolve_club_name, score_population
+from scoring.services.population import (
+    get_scored_population,
+    is_own_club,
+    reconstruct_population,
+    resolve_club_name,
+    score_population,
+)
 
 
 def cs_breakdown_from_row(
@@ -82,16 +88,27 @@ def get_compatibility(player_id, club_id) -> dict:
     """Return the real Compatibility Score + breakdown for a single
     player/club pair.
 
+    Own-club fast path (the common case, and the context Phase 5's oracle
+    proved): read the memoized `get_scored_population()` cs_tp -- O(1) on a
+    warm process, no full-population `score_population` pass per request.
+    Arbitrary-other-club path (Phase 12's "rank clubs for a player"): fall
+    back to a live `score_population(pop, club_name)`, which still reuses the
+    memoized `reconstruct_population()` so only the scoring pass runs live.
+
     Raises `Http404` if `club_id`/`player_id` is unresolvable.
     """
-    club_name = resolve_club_name(club_id)
+    club_name = resolve_club_name(club_id)  # Http404 on unknown club
 
     pop = reconstruct_population()
-    _, cs_tp = score_population(pop, club_name)
+    if is_own_club(player_id, club_id):
+        _, cs_tp = get_scored_population()
+    else:
+        _, cs_tp = score_population(pop, club_name)
 
     # Replicate compute_cs_tp_for_pairs' internal merge (deterministic_scores.py:354)
     # so player_row carries the role-score columns the breakdown re-derivation
-    # needs -- pop.players_df alone has none.
+    # needs -- pop.players_df alone has none. (Role scores are player-intrinsic,
+    # identical for any club context, so this is correct for both paths.)
     players_with_roles = pop.players_df.merge(
         pop.role_scores_wide, on="player_id", how="left", suffixes=("", "_role")
     )

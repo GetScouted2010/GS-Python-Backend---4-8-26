@@ -22,7 +22,13 @@ import pandas as pd
 from django.http import Http404
 
 from scoring.exceptions import null_with_reason
-from scoring.services.population import reconstruct_population, resolve_club_name, score_population
+from scoring.services.population import (
+    get_scored_population,
+    is_own_club,
+    reconstruct_population,
+    resolve_club_name,
+    score_population,
+)
 
 WEIGHTS = {"compatibility": 0.30, "performance": 0.20, "financial": 0.20, "contract_fit": 0.30}
 
@@ -66,12 +72,20 @@ def get_transfer_probability(player_id, club_id) -> dict:
     """Return the real deterministic Transfer Probability + its 4 weighted
     terms for a single player/club pair.
 
+    Own-club fast path via the memoized `get_scored_population()` cs_tp;
+    arbitrary-other-club fallback via a live `score_population(pop, club_name)`
+    (same split as get_compatibility). O(1) on a warm process for the
+    common own-club case.
+
     Raises `Http404` if `club_id`/`player_id` is unresolvable.
     """
-    club_name = resolve_club_name(club_id)
+    club_name = resolve_club_name(club_id)  # Http404 on unknown club
 
     pop = reconstruct_population()
-    _, cs_tp = score_population(pop, club_name)
+    if is_own_club(player_id, club_id):
+        _, cs_tp = get_scored_population()
+    else:
+        _, cs_tp = score_population(pop, club_name)
 
     cs_tp_indexed_str = cs_tp.set_axis(cs_tp.index.astype(str))
     if str(player_id) not in cs_tp_indexed_str.index:
