@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-07-25T09:57:47.034Z"
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-07-25T10:05:01.007Z"
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 49
-  completed_plans: 47
+  completed_plans: 48
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 09 (ai-provider-interface-natural-language-search) — EXECUTING
-Plan: 3 of 4 (09-02 complete: AnthropicNLQueryParser forced tool-use extraction against the real PlayerFilter/ClubFilter whitelist + get_nl_query_parser() factory dispatching on settings.LLM_PROVIDER; 11/11 fully-mocked tests passing, zero real network calls)
+Plan: 4 of 4 (09-03 complete: deterministic no-LLM tier-2 keyword_extract fallback (regex/synonym mapping onto the PlayerFilter whitelist, never guesses ambiguous leagues) + search_players(filters, request) composition service, with a live-verified regression proving the club__<field>_min style-filter step actually narrows results (41708 -> 14252) while confirming PlayerFilter alone silently ignores those keys)
 
 ## Performance Metrics
 
@@ -88,6 +88,7 @@ Plan: 3 of 4 (09-02 complete: AnthropicNLQueryParser forced tool-use extraction 
 | Phase 08 P06 | 8min | 3 tasks | 5 files |
 | Phase 09 P01 | 12min | 3 tasks | 8 files |
 | Phase 09 P02 | 10min | 2 tasks | 4 files |
+| Phase 09 P03 | 15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -157,6 +158,7 @@ Recent decisions affecting current work:
 - [Phase 08-user-workspace-crud]: [Phase 08-06]: CRUD-10 CSV export complete -- ShortlistViewSet.export @action (IsOwner-gated via get_object()) streams shortlist players via StreamingHttpResponse+Echo+csv.writer, columns pinned to PLAYER_EXPORT_COLUMNS (drawn from PlayerListSerializer's fields so exports never drift from the read API); ClubExportView (new APIView, IsAuthenticated-only -- club data isn't user-owned) streams club profile + transfer_aggregates reusing ClubDetailSerializer, with its own local Echo copy (per-app duplication over cross-app import, per plan). Discovered and fixed a real Phase-8-wide gap while satisfying this plan's own full-suite verification requirement: pyproject.toml's pytest testpaths never included "workspace" since the app was scaffolded in 08-01, so all of workspace/tests/ (every prior Phase 8 plan's tests) was silently excluded from every "full suite green" claim to date. Fixed by adding "workspace" to testpaths; full suite now correctly reports 144 passed, 305 skipped, 0 failed (up from the previously-undercounted 112 passed). Phase 8 is now feature-complete pending goal-backward verification.
 - [Phase 09]: [Phase 09-01]: anthropic SDK pinned to a narrow 0.x minor-band (>=0.120,<0.130); ANTHROPIC_MODEL default claude-haiku-4-5 build-time verified via the installed SDK's own ModelParam Literal type (no local API key available to hit the live /v1/models endpoint); test isolation for ANTHROPIC_API_KEY implemented as an autouse monkeypatch guard in players/tests/conftest.py rather than a test-settings module
 - [Phase 09]: [Phase 09-02]: AnthropicNLQueryParser catches parent anthropic.APIError (not a narrow subclass); ANTHROPIC_MODEL read exclusively from settings; _validate() drops hallucinated position/league enums + unknown keys before ORM; get_nl_query_parser() factory dispatches on settings.LLM_PROVIDER with lazy in-branch import
+- [Phase 09]: [Phase 09-03]: search_players splits filters into player_filter_data (passed to PlayerFilter) and style_filters (club__<field>_min, applied via a separate manual .filter(club__<field>__gte=...) step) because PlayerFilter silently ignores undeclared club__ keys instead of erroring; league ambiguity in keyword_extract resolved via explicit qualifier-required regex groups for the 5 shared base terms (bundesliga/serie/la liga/ligue/efl)
 
 ### Pending Todos
 
@@ -172,6 +174,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-25T09:57:47.030Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-07-25T10:05:01.003Z
+Stopped at: Completed 09-03-PLAN.md
 Resume file: None

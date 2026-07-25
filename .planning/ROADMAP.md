@@ -174,7 +174,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans (3 waves)
 - [x] 09-01-PLAN.md — Foundation: anthropic dep + LLM_PROVIDER/ANTHROPIC_* settings + NLQueryParser interface contract + pytest anthropic-call safety-net (wave 1) (completed 2026-07-25)
 - [x] 09-02-PLAN.md — AnthropicNLQueryParser (forced tool-use + whitelist validation) + get_nl_query_parser() factory (wave 2) (completed 2026-07-25)
-- [ ] 09-03-PLAN.md — Tier-2 keyword fallback extractor + search_players() service (PlayerFilter + manual club__ style step + pagination) (wave 2)
+- [x] 09-03-PLAN.md — Tier-2 keyword fallback extractor + search_players() service (PlayerFilter + manual club__ style step + pagination) (wave 2) (completed 2026-07-25)
 - [ ] 09-04-PLAN.md — POST /api/players/search/ view: 3-tier degradation + RecentActivity "searched" logging + integration tests (wave 3)
 
 ### Phase 10: AI Grounded Report Generation
@@ -222,7 +222,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
 | 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
 | 8. User Workspace CRUD | 6/6 | Complete   | 2026-07-25 |
-| 9. AI Provider Interface & Natural-Language Search | 1/4 | In Progress | - |
+| 9. AI Provider Interface & Natural-Language Search | 3/4 | In Progress | - |
 | 10. AI Grounded Report Generation | 0/TBD | Not started | - |
 | 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
 | 12. Bidirectional Matching - Replacements & Player-Club Fit | 0/TBD | Not started | - |
