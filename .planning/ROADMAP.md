@@ -185,7 +185,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. User can request an AI-generated scouting report for a player covering strengths, weaknesses, tactical fit, financial fit, and best use case, with every number in the report traceable to an already-computed score/stat.
   2. User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints) grounded in real Position Needs and Transfer Behaviour aggregates.
   3. No report ever contains an LLM-invented number — all figures originate from the scoring/CRUD layers.
-**Plans**: TBD
+**Plans**: 5 plans (4 waves)
+- [ ] 10-01-PLAN.md — Foundation: ANTHROPIC_REPORT_MODEL config + ReportGenerator interface contract + grounding validator (wave 1)
+- [ ] 10-02-PLAN.md — AnthropicReportGenerator (plain generation + section parse + grounding + retry-once) + get_report_generator() factory (wave 2)
+- [ ] 10-03-PLAN.md — Player scouting-report slice (AI-03): generate_scouting_report service + POST /api/players/{id}/scouting-report/ + clean-error path (wave 3)
+- [ ] 10-04-PLAN.md — Club-insights slice (AI-04): clubs/tests conftest safety-net port + position_needs_aggregate + generate_club_insights + POST /api/clubs/{id}/insights/ (wave 3)
+- [ ] 10-05-PLAN.md — Full-suite regression check + Phase-10 collection verify + live real-LLM spot-check/deferral (wave 4)
 
 ### Phase 11: Position Needs & Squad Simulation
 **Goal**: Users can see where a club's squad is weak and simulate changes before committing to them.
@@ -223,7 +228,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
 | 8. User Workspace CRUD | 6/6 | Complete   | 2026-07-25 |
 | 9. AI Provider Interface & Natural-Language Search | 4/4 | Complete   | 2026-07-25 |
-| 10. AI Grounded Report Generation | 0/TBD | Not started | - |
+| 10. AI Grounded Report Generation | 0/5 | In Progress | - |
 | 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
 | 12. Bidirectional Matching - Replacements & Player-Club Fit | 0/TBD | Not started | - |
 
