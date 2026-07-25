@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-07-25T10:05:01.007Z"
+stopped_at: Completed 09-04-PLAN.md
+last_updated: "2026-07-25T10:15:39.878Z"
 progress:
   total_phases: 12
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 49
-  completed_plans: 48
+  completed_plans: 49
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 09 (ai-provider-interface-natural-language-search) — EXECUTING
-Plan: 4 of 4 (09-03 complete: deterministic no-LLM tier-2 keyword_extract fallback (regex/synonym mapping onto the PlayerFilter whitelist, never guesses ambiguous leagues) + search_players(filters, request) composition service, with a live-verified regression proving the club__<field>_min style-filter step actually narrows results (41708 -> 14252) while confirming PlayerFilter alone silently ignores those keys)
+Phase: 09 (ai-provider-interface-natural-language-search) — Phase complete — ready for verification
+Plan: 4 of 4 (09-04 complete: POST /api/players/search/ wires the 3-tier degradation (LLM parser -> deterministic keyword fallback -> unfiltered list), always HTTP 200, with fallback_used honestly reporting which tier served the request and exactly one RecentActivity(activity_type="searched") logged per call, completing the Phase 8-reserved producer contract; full suite 174 passed/315 skipped/0 failed, all 7 Phase 9 AI test files collected)
 
 ## Performance Metrics
 
@@ -89,6 +89,7 @@ Plan: 4 of 4 (09-03 complete: deterministic no-LLM tier-2 keyword_extract fallba
 | Phase 09 P01 | 12min | 3 tasks | 8 files |
 | Phase 09 P02 | 10min | 2 tasks | 4 files |
 | Phase 09 P03 | 15min | 2 tasks | 4 files |
+| Phase 09 P04 | 14min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -159,6 +160,7 @@ Recent decisions affecting current work:
 - [Phase 09]: [Phase 09-01]: anthropic SDK pinned to a narrow 0.x minor-band (>=0.120,<0.130); ANTHROPIC_MODEL default claude-haiku-4-5 build-time verified via the installed SDK's own ModelParam Literal type (no local API key available to hit the live /v1/models endpoint); test isolation for ANTHROPIC_API_KEY implemented as an autouse monkeypatch guard in players/tests/conftest.py rather than a test-settings module
 - [Phase 09]: [Phase 09-02]: AnthropicNLQueryParser catches parent anthropic.APIError (not a narrow subclass); ANTHROPIC_MODEL read exclusively from settings; _validate() drops hallucinated position/league enums + unknown keys before ORM; get_nl_query_parser() factory dispatches on settings.LLM_PROVIDER with lazy in-branch import
 - [Phase 09]: [Phase 09-03]: search_players splits filters into player_filter_data (passed to PlayerFilter) and style_filters (club__<field>_min, applied via a separate manual .filter(club__<field>__gte=...) step) because PlayerFilter silently ignores undeclared club__ keys instead of erroring; league ambiguity in keyword_extract resolved via explicit qualifier-required regex groups for the 5 shared base terms (bundesliga/serie/la liga/ligue/efl)
+- [Phase 09]: [Phase 09-04]: PlayerSearchView wraps ONLY the tier-1 get_nl_query_parser().parse() call in try/except NLQueryParserError (search_players() stays outside, so a genuine DB error is a real 500, never masked as a fallback); fallback_used=False means the LLM's real answer even if empty/partial, only flips True when the LLM CALL itself failed; live-verified all 3 tiers + RecentActivity 'searched' logging against the real 41,708-player dev DB (tier-2 'strikers under 5m' -> 4,504 matches, tier-3 unparseable query -> full 41,708 unfiltered, tier-1 mocked success -> 25 real CB results); full suite 174 passed/315 skipped/0 failed, phase complete
 
 ### Pending Todos
 
@@ -174,6 +176,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-25T10:05:01.003Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-07-25T10:15:39.874Z
+Stopped at: Completed 09-04-PLAN.md
 Resume file: None

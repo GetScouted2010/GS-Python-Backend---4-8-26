@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates (completed 2026-07-24)
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
 - [x] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export (completed 2026-07-25)
-- [ ] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface
+- [x] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface (completed 2026-07-25)
 - [ ] **Phase 10: AI Grounded Report Generation** - Users can request AI-written scouting reports and club insights grounded in real computed scores
 - [ ] **Phase 11: Position Needs & Squad Simulation** - Users can see squad weaknesses and simulate changes before committing
 - [ ] **Phase 12: Bidirectional Matching - Replacements & Player-Club Fit** - Users can get ranked replacement players and ranked club fits off one shared ranking primitive
@@ -175,7 +175,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 09-01-PLAN.md — Foundation: anthropic dep + LLM_PROVIDER/ANTHROPIC_* settings + NLQueryParser interface contract + pytest anthropic-call safety-net (wave 1) (completed 2026-07-25)
 - [x] 09-02-PLAN.md — AnthropicNLQueryParser (forced tool-use + whitelist validation) + get_nl_query_parser() factory (wave 2) (completed 2026-07-25)
 - [x] 09-03-PLAN.md — Tier-2 keyword fallback extractor + search_players() service (PlayerFilter + manual club__ style step + pagination) (wave 2) (completed 2026-07-25)
-- [ ] 09-04-PLAN.md — POST /api/players/search/ view: 3-tier degradation + RecentActivity "searched" logging + integration tests (wave 3)
+- [x] 09-04-PLAN.md — POST /api/players/search/ view: 3-tier degradation + RecentActivity "searched" logging + integration tests (wave 3) (completed 2026-07-25)
 
 ### Phase 10: AI Grounded Report Generation
 **Goal**: Users can request AI-written scouting reports and club insights that are narratively generated but numerically grounded in real, already-computed scores.
@@ -222,7 +222,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
 | 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
 | 8. User Workspace CRUD | 6/6 | Complete   | 2026-07-25 |
-| 9. AI Provider Interface & Natural-Language Search | 3/4 | In Progress | - |
+| 9. AI Provider Interface & Natural-Language Search | 4/4 | Complete   | 2026-07-25 |
 | 10. AI Grounded Report Generation | 0/TBD | Not started | - |
 | 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
 | 12. Bidirectional Matching - Replacements & Player-Club Fit | 0/TBD | Not started | - |
