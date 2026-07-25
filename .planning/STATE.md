@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-07-25T05:29:49.922Z"
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-07-25T05:36:20.790Z"
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 45
-  completed_plans: 41
+  completed_plans: 42
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 08 (user-workspace-crud) — EXECUTING
-Plan: 3 of 6 (08-02 complete: WatchlistViewSet CRUD-06, get_queryset user-scoping + IsAuthenticated+IsOwner + HiddenField(CurrentUserDefault) template)
+Plan: 4 of 6 (08-03 complete: ShortlistViewSet CRUD-07, nested entries/delete_entry @action routes via self.get_object() ownership propagation)
 
 ## Performance Metrics
 
@@ -82,6 +82,7 @@ Plan: 3 of 6 (08-02 complete: WatchlistViewSet CRUD-06, get_queryset user-scopin
 | Phase 07 P03 | 5min | 3 tasks | 6 files |
 | Phase 08-user-workspace-crud P01 | 10min | 3 tasks | 9 files |
 | Phase 08 P02 | 5min | 2 tasks | 5 files |
+| Phase 08 P03 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -145,6 +146,7 @@ Recent decisions affecting current work:
 - [Phase 07]: [Phase 07-core-crud-players-clubs]: [Phase 07-03]: Clubs CRUD list/detail/squad/transfer-aggregates/ids wired -- ClubListView (filter by league/country/playing-style thresholds via ClubFilter + IdsBypassPagination) and ClubDetailView (full profile + squad via players.serializers.PlayerListSerializer over club.players.all() + transfer_aggregates) live under /api/clubs/, appended after (not replacing) 07-02's api/players/ include; transfer_aggregates strictly sourced from Transfer.market_value_at_transfer (clean BigInteger), never Transfer.fee (free-text) -- live-verified against the real dev DB (avg_market_value_at_transfer returned a real numeric average without raising). CRUD-02/04/05 functionally complete; requirements-mark-complete deferred to the phase verifier per this plan's explicit instruction. Pre-existing unrelated test failure discovered (accounts/tests/test_permissions.py::test_director_read_only_visibility, caused by 07-01's project-wide pagination change, confirmed to predate 07-03) logged to 07-core-crud-players-clubs/deferred-items.md, not fixed (out of scope).
 - [Phase 08-user-workspace-crud]: [Phase 08-01]: workspace app scaffolded with 5 UUID-keyed models (Watchlist/Shortlist/ShortlistEntry/SquadPlan/RecentActivity) using UniqueConstraint/Index Meta convention; RecentActivity.target_id is a bare nullable UUIDField (not FK) to survive future Player/Club deletion; IsOwner permission resolves ownership via obj.user with a shortlist.user fallback for ShortlistEntry
 - [Phase 08]: [Phase 08-02]: WatchlistViewSet.permission_classes must explicitly include IsAuthenticated alongside IsOwner -- overriding permission_classes drops the global default and lets AnonymousUser crash get_queryset() instead of returning 401
+- [Phase 08]: [Phase 08-03]: Shortlist CRUD + nested entries (CRUD-07) live under /api/workspace/shortlists/, using a self.get_object()-based @action nested-resource pattern for entries/delete_entry that inherits IsOwner from the parent Shortlist without drf-nested-routers; 08-02's permission_classes=[IsAuthenticated, IsOwner] fix applied proactively this time, no deviation needed
 
 ### Pending Todos
 
@@ -160,6 +162,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-25T05:29:49.919Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-07-25T05:36:13.204Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
