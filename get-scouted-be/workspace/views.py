@@ -4,9 +4,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from workspace.models import Shortlist, ShortlistEntry, Watchlist
+from workspace.models import Shortlist, ShortlistEntry, SquadPlan, Watchlist
 from workspace.permissions import IsOwner
-from workspace.serializers import ShortlistEntrySerializer, ShortlistSerializer, WatchlistSerializer
+from workspace.serializers import (
+    ShortlistEntrySerializer,
+    ShortlistSerializer,
+    SquadPlanDetailSerializer,
+    SquadPlanListSerializer,
+    WatchlistSerializer,
+)
 
 
 class WatchlistViewSet(
@@ -55,3 +61,19 @@ class ShortlistViewSet(viewsets.ModelViewSet):
         shortlist = self.get_object()
         get_object_or_404(ShortlistEntry, pk=entry_id, shortlist=shortlist).delete()
         return Response(status=204)
+
+
+class SquadPlanViewSet(viewsets.ModelViewSet):
+    # Overriding permission_classes drops the global IsAuthenticated default,
+    # so it must be listed explicitly alongside IsOwner (see WatchlistViewSet
+    # comment above / 08-02 decision) to deny anonymous requests with a clean
+    # 401 instead of crashing get_queryset() on AnonymousUser.
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        return SquadPlan.objects.filter(user=self.request.user).order_by("-updated_at")
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return SquadPlanListSerializer
+        return SquadPlanDetailSerializer
