@@ -155,7 +155,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can create and manage Squad Plans (formation, current squad, proposed changes).
   4. User's Recent Activity (searches, viewed players) is recorded and retrievable.
   5. User can export a Shortlist or Club report as CSV.
-**Plans**: TBD
+**Plans**: 6 plans (6 waves — sequential; all workspace features share workspace/views.py, serializers.py, urls.py so cannot run in parallel)
+- [ ] 08-01-PLAN.md — Foundation: workspace app scaffold + 5 models + migration + IsOwner permission + test conftest (wave 1)
+- [ ] 08-02-PLAN.md — Watchlist read/write API (save/remove, per-user uniqueness, list scoping) (wave 2)
+- [ ] 08-03-PLAN.md — Shortlists + nested entries (named, club-tied, @action nested routes) (wave 3)
+- [ ] 08-04-PLAN.md — Squad Plans (list/detail split, live current_squad, proposed_changes validation) (wave 4)
+- [ ] 08-05-PLAN.md — Recent Activity (auto-logged by Player/Club detail views + scoped list endpoint) (wave 5)
+- [ ] 08-06-PLAN.md — CSV export (Shortlist + Club report via StreamingHttpResponse) (wave 6)
 
 ### Phase 9: AI Provider Interface & Natural-Language Search
 **Goal**: Users can search using plain language and get real, structured results, with the underlying LLM provider swappable without touching calling code.
@@ -211,7 +217,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
 | 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
 | 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
-| 8. User Workspace CRUD | 0/TBD | Not started | - |
+| 8. User Workspace CRUD | 0/6 | Planned | - |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
 | 10. AI Grounded Report Generation | 0/TBD | Not started | - |
 | 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
