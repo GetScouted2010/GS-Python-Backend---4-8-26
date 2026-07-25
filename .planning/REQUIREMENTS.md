@@ -118,11 +118,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-08 | Phase 8 | Complete (`SquadPlan` stores only the `proposed_changes` delta; `current_squad` always derived live via `PlayerListSerializer`, never frozen — sets up Phase 11) |
 | CRUD-09 | Phase 8 | Complete (auto-logged via `PlayerDetailView.get()`/`ClubDetailView.retrieve()`, not a manual endpoint; live-verified zero regression to Phase 7's detail views) |
 | CRUD-10 | Phase 8 | Complete (`StreamingHttpResponse`+stdlib `csv`, no new dependency; Shortlist export reuses `PlayerListSerializer`, Club export reuses `ClubDetailSerializer`'s transfer aggregates) |
-| AI-01 | Phase 9 | Complete |
-| AI-02 | Phase 9 | Complete |
+| AI-01 | Phase 9 | Complete (Anthropic tool-use extraction against a fixed whitelist — position/league/age/market-value/score fields plus style via `club__<field>`, the only way to resolve "style" since it's a Club field, not a Player field) |
+| AI-02 | Phase 9 | Complete (3-tier degradation — LLM parse → deterministic keyword/regex fallback → unfiltered paginated list — always HTTP 200, live-verified with no API key configured at all) |
 | AI-03 | Phase 10 | Pending |
 | AI-04 | Phase 10 | Pending |
-| AI-05 | Phase 9 | Complete |
+| AI-05 | Phase 9 | Complete (`get_nl_query_parser()` factory dispatches on `LLM_PROVIDER`; calling code imports only the abstract interface, never `AnthropicNLQueryParser` directly — verified via grep, not just declared) |
 | PLAN-01 | Phase 11 | Pending |
 | PLAN-02 | Phase 12 | Pending |
 | PLAN-03 | Phase 11 | Pending |
