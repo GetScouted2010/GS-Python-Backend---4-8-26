@@ -113,11 +113,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-03 | Phase 7 | Complete (full profile + real single-season snapshot + score breakdowns via `get_summary()`; explicit club=None fallback) |
 | CRUD-04 | Phase 7 | Complete (full profile + squad via `PlayerListSerializer` + transfer aggregates from `market_value_at_transfer`, never `fee`) |
 | CRUD-05 | Phase 7 | Complete (`?ids=` reuses list endpoints for both Players and Clubs, unpaginated, capped at 100) |
-| CRUD-06 | Phase 8 | Complete |
-| CRUD-07 | Phase 8 | Complete |
-| CRUD-08 | Phase 8 | Complete |
-| CRUD-09 | Phase 8 | Complete |
-| CRUD-10 | Phase 8 | Complete |
+| CRUD-06 | Phase 8 | Complete (per-`(user,player)` Watchlist row, `UniqueConstraint`-guarded; `get_queryset()` scoped to `request.user`) |
+| CRUD-07 | Phase 8 | Complete (`Shortlist`+`ShortlistEntry` through-model, club-scoped, nested `entries`/`delete_entry` actions) |
+| CRUD-08 | Phase 8 | Complete (`SquadPlan` stores only the `proposed_changes` delta; `current_squad` always derived live via `PlayerListSerializer`, never frozen — sets up Phase 11) |
+| CRUD-09 | Phase 8 | Complete (auto-logged via `PlayerDetailView.get()`/`ClubDetailView.retrieve()`, not a manual endpoint; live-verified zero regression to Phase 7's detail views) |
+| CRUD-10 | Phase 8 | Complete (`StreamingHttpResponse`+stdlib `csv`, no new dependency; Shortlist export reuses `PlayerListSerializer`, Club export reuses `ClubDetailSerializer`'s transfer aggregates) |
 | AI-01 | Phase 9 | Pending |
 | AI-02 | Phase 9 | Pending |
 | AI-03 | Phase 10 | Pending |
