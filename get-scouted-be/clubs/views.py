@@ -7,13 +7,28 @@ global DEFAULT_PERMISSION_CLASSES (IsAuthenticated) + DEFAULT_AUTHENTICATION
 _CLASSES (JWTAuthentication) already deny-by-default (config/settings/base.py).
 """
 
+import csv
+
+from django.http import StreamingHttpResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.views import APIView
 
 from clubs.filters import ClubFilter
 from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer, ClubListSerializer
 from core.pagination import IdsBypassPagination
 from workspace.models import RecentActivity
+
+
+class Echo:
+    """Write-only buffer that returns the value instead of storing it
+    (verbatim Django docs streaming-CSV pattern). Duplicated from
+    workspace/views.py rather than cross-app imported, keeping club-data
+    concerns inside the clubs app."""
+
+    def write(self, value):
+        return value
 
 
 class ClubListView(generics.ListAPIView):
@@ -44,3 +59,35 @@ class ClubDetailView(generics.RetrieveAPIView):
             user=request.user, activity_type="viewed_club", target_id=kwargs["pk"]
         )
         return response
+
+
+class ClubExportView(APIView):
+    """GET /api/clubs/{id}/export/ -- CRUD-10: streams a text/csv of the club
+    profile + transfer aggregates, reusing ClubDetailSerializer so the
+    exported numbers never diverge from the API. IsAuthenticated only (the
+    project global default) -- club data is not user-owned, so no IsOwner."""
+
+    def get(self, request, pk):
+        club = get_object_or_404(Club, pk=pk)
+        detail = ClubDetailSerializer(club).data
+        aggregates = detail["transfer_aggregates"]
+        profile_fields = [
+            "id", "name", "league", "country", "manager", "formation",
+        ]
+        agg_fields = [
+            "total_transfers", "arrivals", "departures",
+            "avg_market_value_at_transfer", "total_market_value_at_transfer",
+        ]
+        header = profile_fields + agg_fields
+        row = [detail.get(f) for f in profile_fields] + [aggregates.get(f) for f in agg_fields]
+        writer = csv.writer(Echo())
+
+        def generate():
+            yield writer.writerow(header)
+            yield writer.writerow(row)
+
+        return StreamingHttpResponse(
+            generate(),
+            content_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="club-{club.id}.csv"'},
+        )
