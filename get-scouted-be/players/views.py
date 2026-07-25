@@ -13,6 +13,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.pagination import IdsBypassPagination
+from players import services
+from players.ai import fallback
+from players.ai.base import NLQueryParserError
+from players.ai.factory import get_nl_query_parser
 from players.filters import PlayerFilter
 from players.models import Player
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
@@ -66,3 +70,52 @@ class PlayerDetailView(APIView):
             scores = summary.get_summary(pk, club_id)
 
         return Response({**profile, "scores": scores})
+
+
+class PlayerSearchView(APIView):
+    """POST /api/players/search/ -- AI-01/AI-02 natural-language search.
+
+    3-tier degradation, always HTTP 200:
+      tier 1: the provider-agnostic LLM parser (players.ai.factory).
+      tier 2: NLQueryParserError -> the deterministic keyword extractor.
+      tier 3: keyword extractor also yields nothing -> unfiltered list.
+    Exactly one RecentActivity(activity_type="searched") row is logged per
+    call regardless of which tier actually served the request (completes
+    the "searched" producer contract Phase 8 reserved for this endpoint).
+
+    No explicit permission_classes -- the global IsAuthenticated default
+    already denies anonymous, matching every other players view.
+    """
+
+    def post(self, request):
+        query = request.data.get("query", "")
+
+        fallback_used = False
+        try:
+            parsed = get_nl_query_parser().parse(query)  # tier 1
+            filters = parsed.filters
+        except NLQueryParserError:
+            filters = fallback.keyword_extract(query)  # tier 2 (deterministic)
+            fallback_used = True
+        # tier 3: keyword extractor produced nothing usable -> unfiltered list
+        if not filters and fallback_used:
+            filters = {}  # already empty; explicit for clarity
+        # Note: a SUCCESSFUL-but-partial/empty tier-1 parse stays
+        # fallback_used=False (it is still "the LLM's real answer").
+        # fallback_used only flips true when the LLM CALL failed and tier 2
+        # took over.
+
+        results = services.search_players(filters, request)
+
+        RecentActivity.objects.create(
+            user=request.user, activity_type="searched", query_text=query, target_id=None
+        )
+
+        return Response(
+            {
+                "query": query,
+                "parsed_filters": filters,
+                "fallback_used": fallback_used,
+                "results": results,
+            }
+        )
