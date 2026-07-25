@@ -160,7 +160,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] 08-02-PLAN.md — Watchlist read/write API (save/remove, per-user uniqueness, list scoping) (wave 2)
 - [ ] 08-03-PLAN.md — Shortlists + nested entries (named, club-tied, @action nested routes) (wave 3)
 - [ ] 08-04-PLAN.md — Squad Plans (list/detail split, live current_squad, proposed_changes validation) (wave 4)
-- [ ] 08-05-PLAN.md — Recent Activity (auto-logged by Player/Club detail views + scoped list endpoint) (wave 5)
+- [x] 08-05-PLAN.md — Recent Activity (auto-logged by Player/Club detail views + scoped list endpoint) (wave 5)
 - [ ] 08-06-PLAN.md — CSV export (Shortlist + Club report via StreamingHttpResponse) (wave 6)
 
 ### Phase 9: AI Provider Interface & Natural-Language Search
