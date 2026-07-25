@@ -46,7 +46,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### AI Features
 
-- [ ] **AI-01**: User can submit a natural-language query parsed into structured filters (position, age, value, league, style) against a fixed whitelist of real fields
+- [x] **AI-01**: User can submit a natural-language query parsed into structured filters (position, age, value, league, style) against a fixed whitelist of real fields
 - [ ] **AI-02**: NL query parsing gracefully falls back (partial parse / keyword fallback) when input is ambiguous or unparseable
 - [ ] **AI-03**: User can request an AI-generated scouting report for a player (strengths, weaknesses, tactical fit, financial fit, best use case), strictly grounded in already-computed scores/stats
 - [ ] **AI-04**: User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints), grounded in Position Needs and Transfer Behaviour aggregates
@@ -118,7 +118,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-08 | Phase 8 | Complete (`SquadPlan` stores only the `proposed_changes` delta; `current_squad` always derived live via `PlayerListSerializer`, never frozen — sets up Phase 11) |
 | CRUD-09 | Phase 8 | Complete (auto-logged via `PlayerDetailView.get()`/`ClubDetailView.retrieve()`, not a manual endpoint; live-verified zero regression to Phase 7's detail views) |
 | CRUD-10 | Phase 8 | Complete (`StreamingHttpResponse`+stdlib `csv`, no new dependency; Shortlist export reuses `PlayerListSerializer`, Club export reuses `ClubDetailSerializer`'s transfer aggregates) |
-| AI-01 | Phase 9 | Pending |
+| AI-01 | Phase 9 | Complete |
 | AI-02 | Phase 9 | Pending |
 | AI-03 | Phase 10 | Pending |
 | AI-04 | Phase 10 | Pending |

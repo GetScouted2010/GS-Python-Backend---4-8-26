@@ -173,7 +173,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The LLM call for parsing goes through a provider-agnostic interface — swapping the underlying provider requires no changes to search-calling code.
 **Plans**: 4 plans (3 waves)
 - [x] 09-01-PLAN.md — Foundation: anthropic dep + LLM_PROVIDER/ANTHROPIC_* settings + NLQueryParser interface contract + pytest anthropic-call safety-net (wave 1) (completed 2026-07-25)
-- [ ] 09-02-PLAN.md — AnthropicNLQueryParser (forced tool-use + whitelist validation) + get_nl_query_parser() factory (wave 2)
+- [x] 09-02-PLAN.md — AnthropicNLQueryParser (forced tool-use + whitelist validation) + get_nl_query_parser() factory (wave 2) (completed 2026-07-25)
 - [ ] 09-03-PLAN.md — Tier-2 keyword fallback extractor + search_players() service (PlayerFilter + manual club__ style step + pagination) (wave 2)
 - [ ] 09-04-PLAN.md — POST /api/players/search/ view: 3-tier degradation + RecentActivity "searched" logging + integration tests (wave 3)
 
