@@ -18,3 +18,22 @@ def real_data_available(db):
             "No real Player data in the dev DB -- run Phase 1's import_all "
             "management command first to populate real migrated data."
         )
+
+
+@pytest.fixture(autouse=True)
+def _block_real_anthropic_calls(monkeypatch):
+    """Safety net: no test may fire a real, billed Anthropic API call.
+    Replaces anthropic.Anthropic with a guard that raises on instantiation.
+    Tests that exercise AnthropicNLQueryParser MUST inject a fake client
+    (constructor `client=` param) or patch the parser's own binding -- never
+    rely on ANTHROPIC_API_KEY being unset."""
+    import anthropic
+
+    class _GuardAnthropic:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "Real anthropic.Anthropic() construction blocked in tests. "
+                "Inject a fake client or patch the parser binding instead."
+            )
+
+    monkeypatch.setattr(anthropic, "Anthropic", _GuardAnthropic)
