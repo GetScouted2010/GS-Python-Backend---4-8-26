@@ -1,9 +1,13 @@
+import csv
+
+from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from players.serializers import PlayerListSerializer
 from workspace.models import RecentActivity, Shortlist, ShortlistEntry, SquadPlan, Watchlist
 from workspace.permissions import IsOwner
 from workspace.serializers import (
@@ -14,6 +18,21 @@ from workspace.serializers import (
     SquadPlanListSerializer,
     WatchlistSerializer,
 )
+
+
+class Echo:
+    """Write-only buffer that returns the value instead of storing it
+    (verbatim Django docs streaming-CSV pattern)."""
+
+    def write(self, value):
+        return value
+
+
+PLAYER_EXPORT_COLUMNS = [
+    "id", "player", "position", "main_position", "league", "club_name",
+    "age", "market_value", "impact_score", "compatibility_score",
+    "financial_fit_score", "transfer_probability_score",
+]
 
 
 class WatchlistViewSet(
@@ -62,6 +81,25 @@ class ShortlistViewSet(viewsets.ModelViewSet):
         shortlist = self.get_object()
         get_object_or_404(ShortlistEntry, pk=entry_id, shortlist=shortlist).delete()
         return Response(status=204)
+
+    @action(detail=True, methods=["get"], url_path="export")
+    def export(self, request, pk=None):
+        shortlist = self.get_object()  # IsOwner enforced via get_object()
+        writer = csv.writer(Echo())
+
+        def generate():
+            yield writer.writerow(PLAYER_EXPORT_COLUMNS)
+            for entry in shortlist.entries.select_related("player").all():
+                data = PlayerListSerializer(entry.player).data
+                yield writer.writerow([data.get(c) for c in PLAYER_EXPORT_COLUMNS])
+
+        return StreamingHttpResponse(
+            generate(),
+            content_type="text/csv",
+            headers={
+                "Content-Disposition": f'attachment; filename="shortlist-{shortlist.id}.csv"'
+            },
+        )
 
 
 class SquadPlanViewSet(viewsets.ModelViewSet):
