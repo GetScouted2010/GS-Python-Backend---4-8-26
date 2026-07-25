@@ -170,3 +170,16 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
 )
+
+# LLM provider abstraction (AI-05). LLM_PROVIDER selects the concrete
+# NLQueryParser implementation via players.ai.factory.get_nl_query_parser().
+# Swapping providers = one new class + change this one env var, zero
+# changes to search-calling code.
+LLM_PROVIDER = env("LLM_PROVIDER", default="anthropic")
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
+# Model id is env-overridable ON PURPOSE: 09-RESEARCH.md Open Question 1 flags
+# real uncertainty about the exact current fast/cheap model string, and STATE.md's
+# Blockers note "AI layer LLM library/API surface should get a fresh check at build
+# time." The default below was verified at build time (see build-time verification
+# step) — never trust a stale model string.
+ANTHROPIC_MODEL = env("ANTHROPIC_MODEL", default="claude-haiku-4-5")
