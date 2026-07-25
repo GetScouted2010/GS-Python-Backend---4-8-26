@@ -40,7 +40,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CRUD-05**: User can fetch multiple players/clubs by ID in one request for side-by-side comparison
 - [x] **CRUD-06**: User can save/remove players to/from a personal Watchlist
 - [x] **CRUD-07**: User can create, name, and manage Shortlists tied to a club context
-- [ ] **CRUD-08**: User can create and manage Squad Plans (formation, current squad, proposed changes)
+- [x] **CRUD-08**: User can create and manage Squad Plans (formation, current squad, proposed changes)
 - [ ] **CRUD-09**: User's Recent Activity (searches, viewed players) is recorded and retrievable
 - [ ] **CRUD-10**: User can export a Shortlist or Club report as CSV
 
@@ -115,7 +115,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-05 | Phase 7 | Complete (`?ids=` reuses list endpoints for both Players and Clubs, unpaginated, capped at 100) |
 | CRUD-06 | Phase 8 | Complete |
 | CRUD-07 | Phase 8 | Complete |
-| CRUD-08 | Phase 8 | Pending |
+| CRUD-08 | Phase 8 | Complete |
 | CRUD-09 | Phase 8 | Pending |
 | CRUD-10 | Phase 8 | Pending |
 | AI-01 | Phase 9 | Pending |

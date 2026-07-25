@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-07-25T05:36:20.790Z"
+stopped_at: Completed 08-04-PLAN.md
+last_updated: "2026-07-25T05:41:51.000Z"
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 45
-  completed_plans: 42
+  completed_plans: 43
 ---
 
 # Project State
@@ -24,15 +24,15 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 08 (user-workspace-crud) — EXECUTING
-Plan: 4 of 6 (08-03 complete: ShortlistViewSet CRUD-07, nested entries/delete_entry @action routes via self.get_object() ownership propagation)
+Plan: 5 of 6 (08-04 complete: SquadPlanViewSet CRUD-08, list/detail serializer split with live current_squad derivation, write-time proposed_changes validation)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
-- Average duration: 20 min
-- Total execution time: 1.33 hours
+- Total plans completed: 5
+- Average duration: 17.6 min
+- Total execution time: 1.43 hours
 
 **By Phase:**
 
@@ -83,6 +83,7 @@ Plan: 4 of 6 (08-03 complete: ShortlistViewSet CRUD-07, nested entries/delete_en
 | Phase 08-user-workspace-crud P01 | 10min | 3 tasks | 9 files |
 | Phase 08 P02 | 5min | 2 tasks | 5 files |
 | Phase 08 P03 | 4min | 2 tasks | 4 files |
+| Phase 08 P04 | 6min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -147,6 +148,7 @@ Recent decisions affecting current work:
 - [Phase 08-user-workspace-crud]: [Phase 08-01]: workspace app scaffolded with 5 UUID-keyed models (Watchlist/Shortlist/ShortlistEntry/SquadPlan/RecentActivity) using UniqueConstraint/Index Meta convention; RecentActivity.target_id is a bare nullable UUIDField (not FK) to survive future Player/Club deletion; IsOwner permission resolves ownership via obj.user with a shortlist.user fallback for ShortlistEntry
 - [Phase 08]: [Phase 08-02]: WatchlistViewSet.permission_classes must explicitly include IsAuthenticated alongside IsOwner -- overriding permission_classes drops the global default and lets AnonymousUser crash get_queryset() instead of returning 401
 - [Phase 08]: [Phase 08-03]: Shortlist CRUD + nested entries (CRUD-07) live under /api/workspace/shortlists/, using a self.get_object()-based @action nested-resource pattern for entries/delete_entry that inherits IsOwner from the parent Shortlist without drf-nested-routers; 08-02's permission_classes=[IsAuthenticated, IsOwner] fix applied proactively this time, no deviation needed
+- [Phase 08]: [Phase 08-04]: SquadPlan CRUD (CRUD-08) live under /api/workspace/squad-plans/, establishing the list/detail serializer split (SquadPlanListSerializer lightweight vs SquadPlanDetailSerializer with a SerializerMethodField current_squad derived live via PlayerListSerializer(obj.club.players.all()) -- never frozen, setting up Phase 11's simulation); proposed_changes JSONField validated at write time (list of dicts, action in {add,remove,swap}, swap requires incoming_player_id) via validate_proposed_changes on the detail serializer, which runs on create since create uses the detail serializer; permission_classes=[IsAuthenticated, IsOwner] applied per the 08-02/08-03 established pattern (plan's literal [IsOwner] auto-corrected, Rule 1)
 
 ### Pending Todos
 
@@ -162,6 +164,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-25T05:36:13.204Z
-Stopped at: Completed 08-03-PLAN.md
+Last session: 2026-07-25T05:41:51.000Z
+Stopped at: Completed 08-04-PLAN.md
 Resume file: None
