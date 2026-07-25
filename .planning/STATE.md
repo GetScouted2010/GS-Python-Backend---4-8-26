@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 9 context gathered
-last_updated: "2026-07-25T06:17:28.051Z"
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-07-25T09:50:17.745Z"
 progress:
   total_phases: 12
   completed_phases: 8
-  total_plans: 45
-  completed_plans: 45
+  total_plans: 49
+  completed_plans: 46
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 08 — user-workspace-crud
+**Current focus:** Phase 09 — ai-provider-interface-natural-language-search
 
 ## Current Position
 
-Phase: 08 (user-workspace-crud) — Plan 6 of 6 complete, ready for phase verification
-Plan: 6 of 6 (08-06 complete: CRUD-10 CSV export -- shortlist export IsOwner-gated via ShortlistViewSet.export, club report export via ClubExportView, both streaming via StreamingHttpResponse+Echo+csv.writer reusing PlayerListSerializer/ClubDetailSerializer columns; full suite green 144 passed/305 skipped/0 failed, now correctly including workspace/tests/ after fixing a pytest testpaths gap)
+Phase: 09 (ai-provider-interface-natural-language-search) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Plan: 6 of 6 (08-06 complete: CRUD-10 CSV export -- shortlist export IsOwner-gat
 | Phase 08 P04 | 6min | 2 tasks | 4 files |
 | Phase 08 P05 | 8min | 3 tasks | 6 files |
 | Phase 08 P06 | 8min | 3 tasks | 5 files |
+| Phase 09 P01 | 12min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,7 @@ Recent decisions affecting current work:
 - [Phase 08]: [Phase 08-04]: SquadPlan CRUD (CRUD-08) live under /api/workspace/squad-plans/, establishing the list/detail serializer split (SquadPlanListSerializer lightweight vs SquadPlanDetailSerializer with a SerializerMethodField current_squad derived live via PlayerListSerializer(obj.club.players.all()) -- never frozen, setting up Phase 11's simulation); proposed_changes JSONField validated at write time (list of dicts, action in {add,remove,swap}, swap requires incoming_player_id) via validate_proposed_changes on the detail serializer, which runs on create since create uses the detail serializer; permission_classes=[IsAuthenticated, IsOwner] applied per the 08-02/08-03 established pattern (plan's literal [IsOwner] auto-corrected, Rule 1)
 - [Phase 08-user-workspace-crud]: [Phase 08-05]: RecentActivity auto-logged via explicit writes inside PlayerDetailView.get (post-get_object_or_404) and a new ClubDetailView.retrieve() override (RetrieveAPIView had no prior hook); RecentActivityListView needs no permission_classes override (get_queryset scoping + global IsAuthenticated default already deny anonymous with 401); test suite monkeypatches players.views.rmm.get_rmm for club=None PlayerFactory rows to avoid a real scoring-engine reconstruction against the empty pytest test DB, mirroring players/tests/test_views.py's established pattern; full suite (112 passed, 305 skipped, 0 failed) plus a live manage.py shell check against the real 41,708-player/1,060-club dev DB confirmed zero regression in Phase 7's player/club detail response contracts
 - [Phase 08-user-workspace-crud]: [Phase 08-06]: CRUD-10 CSV export complete -- ShortlistViewSet.export @action (IsOwner-gated via get_object()) streams shortlist players via StreamingHttpResponse+Echo+csv.writer, columns pinned to PLAYER_EXPORT_COLUMNS (drawn from PlayerListSerializer's fields so exports never drift from the read API); ClubExportView (new APIView, IsAuthenticated-only -- club data isn't user-owned) streams club profile + transfer_aggregates reusing ClubDetailSerializer, with its own local Echo copy (per-app duplication over cross-app import, per plan). Discovered and fixed a real Phase-8-wide gap while satisfying this plan's own full-suite verification requirement: pyproject.toml's pytest testpaths never included "workspace" since the app was scaffolded in 08-01, so all of workspace/tests/ (every prior Phase 8 plan's tests) was silently excluded from every "full suite green" claim to date. Fixed by adding "workspace" to testpaths; full suite now correctly reports 144 passed, 305 skipped, 0 failed (up from the previously-undercounted 112 passed). Phase 8 is now feature-complete pending goal-backward verification.
+- [Phase 09]: [Phase 09-01]: anthropic SDK pinned to a narrow 0.x minor-band (>=0.120,<0.130); ANTHROPIC_MODEL default claude-haiku-4-5 build-time verified via the installed SDK's own ModelParam Literal type (no local API key available to hit the live /v1/models endpoint); test isolation for ANTHROPIC_API_KEY implemented as an autouse monkeypatch guard in players/tests/conftest.py rather than a test-settings module
 
 ### Pending Todos
 
@@ -163,11 +165,11 @@ Recent decisions affecting current work:
 
 - Scoring engine curation (Phase 3) requires direct manual review of impact_model_v4.1.py to identify authoritative duplicated functions — no external pattern to follow, flagged by research as needing deeper analysis during planning.
 - RESOLVED (03-05): Transfer Probability (SCORE-04) is confirmed a fully deterministic, non-ML weighted formula (0.30*compat + 0.20*perf + 0.20*financial + 0.30*contract_fit) — the RandomForestRegressor in impact_model_v4.1.py is the Financial Fit (TFM) artifact instead (Plan 06's concern), not Transfer Probability. No sklearn-parity risk for SCORE-04 itself; TFM (financial_score's ML sibling) still needs Phase 5 parity/quality validation.
-- AI layer (Phases 9-10) LLM library/API surface should get a fresh check at build time given how fast that space moves.
+- RESOLVED (09-01): AI layer LLM library/API surface checked fresh at build time -- anthropic==0.120.0 installed 2026-07-25, ANTHROPIC_MODEL default claude-haiku-4-5 confirmed current via the SDK's own bundled ModelParam Literal type (no local API key to hit the live /v1/models endpoint). Phase 10 (if it adds further Anthropic usage) should re-verify if executed much later, since 0.x SDK minors can drift.
 - RESOLVED (06-01): The migration get-scouted-be/players/migrations/0002_denormalized_scores.py (from Plan 06-01's Player model change) was briefly knocked untracked by a git race between the two parallel wave-1 executors (06-01/06-02); committed cleanly as 5d71090, manage.py showmigrations confirms it applied. See 06-scoring-performance-caching-layer/deferred-items.md.
 
 ## Session Continuity
 
-Last session: 2026-07-25T06:17:28.047Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-ai-provider-interface-natural-language-search/09-CONTEXT.md
+Last session: 2026-07-25T09:50:17.741Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None

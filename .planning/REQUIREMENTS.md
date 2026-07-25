@@ -50,7 +50,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **AI-02**: NL query parsing gracefully falls back (partial parse / keyword fallback) when input is ambiguous or unparseable
 - [ ] **AI-03**: User can request an AI-generated scouting report for a player (strengths, weaknesses, tactical fit, financial fit, best use case), strictly grounded in already-computed scores/stats
 - [ ] **AI-04**: User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints), grounded in Position Needs and Transfer Behaviour aggregates
-- [ ] **AI-05**: The LLM integration is built behind a provider-agnostic interface so the concrete provider can be swapped without touching calling code
+- [x] **AI-05**: The LLM integration is built behind a provider-agnostic interface so the concrete provider can be swapped without touching calling code
 
 ### Squad Planning & Matching
 
@@ -122,7 +122,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-02 | Phase 9 | Pending |
 | AI-03 | Phase 10 | Pending |
 | AI-04 | Phase 10 | Pending |
-| AI-05 | Phase 9 | Pending |
+| AI-05 | Phase 9 | Complete |
 | PLAN-01 | Phase 11 | Pending |
 | PLAN-02 | Phase 12 | Pending |
 | PLAN-03 | Phase 11 | Pending |
