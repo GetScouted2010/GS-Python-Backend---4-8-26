@@ -18,6 +18,7 @@ from players.models import Player
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
 from scoring.exceptions import null_with_reason
 from scoring.services import rmm, summary
+from workspace.models import RecentActivity
 
 
 class PlayerListView(generics.ListAPIView):
@@ -48,6 +49,9 @@ class PlayerDetailView(APIView):
 
     def get(self, request, pk):
         player = get_object_or_404(Player, id=pk)
+        RecentActivity.objects.create(
+            user=request.user, activity_type="viewed_player", target_id=player.id
+        )
         profile = PlayerDetailSerializer(player).data
 
         club_id = request.query_params.get("club_id") or player.club_id

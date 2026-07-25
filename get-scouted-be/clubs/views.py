@@ -13,6 +13,7 @@ from clubs.filters import ClubFilter
 from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer, ClubListSerializer
 from core.pagination import IdsBypassPagination
+from workspace.models import RecentActivity
 
 
 class ClubListView(generics.ListAPIView):
@@ -36,3 +37,10 @@ class ClubDetailView(generics.RetrieveAPIView):
     queryset = Club.objects.all()
     serializer_class = ClubDetailSerializer
     lookup_field = "pk"
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        RecentActivity.objects.create(
+            user=request.user, activity_type="viewed_club", target_id=kwargs["pk"]
+        )
+        return response
