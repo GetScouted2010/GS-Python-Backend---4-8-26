@@ -1,12 +1,13 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, viewsets
+from rest_framework import generics, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from workspace.models import Shortlist, ShortlistEntry, SquadPlan, Watchlist
+from workspace.models import RecentActivity, Shortlist, ShortlistEntry, SquadPlan, Watchlist
 from workspace.permissions import IsOwner
 from workspace.serializers import (
+    RecentActivitySerializer,
     ShortlistEntrySerializer,
     ShortlistSerializer,
     SquadPlanDetailSerializer,
@@ -77,3 +78,10 @@ class SquadPlanViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return SquadPlanListSerializer
         return SquadPlanDetailSerializer
+
+
+class RecentActivityListView(generics.ListAPIView):
+    serializer_class = RecentActivitySerializer
+
+    def get_queryset(self):
+        return RecentActivity.objects.filter(user=self.request.user).order_by("-created_at")

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from players.serializers import PlayerListSerializer
-from workspace.models import Shortlist, ShortlistEntry, SquadPlan, Watchlist
+from workspace.models import RecentActivity, Shortlist, ShortlistEntry, SquadPlan, Watchlist
 
 
 class WatchlistSerializer(serializers.ModelSerializer):
@@ -66,3 +66,10 @@ class SquadPlanDetailSerializer(serializers.ModelSerializer):
             if entry["action"] == "swap" and not entry.get("incoming_player_id"):
                 raise serializers.ValidationError("swap entries require incoming_player_id.")
         return value
+
+
+class RecentActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecentActivity
+        fields = ["id", "activity_type", "target_id", "query_text", "created_at"]
+        read_only_fields = fields
