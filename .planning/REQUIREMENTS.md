@@ -38,7 +38,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CRUD-03**: User can retrieve a single Player's full profile, season-by-season stats, and score breakdowns
 - [x] **CRUD-04**: User can retrieve a single Club's full profile, squad overview, and transfer behaviour aggregates
 - [x] **CRUD-05**: User can fetch multiple players/clubs by ID in one request for side-by-side comparison
-- [ ] **CRUD-06**: User can save/remove players to/from a personal Watchlist
+- [x] **CRUD-06**: User can save/remove players to/from a personal Watchlist
 - [ ] **CRUD-07**: User can create, name, and manage Shortlists tied to a club context
 - [ ] **CRUD-08**: User can create and manage Squad Plans (formation, current squad, proposed changes)
 - [ ] **CRUD-09**: User's Recent Activity (searches, viewed players) is recorded and retrievable
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-03 | Phase 7 | Complete (full profile + real single-season snapshot + score breakdowns via `get_summary()`; explicit club=None fallback) |
 | CRUD-04 | Phase 7 | Complete (full profile + squad via `PlayerListSerializer` + transfer aggregates from `market_value_at_transfer`, never `fee`) |
 | CRUD-05 | Phase 7 | Complete (`?ids=` reuses list endpoints for both Players and Clubs, unpaginated, capped at 100) |
-| CRUD-06 | Phase 8 | Pending |
+| CRUD-06 | Phase 8 | Complete |
 | CRUD-07 | Phase 8 | Pending |
 | CRUD-08 | Phase 8 | Pending |
 | CRUD-09 | Phase 8 | Pending |

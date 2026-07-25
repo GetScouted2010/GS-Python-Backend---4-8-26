@@ -217,7 +217,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
 | 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
 | 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
-| 8. User Workspace CRUD | 0/6 | Planned | - |
+| 8. User Workspace CRUD | 2/6 | In Progress|  |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
 | 10. AI Grounded Report Generation | 0/TBD | Not started | - |
 | 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
