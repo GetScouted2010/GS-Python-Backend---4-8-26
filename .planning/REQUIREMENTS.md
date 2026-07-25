@@ -42,7 +42,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CRUD-07**: User can create, name, and manage Shortlists tied to a club context
 - [x] **CRUD-08**: User can create and manage Squad Plans (formation, current squad, proposed changes)
 - [x] **CRUD-09**: User's Recent Activity (searches, viewed players) is recorded and retrievable
-- [ ] **CRUD-10**: User can export a Shortlist or Club report as CSV
+- [x] **CRUD-10**: User can export a Shortlist or Club report as CSV
 
 ### AI Features
 
@@ -117,7 +117,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-07 | Phase 8 | Complete |
 | CRUD-08 | Phase 8 | Complete |
 | CRUD-09 | Phase 8 | Complete |
-| CRUD-10 | Phase 8 | Pending |
+| CRUD-10 | Phase 8 | Complete |
 | AI-01 | Phase 9 | Pending |
 | AI-02 | Phase 9 | Pending |
 | AI-03 | Phase 10 | Pending |

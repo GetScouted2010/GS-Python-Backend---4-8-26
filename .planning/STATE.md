@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 08-05-PLAN.md
-last_updated: "2026-07-25T05:52:53.373Z"
+stopped_at: Completed 08-06-PLAN.md
+last_updated: "2026-07-25T07:00:43+01:00"
 progress:
   total_phases: 12
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 45
-  completed_plans: 44
+  completed_plans: 45
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 08 (user-workspace-crud) — EXECUTING
-Plan: 5 of 6 (08-05 complete: CRUD-09 RecentActivity auto-logging on player/club detail views + GET /api/workspace/activity/, full suite green with zero regression; 08-06 remains)
+Phase: 08 (user-workspace-crud) — Plan 6 of 6 complete, ready for phase verification
+Plan: 6 of 6 (08-06 complete: CRUD-10 CSV export -- shortlist export IsOwner-gated via ShortlistViewSet.export, club report export via ClubExportView, both streaming via StreamingHttpResponse+Echo+csv.writer reusing PlayerListSerializer/ClubDetailSerializer columns; full suite green 144 passed/305 skipped/0 failed, now correctly including workspace/tests/ after fixing a pytest testpaths gap)
 
 ## Performance Metrics
 
@@ -85,6 +85,7 @@ Plan: 5 of 6 (08-05 complete: CRUD-09 RecentActivity auto-logging on player/club
 | Phase 08 P03 | 4min | 2 tasks | 4 files |
 | Phase 08 P04 | 6min | 2 tasks | 4 files |
 | Phase 08 P05 | 8min | 3 tasks | 6 files |
+| Phase 08 P06 | 8min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -151,6 +152,7 @@ Recent decisions affecting current work:
 - [Phase 08]: [Phase 08-03]: Shortlist CRUD + nested entries (CRUD-07) live under /api/workspace/shortlists/, using a self.get_object()-based @action nested-resource pattern for entries/delete_entry that inherits IsOwner from the parent Shortlist without drf-nested-routers; 08-02's permission_classes=[IsAuthenticated, IsOwner] fix applied proactively this time, no deviation needed
 - [Phase 08]: [Phase 08-04]: SquadPlan CRUD (CRUD-08) live under /api/workspace/squad-plans/, establishing the list/detail serializer split (SquadPlanListSerializer lightweight vs SquadPlanDetailSerializer with a SerializerMethodField current_squad derived live via PlayerListSerializer(obj.club.players.all()) -- never frozen, setting up Phase 11's simulation); proposed_changes JSONField validated at write time (list of dicts, action in {add,remove,swap}, swap requires incoming_player_id) via validate_proposed_changes on the detail serializer, which runs on create since create uses the detail serializer; permission_classes=[IsAuthenticated, IsOwner] applied per the 08-02/08-03 established pattern (plan's literal [IsOwner] auto-corrected, Rule 1)
 - [Phase 08-user-workspace-crud]: [Phase 08-05]: RecentActivity auto-logged via explicit writes inside PlayerDetailView.get (post-get_object_or_404) and a new ClubDetailView.retrieve() override (RetrieveAPIView had no prior hook); RecentActivityListView needs no permission_classes override (get_queryset scoping + global IsAuthenticated default already deny anonymous with 401); test suite monkeypatches players.views.rmm.get_rmm for club=None PlayerFactory rows to avoid a real scoring-engine reconstruction against the empty pytest test DB, mirroring players/tests/test_views.py's established pattern; full suite (112 passed, 305 skipped, 0 failed) plus a live manage.py shell check against the real 41,708-player/1,060-club dev DB confirmed zero regression in Phase 7's player/club detail response contracts
+- [Phase 08-user-workspace-crud]: [Phase 08-06]: CRUD-10 CSV export complete -- ShortlistViewSet.export @action (IsOwner-gated via get_object()) streams shortlist players via StreamingHttpResponse+Echo+csv.writer, columns pinned to PLAYER_EXPORT_COLUMNS (drawn from PlayerListSerializer's fields so exports never drift from the read API); ClubExportView (new APIView, IsAuthenticated-only -- club data isn't user-owned) streams club profile + transfer_aggregates reusing ClubDetailSerializer, with its own local Echo copy (per-app duplication over cross-app import, per plan). Discovered and fixed a real Phase-8-wide gap while satisfying this plan's own full-suite verification requirement: pyproject.toml's pytest testpaths never included "workspace" since the app was scaffolded in 08-01, so all of workspace/tests/ (every prior Phase 8 plan's tests) was silently excluded from every "full suite green" claim to date. Fixed by adding "workspace" to testpaths; full suite now correctly reports 144 passed, 305 skipped, 0 failed (up from the previously-undercounted 112 passed). Phase 8 is now feature-complete pending goal-backward verification.
 
 ### Pending Todos
 
@@ -166,6 +168,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-25T05:52:53.373Z
-Stopped at: Completed 08-05-PLAN.md
+Last session: 2026-07-25T07:00:43+01:00
+Stopped at: Completed 08-06-PLAN.md
 Resume file: None

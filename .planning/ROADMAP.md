@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Scoring Parity Testing** - The Django port is proven numerically faithful to the original script within tolerance, for every position group (completed 2026-07-24)
 - [x] **Phase 6: Scoring Performance & Caching Layer** - Live per-entity scoring runs in O(1) time against precomputed, cached aggregates (completed 2026-07-24)
 - [ ] **Phase 7: Core CRUD - Players & Clubs** - Users can browse, filter, inspect, and compare real player and club data including scores
-- [ ] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export
+- [x] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export (completed 2026-07-25)
 - [ ] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface
 - [ ] **Phase 10: AI Grounded Report Generation** - Users can request AI-written scouting reports and club insights grounded in real computed scores
 - [ ] **Phase 11: Position Needs & Squad Simulation** - Users can see squad weaknesses and simulate changes before committing
@@ -217,7 +217,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Scoring Parity Testing | 4/4 | Complete   | 2026-07-24 |
 | 6. Scoring Performance & Caching Layer | 7/7 | Complete   | 2026-07-24 |
 | 7. Core CRUD - Players & Clubs | 3/3 | In Progress | - |
-| 8. User Workspace CRUD | 3/6 | In Progress|  |
+| 8. User Workspace CRUD | 6/6 | Complete   | 2026-07-25 |
 | 9. AI Provider Interface & Natural-Language Search | 0/TBD | Not started | - |
 | 10. AI Grounded Report Generation | 0/TBD | Not started | - |
 | 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
