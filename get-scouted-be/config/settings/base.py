@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "core",
     "accounts",
     "scoring",
+    "workspace",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
