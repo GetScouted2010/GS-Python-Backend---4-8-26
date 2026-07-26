@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-07-26T06:23:24.547Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-07-26T06:24:16.567Z"
 progress:
   total_phases: 12
   completed_phases: 11
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 11 (position-needs-squad-simulation) — EXECUTING
-Plan: 2 of 2
+Phase: 11 (position-needs-squad-simulation) — READY FOR VERIFICATION
+Plan: 2 of 2 (all plans executed)
 
 ## Performance Metrics
 
@@ -96,6 +96,7 @@ Plan: 2 of 2
 | Phase 10-ai-grounded-report-generation P04 | 12min | 3 tasks | 7 files |
 | Phase 10-ai-grounded-report-generation P05 | 8min | 1 tasks | 1 files |
 | Phase 11 P01 | 12min | 2 tasks | 5 files |
+| Phase 11 P02 | 12min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -173,6 +174,7 @@ Recent decisions affecting current work:
 - [Phase 10-ai-grounded-report-generation]: [10-04]: AI-04 complete end-to-end -- clubs/tests/conftest.py gained its own ported autouse _block_real_anthropic_calls guard (closing the confirmed cross-app safety-net gap, sequenced/committed first); clubs/services.py::position_needs_aggregate(club) is a single bounded ORM .values("position").annotate() group-by scoped to club.players (never pandas, matching Phase 6 SCORE-07 precedent); generate_club_insights(club_id) combines it with ClubDetailSerializer().get_transfer_aggregates(club) (called on a bare instance to skip the heavy get_squad path) and generates narrative via the cross-app players.ai.report_factory.get_report_generator(), propagating ReportGeneratorError unswallowed; ClubInsightsView (POST /api/clubs/{id}/insights/) is the single catch point mapping it to a clean 503 (locked decision #6), with unknown-club Http404 left to surface naturally. Full clubs suite green (17 passed, 6 skipped, no regression). Note: a concurrent 10-03 executor's completion commit (651758c) incidentally captured this plan's already-staged Task 3 files (clubs/views.py, clubs/urls.py, clubs/tests/test_ai_club_insights.py) due to a parallel-execution git race -- content verified correct and fully authored by this plan, zero functional impact, documented in 10-04-SUMMARY.md.
 - [Phase 10-ai-grounded-report-generation]: [10-05]: Phase gate complete -- independently re-derived full-suite result (214 passed, 315 skipped, 0 failed), confirmed all 8 Phase-10 test files collect their 40 tests, confirmed zero regression in players+clubs (89 passed, 22 skipped, 0 failed), confirmed both new AI routes resolve; live real-LLM narrative check recorded as an explicit deferred manual follow-up since no ANTHROPIC_API_KEY is available in this environment, mirroring Phase 9's 09-01 same-constraint handling. Phase 10 (AI-03, AI-04) is functionally complete.
 - [Phase 11]: PLAN-01 classify_position_needs layers weak/at-risk/strong onto position_needs_aggregate (never recomputes); thresholds locked by 11-CONTEXT.md, avg_age None-guard mandatory; GET /api/clubs/{id}/position-needs/ route placed above the <uuid:pk>/ catch-all
+- [Phase 11-position-needs-squad-simulation]: [Phase 11]: [11-02]: POST /api/workspace/squad-plans/{id}/simulate/ applies add/remove/swap proposed_changes (stored or ad-hoc override) to a club's live squad entirely in memory via a NEW workspace/services.py::simulate_squad_change -- never writes to the DB; avg score uses Player.impact_score exclusively (club-independent RMM), never the three own-club-context denormalized score fields; single bulk Player.objects.filter(id__in=...) fetch (no N+1) raises InvalidPlayerReference (mapped to 400) on unknown ids; null age/impact_score/market_value excluded from averages/sums, never coerced to 0. Full backend suite 231 passed/315 skipped/0 failed, no regression.
 
 ### Pending Todos
 
@@ -190,6 +192,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T06:22:45.954Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-07-26T06:24:16.563Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None

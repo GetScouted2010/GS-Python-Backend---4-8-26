@@ -56,7 +56,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **PLAN-01**: User can view Position Needs analysis (strong/weak/at-risk) for a club's squad, based on depth, contract expiry, and age profile
 - [ ] **PLAN-02**: User can get AI-suggested replacement players for a weak position, ranked by RMM/CS/TFM fit
-- [ ] **PLAN-03**: User can simulate a squad change (add/remove/swap) and get recalculated aggregate squad metrics (avg age, avg score, budget/wage impact) without persisting until committed
+- [x] **PLAN-03**: User can simulate a squad change (add/remove/swap) and get recalculated aggregate squad metrics (avg age, avg score, budget/wage impact) without persisting until committed
 - [ ] **PLAN-04**: User can get a ranked list of clubs that fit a given player (Player → Club Matching), scored by CS/TFM
 
 ## v2 Requirements
@@ -125,7 +125,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-05 | Phase 9 | Complete (`get_nl_query_parser()` factory dispatches on `LLM_PROVIDER`; calling code imports only the abstract interface, never `AnthropicNLQueryParser` directly — verified via grep, not just declared) |
 | PLAN-01 | Phase 11 | Complete |
 | PLAN-02 | Phase 12 | Pending |
-| PLAN-03 | Phase 11 | Pending |
+| PLAN-03 | Phase 11 | Complete |
 | PLAN-04 | Phase 12 | Pending |
 
 **Coverage:**
