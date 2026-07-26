@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-07-26T18:10:28.203Z"
+stopped_at: Completed 12-04-PLAN.md
+last_updated: "2026-07-26T18:28:10.066Z"
 progress:
   total_phases: 12
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 60
-  completed_plans: 59
+  completed_plans: 60
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 12 — bidirectional-matching-replacements-player-club-fit
+**Current focus:** Phase 12 — bidirectional-matching-replacements-player-club-fit (all plans executed; pending goal-backward verification -- final phase of v1)
 
 ## Current Position
 
-Phase: 12 (bidirectional-matching-replacements-player-club-fit) — EXECUTING
-Plan: 3 of 4 complete (next: 12-04)
+Phase: 12 (bidirectional-matching-replacements-player-club-fit) — ALL PLANS EXECUTED, PENDING VERIFICATION
+Plan: 4 of 4 complete (phase 12 functionally complete; this is the final phase of the v1 roadmap)
 
 ## Performance Metrics
 
@@ -100,6 +100,7 @@ Plan: 3 of 4 complete (next: 12-04)
 | Phase 12 P01 | 15min | 2 tasks | 4 files |
 | Phase 12 P02 | 20min | 3 tasks | 4 files |
 | Phase 12 P03 | 15min | 3 tasks | 2 files |
+| Phase 12 P04 | 20min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -180,13 +181,15 @@ Recent decisions affecting current work:
 - [Phase 11-position-needs-squad-simulation]: [Phase 11]: [11-02]: POST /api/workspace/squad-plans/{id}/simulate/ applies add/remove/swap proposed_changes (stored or ad-hoc override) to a club's live squad entirely in memory via a NEW workspace/services.py::simulate_squad_change -- never writes to the DB; avg score uses Player.impact_score exclusively (club-independent RMM), never the three own-club-context denormalized score fields; single bulk Player.objects.filter(id__in=...) fetch (no N+1) raises InvalidPlayerReference (mapped to 400) on unknown ids; null age/impact_score/market_value excluded from averages/sums, never coerced to 0. Full backend suite 231 passed/315 skipped/0 failed, no regression.
 - [Phase 12]: [Phase 12-01]: scoring/services/matching.py created as the single shared module both bidirectional-matching directions (rank_replacement_players/rank_clubs_for_player) will implement against, with a fully-implemented shared _attach_real_tfm helper that bounds real-TFM enrichment to the top-N only; test_matching_reuses_shared_primitives uses ast-based import parsing (not substring matching) to be a genuine structural guard, not a docstring-fooled false pass
 - [Phase 12]: [Phase 12-03]: rank_clubs_for_player implemented via Pattern 2 (locked correctness fix) -- squad_stats computed ONCE over the full population (never a compute_cs_tp_for_pairs single-row slice), club-independent terms (player_impact, performance_score, own_best_role, contract_fit) computed once, per-club loop varies only role-fit/compatibility + O(1) squad_stats lookup. test_matching_reuses_shared_primitives now genuinely green (also fixed a latent unhashable-set TypeError in its Wave-0 scaffold that only surfaced once the real imports landed). Live-measured Pattern 2 latency: ~78.3-78.7s cold (no prior benchmark), exceeding the plan's own ~60s flag threshold -- no caching added per 12-CONTEXT.md's deferred-caching decision; flagged for the 12-04 phase gate.
+- [Phase 12]: [Phase 12]: [Phase 12-04]: GET /api/players/{id}/club-matches/ live (ClubMatchesView), registered above the <uuid:pk>/ catch-all. Fixed 3 Rule-1 bugs surfaced by the endpoint's own empty-Club-table test scaffold: build_team_styles_df now guards a genuinely empty Club table (mirrors build_transfers_df's existing convention), rank_clubs_for_player now returns an empty results list when zero candidate clubs exist (mirrors rank_replacement_players' own guard), and test_club_matches_view.py gained an autouse cache-clearing fixture since reconstruct_population/get_scored_population are intentionally process-level lru_cache'd and went stale across this file's per-test isolated Player fixtures. Full backend suite green: 241 passed, 321 skipped, 0 failed (the previously-tracked accounts/tests/test_permissions.py::test_director_read_only_visibility failure no longer reproduces). Live dual-endpoint spike against the real dev DB confirmed both rank_replacement_players (120.1s cold in this run) and rank_clubs_for_player (78.3-78.7s independently cold per 12-03; 4.5s in this run's warm-reconstruct-cache back-to-back spike) return correct, bounded, TFM-enriched results. PLAN-02 and PLAN-04 are functionally complete; marking REQUIREMENTS.md complete is the goal-backward verifier's call. Phase 12 (final v1 phase) is functionally complete pending verification.
 
 ### Pending Todos
 
-- Fix accounts/tests/test_permissions.py::test_director_read_only_visibility (paginated response.data["results"] indexing) -- pre-existing regression from 07-01's pagination wiring, tracked in .planning/phases/07-core-crud-players-clubs/deferred-items.md
+- RESOLVED (12-04): accounts/tests/test_permissions.py::test_director_read_only_visibility (pre-existing regression from 07-01's pagination wiring, tracked in .planning/phases/07-core-crud-players-clubs/deferred-items.md) no longer reproduces -- confirmed passing both in isolation and as part of the full 12-04 suite run (241 passed, 321 skipped, 0 failed)
 - Phase 07 goal-backward verification (all 3 plans executed; CRUD-02/04/05 completion in REQUIREMENTS.md is the verifier's call)
 - Live real-LLM narrative spot-check for Phase 10 (scouting report + club insights) deferred -- requires a real ANTHROPIC_API_KEY not available in this environment; manual verification steps recorded in 10-05-SUMMARY.md
 - Phase 10 goal-backward verification (all 5 plans executed; AI-03/AI-04 completion in REQUIREMENTS.md is the verifier's call)
+- Phase 12 goal-backward verification (all 4 plans executed; PLAN-02/PLAN-04 completion in REQUIREMENTS.md is the verifier's call) -- this is the FINAL phase of the v1 roadmap; milestone-level verification is the remaining step after this
 
 ### Blockers/Concerns
 
@@ -197,6 +200,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T18:10:28.199Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-07-26T18:28:10.062Z
+Stopped at: Completed 12-04-PLAN.md
 Resume file: None

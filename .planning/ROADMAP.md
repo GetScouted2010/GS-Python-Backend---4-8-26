@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface (completed 2026-07-25)
 - [x] **Phase 10: AI Grounded Report Generation** - Users can request AI-written scouting reports and club insights grounded in real computed scores (completed 2026-07-26)
 - [x] **Phase 11: Position Needs & Squad Simulation** - Users can see squad weaknesses and simulate changes before committing (completed 2026-07-26)
-- [ ] **Phase 12: Bidirectional Matching - Replacements & Player-Club Fit** - Users can get ranked replacement players and ranked club fits off one shared ranking primitive
+- [x] **Phase 12: Bidirectional Matching - Replacements & Player-Club Fit** - Users can get ranked replacement players and ranked club fits off one shared ranking primitive (completed 2026-07-26)
 
 ## Phase Details
 
@@ -216,7 +216,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 12-01-PLAN.md — Foundation: scoring/services/matching.py skeleton (both ranking signatures + shared _attach_real_tfm top-N enrichment helper) + Wave 0 test scaffolds (wave 1)
 - [x] 12-02-PLAN.md — PLAN-02: rank_replacement_players (Pattern 1, direct score_population reuse) + top-N real-TFM + GET /api/clubs/{id}/replacements/ (wave 2)
 - [x] 12-03-PLAN.md — PLAN-04 service: rank_clubs_for_player (Pattern 2, squad_stats computed once) + live latency spike + top-N real-TFM (wave 3)
-- [ ] 12-04-PLAN.md — PLAN-04 endpoint: GET /api/players/{id}/club-matches/ + phase gate (full suite + live dual-endpoint spike) (wave 4)
+- [x] 12-04-PLAN.md — PLAN-04 endpoint: GET /api/players/{id}/club-matches/ + phase gate (full suite + live dual-endpoint spike) (wave 4)
 
 ## Progress
 
@@ -236,7 +236,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 9. AI Provider Interface & Natural-Language Search | 4/4 | Complete   | 2026-07-25 |
 | 10. AI Grounded Report Generation | 5/5 | Complete   | 2026-07-26 |
 | 11. Position Needs & Squad Simulation | 2/2 | Complete    | 2026-07-26 |
-| 12. Bidirectional Matching - Replacements & Player-Club Fit | 3/4 | In Progress|  |
+| 12. Bidirectional Matching - Replacements & Player-Club Fit | 4/4 | Complete   | 2026-07-26 |
 
 ---
 *Roadmap created: 2026-07-20*
