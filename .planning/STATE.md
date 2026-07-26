@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 12 context gathered
-last_updated: "2026-07-26T14:58:29.374Z"
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-07-26T17:02:27.038Z"
 progress:
   total_phases: 12
   completed_phases: 11
-  total_plans: 56
-  completed_plans: 56
+  total_plans: 60
+  completed_plans: 57
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 11 — position-needs-squad-simulation
+**Current focus:** Phase 12 — bidirectional-matching-replacements-player-club-fit
 
 ## Current Position
 
-Phase: 11 (position-needs-squad-simulation) — READY FOR VERIFICATION
-Plan: 2 of 2 (all plans executed)
+Phase: 12 (bidirectional-matching-replacements-player-club-fit) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -97,6 +97,7 @@ Plan: 2 of 2 (all plans executed)
 | Phase 10-ai-grounded-report-generation P05 | 8min | 1 tasks | 1 files |
 | Phase 11 P01 | 12min | 2 tasks | 5 files |
 | Phase 11 P02 | 12min | 2 tasks | 3 files |
+| Phase 12 P01 | 15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,7 @@ Recent decisions affecting current work:
 - [Phase 10-ai-grounded-report-generation]: [10-05]: Phase gate complete -- independently re-derived full-suite result (214 passed, 315 skipped, 0 failed), confirmed all 8 Phase-10 test files collect their 40 tests, confirmed zero regression in players+clubs (89 passed, 22 skipped, 0 failed), confirmed both new AI routes resolve; live real-LLM narrative check recorded as an explicit deferred manual follow-up since no ANTHROPIC_API_KEY is available in this environment, mirroring Phase 9's 09-01 same-constraint handling. Phase 10 (AI-03, AI-04) is functionally complete.
 - [Phase 11]: PLAN-01 classify_position_needs layers weak/at-risk/strong onto position_needs_aggregate (never recomputes); thresholds locked by 11-CONTEXT.md, avg_age None-guard mandatory; GET /api/clubs/{id}/position-needs/ route placed above the <uuid:pk>/ catch-all
 - [Phase 11-position-needs-squad-simulation]: [Phase 11]: [11-02]: POST /api/workspace/squad-plans/{id}/simulate/ applies add/remove/swap proposed_changes (stored or ad-hoc override) to a club's live squad entirely in memory via a NEW workspace/services.py::simulate_squad_change -- never writes to the DB; avg score uses Player.impact_score exclusively (club-independent RMM), never the three own-club-context denormalized score fields; single bulk Player.objects.filter(id__in=...) fetch (no N+1) raises InvalidPlayerReference (mapped to 400) on unknown ids; null age/impact_score/market_value excluded from averages/sums, never coerced to 0. Full backend suite 231 passed/315 skipped/0 failed, no regression.
+- [Phase 12]: [Phase 12-01]: scoring/services/matching.py created as the single shared module both bidirectional-matching directions (rank_replacement_players/rank_clubs_for_player) will implement against, with a fully-implemented shared _attach_real_tfm helper that bounds real-TFM enrichment to the top-N only; test_matching_reuses_shared_primitives uses ast-based import parsing (not substring matching) to be a genuine structural guard, not a docstring-fooled false pass
 
 ### Pending Todos
 
@@ -192,6 +194,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T14:58:29.368Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-bidirectional-matching-replacements-player-club-fit/12-CONTEXT.md
+Last session: 2026-07-26T17:02:27.028Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None
