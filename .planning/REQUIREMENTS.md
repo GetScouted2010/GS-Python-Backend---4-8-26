@@ -48,7 +48,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **AI-01**: User can submit a natural-language query parsed into structured filters (position, age, value, league, style) against a fixed whitelist of real fields
 - [x] **AI-02**: NL query parsing gracefully falls back (partial parse / keyword fallback) when input is ambiguous or unparseable
-- [ ] **AI-03**: User can request an AI-generated scouting report for a player (strengths, weaknesses, tactical fit, financial fit, best use case), strictly grounded in already-computed scores/stats
+- [x] **AI-03**: User can request an AI-generated scouting report for a player (strengths, weaknesses, tactical fit, financial fit, best use case), strictly grounded in already-computed scores/stats
 - [ ] **AI-04**: User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints), grounded in Position Needs and Transfer Behaviour aggregates
 - [x] **AI-05**: The LLM integration is built behind a provider-agnostic interface so the concrete provider can be swapped without touching calling code
 

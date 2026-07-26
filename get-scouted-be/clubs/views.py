@@ -11,13 +11,16 @@ import csv
 
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from clubs import services
 from clubs.filters import ClubFilter
 from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer, ClubListSerializer
 from core.pagination import IdsBypassPagination
+from players.ai.report_generator import ReportGeneratorError
 from workspace.models import RecentActivity
 
 
@@ -91,3 +94,26 @@ class ClubExportView(APIView):
             content_type="text/csv",
             headers={"Content-Disposition": f'attachment; filename="club-{club.id}.csv"'},
         )
+
+
+class ClubInsightsView(APIView):
+    """POST /api/clubs/{id}/insights/ -- AI-04: AI-generated club insights
+    (recruitment gaps, over-aged positions, financial constraints), grounded
+    in position-needs + transfer-behaviour aggregates. No explicit
+    permission_classes -- global IsAuthenticated default (matching
+    ClubExportView; club data is not user-owned, so no IsOwner).
+
+    A generation failure (ReportGeneratorError) returns a clean 503 --
+    NEVER a fabricated report (locked decision #6). A nonexistent club's
+    Http404 (from generate_club_insights' get_object_or_404) is left to
+    surface naturally, not caught."""
+
+    def post(self, request, pk):
+        try:
+            insights = services.generate_club_insights(pk)
+        except ReportGeneratorError:
+            return Response(
+                {"error": "insights generation failed"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response(insights)

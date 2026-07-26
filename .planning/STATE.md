@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-07-26T05:08:56.442Z"
+stopped_at: Completed 10-03-PLAN.md
+last_updated: "2026-07-26T05:16:01.018Z"
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 54
-  completed_plans: 51
+  completed_plans: 52
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 10 (ai-grounded-report-generation) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 
 ## Performance Metrics
 
@@ -92,6 +92,7 @@ Plan: 3 of 5
 | Phase 09 P04 | 14min | 3 tasks | 3 files |
 | Phase 10 P01 | 15min | 2 tasks | 5 files |
 | Phase 10 P02 | 12min | 2 tasks | 4 files |
+| Phase 10-ai-grounded-report-generation P03 | 12min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -165,6 +166,7 @@ Recent decisions affecting current work:
 - [Phase 09]: [Phase 09-04]: PlayerSearchView wraps ONLY the tier-1 get_nl_query_parser().parse() call in try/except NLQueryParserError (search_players() stays outside, so a genuine DB error is a real 500, never masked as a fallback); fallback_used=False means the LLM's real answer even if empty/partial, only flips True when the LLM CALL itself failed; live-verified all 3 tiers + RecentActivity 'searched' logging against the real 41,708-player dev DB (tier-2 'strikers under 5m' -> 4,504 matches, tier-3 unparseable query -> full 41,708 unfiltered, tier-1 mocked success -> 25 real CB results); full suite 174 passed/315 skipped/0 failed, phase complete
 - [Phase 10]: [Phase 10-01]: ReportGenerator/GeneratedReport/ReportGeneratorError (players/ai/report_generator.py) mirror Phase 9's NLQueryParser triad exactly; ANTHROPIC_REPORT_MODEL added alongside ANTHROPIC_MODEL, build-time verified against installed anthropic==0.120.0's ModelParam Literal (had to extract the Literal member from a Union[Literal[...], str] shape, unlike Phase 9's simpler check) -- claude-sonnet-5 confirmed present, kept as default; grounding.py's validate_grounding required a ratio-denominator exemption (numbers immediately preceded by "/", e.g. the "10" in "7.4/10") to satisfy the plan's own accept-path behavior test -- anticipated by 10-RESEARCH.md's Pitfall 3
 - [Phase 10]: [10-02]: AnthropicReportGenerator uses plain (non-tool-use) client.messages.create(), section-parses narrative via re.split on exact ## <Header> anchors, and validates every number against grounding.validate_grounding with a bounded retry-once (never unbounded) before raising ReportGeneratorError; get_report_generator() mirrors Phase 9's get_nl_query_parser() factory exactly
+- [Phase 10-ai-grounded-report-generation]: [Phase 10]: [10-03]: AI-03 complete end-to-end -- generate_scouting_report never catches ReportGeneratorError (propagates to the view, which alone maps it to a clean 503, making a fabricated report structurally impossible); club_id resolution (body club_id or player.club_id) happens in the view before calling get_summary to avoid its misleading Http404 for a genuinely club-less player, surfaced instead as a clean 400; an unresolvable-but-present club_id is left to surface as get_summary's natural Http404, matching PlayerDetailView's posture. Full backend suite verified green: 204 passed, 315 skipped, 0 failed.
 
 ### Pending Todos
 
@@ -180,6 +182,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T05:08:56.438Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-07-26T05:16:01.014Z
+Stopped at: Completed 10-03-PLAN.md
 Resume file: None
