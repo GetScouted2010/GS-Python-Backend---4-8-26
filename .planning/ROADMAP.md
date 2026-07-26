@@ -186,11 +186,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints) grounded in real Position Needs and Transfer Behaviour aggregates.
   3. No report ever contains an LLM-invented number — all figures originate from the scoring/CRUD layers.
 **Plans**: 5 plans (4 waves)
-- [ ] 10-01-PLAN.md — Foundation: ANTHROPIC_REPORT_MODEL config + ReportGenerator interface contract + grounding validator (wave 1)
-- [ ] 10-02-PLAN.md — AnthropicReportGenerator (plain generation + section parse + grounding + retry-once) + get_report_generator() factory (wave 2)
-- [ ] 10-03-PLAN.md — Player scouting-report slice (AI-03): generate_scouting_report service + POST /api/players/{id}/scouting-report/ + clean-error path (wave 3)
-- [ ] 10-04-PLAN.md — Club-insights slice (AI-04): clubs/tests conftest safety-net port + position_needs_aggregate + generate_club_insights + POST /api/clubs/{id}/insights/ (wave 3)
-- [ ] 10-05-PLAN.md — Full-suite regression check + Phase-10 collection verify + live real-LLM spot-check/deferral (wave 4)
+- [x] 10-01-PLAN.md — Foundation: ANTHROPIC_REPORT_MODEL config + ReportGenerator interface contract + grounding validator (wave 1) (completed 2026-07-26)
+- [x] 10-02-PLAN.md — AnthropicReportGenerator (plain generation + section parse + grounding + retry-once) + get_report_generator() factory (wave 2) (completed 2026-07-26)
+- [x] 10-03-PLAN.md — Player scouting-report slice (AI-03): generate_scouting_report service + POST /api/players/{id}/scouting-report/ + clean-error path (wave 3) (completed 2026-07-26)
+- [x] 10-04-PLAN.md — Club-insights slice (AI-04): clubs/tests conftest safety-net port + position_needs_aggregate + generate_club_insights + POST /api/clubs/{id}/insights/ (wave 3) (completed 2026-07-26)
+- [x] 10-05-PLAN.md — Full-suite regression check + Phase-10 collection verify + live real-LLM spot-check/deferral (wave 4) (completed 2026-07-26)
 
 ### Phase 11: Position Needs & Squad Simulation
 **Goal**: Users can see where a club's squad is weak and simulate changes before committing to them.
