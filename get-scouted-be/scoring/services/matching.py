@@ -19,18 +19,42 @@ separate from the real-TFM `financial_fit` object this helper attaches.
 
 No LLM call anywhere in this module.
 
-Implementation of the two ranking functions lands in later plans:
-`rank_replacement_players` in 12-02-PLAN.md, `rank_clubs_for_player` in
-12-03-PLAN.md. This module only establishes the shared contract + the fully
-implemented shared enrichment primitive.
+`rank_replacement_players` (Pattern 1) is implemented per 12-02-PLAN.md and
+`rank_clubs_for_player` (Pattern 2) is implemented per 12-03-PLAN.md, both
+against the shared contract + the fully implemented shared enrichment
+primitive established here.
 """
 
 from __future__ import annotations
 
-import pandas as pd
+import datetime
 
+import numpy as np
+import pandas as pd
+from django.http import Http404
+
+from scoring.characterization.deterministic_scores import (
+    _years_left_from_contract_expires,
+    classify_age_fit,
+    classify_fit,
+    contract_fit,
+    financial_score,
+    performance_score,
+    transfer_probability,
+)
+from scoring.characterization.role_fit import (
+    calculate_subjective_role_fit_for_player_to_team,
+    compatibility_score,
+    get_player_own_best_role,
+    normalise_position,
+)
 from scoring.services.financial_fit import get_financial_fit
-from scoring.services.population import reconstruct_population, resolve_club_name, score_population
+from scoring.services.population import (
+    get_scored_population,
+    reconstruct_population,
+    resolve_club_name,
+    score_population,
+)
 
 DEFAULT_TOP_N = 10
 
@@ -100,8 +124,102 @@ def rank_replacement_players(club_id, position: str, top_n: int = DEFAULT_TOP_N)
 
 def rank_clubs_for_player(player_id, top_n: int = DEFAULT_TOP_N) -> dict:
     """PLAN-04 (Pattern 2): rank clubs that fit a given player.
-    Implemented in 12-03-PLAN.md."""
-    raise NotImplementedError
+
+    Reuses the low-level pure scoring functions directly -- `compatibility_score`
+    (role_fit), `financial_score`/`transfer_probability` (deterministic_scores) --
+    with `squad_stats` (avg age / avg market value per club) computed ONCE over
+    the FULL population, then looked up O(1) per candidate club. This is the
+    LOCKED correctness fix for a verified bug: slicing `players_df` to a single
+    row before calling `compute_cs_tp_for_pairs` makes its internal
+    `groupby("Team")` squad_stats contain ONLY the player's own club, silently
+    NaN-ing `financial_score`/`transfer_probability` for every OTHER candidate
+    (12-RESEARCH.md Pitfall 1). `compute_cs_tp_for_pairs` is never called here.
+
+    Club-independent terms (player_impact/performance_score, own_best_role,
+    contract_fit) are computed once; only role-fit/compatibility and the
+    avg_age/avg_mv squad lookup vary per club. The player's own current club
+    is excluded from the ranked results. Real TFM (predicted_fee/value_verdict)
+    is attached only to the bounded top-N via the shared `_attach_real_tfm`
+    helper.
+    """
+    pop = reconstruct_population()
+    scored, _ = get_scored_population()  # memoized; "Player Impact" (RMM) is club-independent
+
+    players_with_roles = pop.players_df.merge(
+        pop.role_scores_wide, on="player_id", how="left", suffixes=("", "_role")
+    )
+    players_with_roles["_pid_str"] = players_with_roles["player_id"].astype(str)
+    match = players_with_roles[players_with_roles["_pid_str"] == str(player_id)]
+    if match.empty:
+        raise Http404(f"Player {player_id} not found")
+    player_row = match.iloc[0]
+    own_club_name = player_row.get("Team")
+
+    # --- club-INDEPENDENT terms: computed ONCE ---
+    scored_str = scored.copy()
+    scored_str["_pid_str"] = scored_str["player_id"].astype(str)
+    impact_row = scored_str[scored_str["_pid_str"] == str(player_id)]
+    player_impact_val = impact_row["Player Impact"].iloc[0] if not impact_row.empty else np.nan
+    performance_val = performance_score(player_impact_val)
+
+    position = normalise_position(player_row.get("Main_Position", player_row.get("Position", "")))
+    own_best_role, own_best_score = get_player_own_best_role(player_row, position)
+
+    years_left = _years_left_from_contract_expires(
+        player_row.get("Contract expires"), datetime.date.today().year
+    )
+    contract_fit_val = contract_fit(years_left)
+
+    # squad_stats computed ONCE over the FULL population -> correct avg for EVERY club
+    squad_stats = (
+        pop.players_df.groupby("Team")[["Age", "Market value"]].mean()
+        .rename(columns={"Age": "_avg_age", "Market value": "_avg_mv"})
+    )
+
+    rows = []
+    for _, team_row in pop.team_styles_df.iterrows():  # ~1,060 clubs -- cheap
+        club_name = team_row["Team"]
+        if club_name == own_club_name:
+            continue  # exclude "already there"
+
+        role_fit_info = calculate_subjective_role_fit_for_player_to_team(
+            player_row, club_name, pop.team_styles_df
+        )
+        if pd.isna(role_fit_info.get("Role Fit Score", np.nan)):
+            compat_val = np.nan  # unresolved role fit -> null, never a bonus-only 70
+        else:
+            bonus = 100.0 if (
+                role_fit_info.get("Best Team Fit Role", "") == own_best_role
+                and own_best_role not in (None, "")
+            ) else 70.0
+            compat_val = compatibility_score(role_fit_info["Role Fit Score"], np.nan, bonus)
+
+        if club_name in squad_stats.index:
+            avg_age = squad_stats.loc[club_name, "_avg_age"]
+            avg_mv = squad_stats.loc[club_name, "_avg_mv"]
+        else:
+            avg_age, avg_mv = np.nan, np.nan
+
+        age_fit_label = classify_age_fit(player_row.get("Age"), avg_age)
+        mv_fit_label = (
+            classify_fit(player_row.get("Market value"), avg_mv, avg_mv * 0.25, avg_mv * 0.5)
+            if pd.notna(avg_mv) else "Unknown"
+        )
+        financial_val = financial_score(age_fit_label, mv_fit_label)
+        tp_val = transfer_probability(compat_val, performance_val, financial_val, contract_fit_val)
+
+        rows.append({
+            "club": club_name,
+            "transfer_probability": _none_if_nan(tp_val),
+            "compatibility_score": _none_if_nan(compat_val),  # CS breakdown
+            "financial_score": _none_if_nan(financial_val),  # cheap CS-formula term (NOT real TFM)
+            "player_impact": _none_if_nan(player_impact_val),  # RMM breakdown (club-independent)
+        })
+
+    ranked = pd.DataFrame(rows).sort_values(
+        ["transfer_probability", "compatibility_score"], ascending=False, na_position="last"
+    ).head(top_n)
+    return {"player_id": str(player_id), "results": ranked.to_dict("records")}
 
 
 def _attach_real_tfm(entries, pairs, key: str = "financial_fit"):

@@ -126,18 +126,12 @@ def test_matching_reuses_shared_primitives():
                 alias.name for alias in node.names
             )
 
-    role_fit_imports = {
-        names
-        for module, names in imported_names_by_module.items()
-        if "role_fit" in module
-        for names in [names]
-    }
-    deterministic_scores_imports = {
-        names
-        for module, names in imported_names_by_module.items()
-        if "deterministic_scores" in module
-        for names in [names]
-    }
+    role_fit_imports = [
+        names for module, names in imported_names_by_module.items() if "role_fit" in module
+    ]
+    deterministic_scores_imports = [
+        names for module, names in imported_names_by_module.items() if "deterministic_scores" in module
+    ]
 
     assert any("compatibility_score" in names for names in role_fit_imports), (
         "expected an actual `from ...role_fit import compatibility_score` (or similar) "
