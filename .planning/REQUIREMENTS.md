@@ -120,7 +120,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-10 | Phase 8 | Complete (`StreamingHttpResponse`+stdlib `csv`, no new dependency; Shortlist export reuses `PlayerListSerializer`, Club export reuses `ClubDetailSerializer`'s transfer aggregates) |
 | AI-01 | Phase 9 | Complete (Anthropic tool-use extraction against a fixed whitelist — position/league/age/market-value/score fields plus style via `club__<field>`, the only way to resolve "style" since it's a Club field, not a Player field) |
 | AI-02 | Phase 9 | Complete (3-tier degradation — LLM parse → deterministic keyword/regex fallback → unfiltered paginated list — always HTTP 200, live-verified with no API key configured at all) |
-| AI-03 | Phase 10 | In progress (foundation + generator built in 10-01/10-02; end-to-end endpoint lands in 10-03) |
+| AI-03 | Phase 10 | Complete (`players/services.py::generate_scouting_report` assembles grounding from `get_summary()`, generates via `get_report_generator()`; `POST /api/players/{id}/scouting-report/` returns `{narrative, grounding}` or a clean 503, never a fabricated report) |
 | AI-04 | Phase 10 | Complete (`clubs/services.py::generate_club_insights` combines a bounded single-club ORM position-needs aggregation with `ClubDetailSerializer.get_transfer_aggregates`, generated via the cross-app `get_report_generator()`; `POST /api/clubs/{id}/insights/` returns `{narrative, grounding}` or a clean 503, never a fabricated report) |
 | AI-05 | Phase 9 | Complete (`get_nl_query_parser()` factory dispatches on `LLM_PROVIDER`; calling code imports only the abstract interface, never `AnthropicNLQueryParser` directly — verified via grep, not just declared) |
 | PLAN-01 | Phase 11 | Pending |
