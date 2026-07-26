@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 10 context gathered
-last_updated: "2026-07-25T11:29:44.671Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-07-26T05:01:03.773Z"
 progress:
   total_phases: 12
   completed_phases: 9
-  total_plans: 49
-  completed_plans: 49
+  total_plans: 54
+  completed_plans: 50
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 09 — ai-provider-interface-natural-language-search
+**Current focus:** Phase 10 — ai-grounded-report-generation
 
 ## Current Position
 
-Phase: 09 (ai-provider-interface-natural-language-search) — Phase complete — ready for verification
-Plan: 4 of 4 (09-04 complete: POST /api/players/search/ wires the 3-tier degradation (LLM parser -> deterministic keyword fallback -> unfiltered list), always HTTP 200, with fallback_used honestly reporting which tier served the request and exactly one RecentActivity(activity_type="searched") logged per call, completing the Phase 8-reserved producer contract; full suite 174 passed/315 skipped/0 failed, all 7 Phase 9 AI test files collected)
+Phase: 10 (ai-grounded-report-generation) — EXECUTING
+Plan: 2 of 5
 
 ## Performance Metrics
 
@@ -90,6 +90,7 @@ Plan: 4 of 4 (09-04 complete: POST /api/players/search/ wires the 3-tier degrada
 | Phase 09 P02 | 10min | 2 tasks | 4 files |
 | Phase 09 P03 | 15min | 2 tasks | 4 files |
 | Phase 09 P04 | 14min | 3 tasks | 3 files |
+| Phase 10 P01 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,7 @@ Recent decisions affecting current work:
 - [Phase 09]: [Phase 09-02]: AnthropicNLQueryParser catches parent anthropic.APIError (not a narrow subclass); ANTHROPIC_MODEL read exclusively from settings; _validate() drops hallucinated position/league enums + unknown keys before ORM; get_nl_query_parser() factory dispatches on settings.LLM_PROVIDER with lazy in-branch import
 - [Phase 09]: [Phase 09-03]: search_players splits filters into player_filter_data (passed to PlayerFilter) and style_filters (club__<field>_min, applied via a separate manual .filter(club__<field>__gte=...) step) because PlayerFilter silently ignores undeclared club__ keys instead of erroring; league ambiguity in keyword_extract resolved via explicit qualifier-required regex groups for the 5 shared base terms (bundesliga/serie/la liga/ligue/efl)
 - [Phase 09]: [Phase 09-04]: PlayerSearchView wraps ONLY the tier-1 get_nl_query_parser().parse() call in try/except NLQueryParserError (search_players() stays outside, so a genuine DB error is a real 500, never masked as a fallback); fallback_used=False means the LLM's real answer even if empty/partial, only flips True when the LLM CALL itself failed; live-verified all 3 tiers + RecentActivity 'searched' logging against the real 41,708-player dev DB (tier-2 'strikers under 5m' -> 4,504 matches, tier-3 unparseable query -> full 41,708 unfiltered, tier-1 mocked success -> 25 real CB results); full suite 174 passed/315 skipped/0 failed, phase complete
+- [Phase 10]: [Phase 10-01]: ReportGenerator/GeneratedReport/ReportGeneratorError (players/ai/report_generator.py) mirror Phase 9's NLQueryParser triad exactly; ANTHROPIC_REPORT_MODEL added alongside ANTHROPIC_MODEL, build-time verified against installed anthropic==0.120.0's ModelParam Literal (had to extract the Literal member from a Union[Literal[...], str] shape, unlike Phase 9's simpler check) -- claude-sonnet-5 confirmed present, kept as default; grounding.py's validate_grounding required a ratio-denominator exemption (numbers immediately preceded by "/", e.g. the "10" in "7.4/10") to satisfy the plan's own accept-path behavior test -- anticipated by 10-RESEARCH.md's Pitfall 3
 
 ### Pending Todos
 
@@ -176,6 +178,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-25T11:29:44.665Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-ai-grounded-report-generation/10-CONTEXT.md
+Last session: 2026-07-26T05:01:03.769Z
+Stopped at: Completed 10-01-PLAN.md
+Resume file: .planning/phases/10-ai-grounded-report-generation/10-02-PLAN.md

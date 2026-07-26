@@ -48,8 +48,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **AI-01**: User can submit a natural-language query parsed into structured filters (position, age, value, league, style) against a fixed whitelist of real fields
 - [x] **AI-02**: NL query parsing gracefully falls back (partial parse / keyword fallback) when input is ambiguous or unparseable
-- [ ] **AI-03**: User can request an AI-generated scouting report for a player (strengths, weaknesses, tactical fit, financial fit, best use case), strictly grounded in already-computed scores/stats
-- [ ] **AI-04**: User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints), grounded in Position Needs and Transfer Behaviour aggregates
+- [x] **AI-03**: User can request an AI-generated scouting report for a player (strengths, weaknesses, tactical fit, financial fit, best use case), strictly grounded in already-computed scores/stats
+- [x] **AI-04**: User can request AI-generated club insights (recruitment gaps, over-aged positions, financial constraints), grounded in Position Needs and Transfer Behaviour aggregates
 - [x] **AI-05**: The LLM integration is built behind a provider-agnostic interface so the concrete provider can be swapped without touching calling code
 
 ### Squad Planning & Matching
@@ -120,8 +120,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRUD-10 | Phase 8 | Complete (`StreamingHttpResponse`+stdlib `csv`, no new dependency; Shortlist export reuses `PlayerListSerializer`, Club export reuses `ClubDetailSerializer`'s transfer aggregates) |
 | AI-01 | Phase 9 | Complete (Anthropic tool-use extraction against a fixed whitelist — position/league/age/market-value/score fields plus style via `club__<field>`, the only way to resolve "style" since it's a Club field, not a Player field) |
 | AI-02 | Phase 9 | Complete (3-tier degradation — LLM parse → deterministic keyword/regex fallback → unfiltered paginated list — always HTTP 200, live-verified with no API key configured at all) |
-| AI-03 | Phase 10 | Pending |
-| AI-04 | Phase 10 | Pending |
+| AI-03 | Phase 10 | Complete |
+| AI-04 | Phase 10 | Complete |
 | AI-05 | Phase 9 | Complete (`get_nl_query_parser()` factory dispatches on `LLM_PROVIDER`; calling code imports only the abstract interface, never `AnthropicNLQueryParser` directly — verified via grep, not just declared) |
 | PLAN-01 | Phase 11 | Pending |
 | PLAN-02 | Phase 12 | Pending |
