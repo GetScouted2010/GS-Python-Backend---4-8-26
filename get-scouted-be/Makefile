@@ -33,7 +33,7 @@ makemigrations: ## Generate new migrations from model changes
 run: ## Run the dev server
 	$(MANAGE) runserver
 
-shell: ## Open a Django shell (shell_plus if available, else plain shell)
+shell: ## Open a Django shell
 	$(MANAGE) shell
 
 superuser: ## Create a Django admin superuser
