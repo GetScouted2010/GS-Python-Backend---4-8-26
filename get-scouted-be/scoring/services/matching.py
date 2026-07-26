@@ -91,6 +91,10 @@ def rank_replacement_players(club_id, position: str, top_n: int = DEFAULT_TOP_N)
             "compatibility_score": _none_if_nan(r.get("compatibility_score")),  # CS breakdown
             "financial_score": _none_if_nan(r.get("financial_score")),  # cheap CS-formula term (NOT real TFM)
         })
+
+    pairs = [(entry["player_id"], club_id) for entry in results]  # each candidate priced vs the TARGET club
+    _attach_real_tfm(results, pairs)  # adds entry["financial_fit"] = {predicted_fee, value_verdict}
+
     return {"club": club_name, "club_id": str(club_id), "position": position, "results": results}
 
 
