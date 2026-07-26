@@ -8,7 +8,7 @@ _CLASSES (JWTAuthentication) already deny-by-default (config/settings/base.py).
 """
 
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,6 +17,7 @@ from players import services
 from players.ai import fallback
 from players.ai.base import NLQueryParserError
 from players.ai.factory import get_nl_query_parser
+from players.ai.report_generator import ReportGeneratorError
 from players.filters import PlayerFilter
 from players.models import Player
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
@@ -70,6 +71,39 @@ class PlayerDetailView(APIView):
             scores = summary.get_summary(pk, club_id)
 
         return Response({**profile, "scores": scores})
+
+
+class PlayerScoutingReportView(APIView):
+    """POST /api/players/{id}/scouting-report/ -- AI-03.
+
+    Thin orchestration: all grounding/retry/validation logic lives inside
+    the Wave-2 generator (players.ai.report_generator /
+    players.ai.report_factory); this view only resolves club context,
+    calls the service, and maps ReportGeneratorError to a clean 503 --
+    NEVER a fabricated/template report.
+
+    No explicit permission_classes -- the global IsAuthenticated default
+    already denies anonymous, matching every other players view.
+    """
+
+    def post(self, request, pk):
+        player = get_object_or_404(Player, id=pk)
+
+        club_id = request.data.get("club_id") or player.club_id
+        if club_id is None:
+            return Response(
+                {"error": "club_id required for a club-relative scouting report"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            report = services.generate_scouting_report(pk, club_id)
+        except ReportGeneratorError:
+            return Response(
+                {"error": "report generation failed"}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        return Response(report)
 
 
 class PlayerSearchView(APIView):
