@@ -20,9 +20,11 @@ any error.
 from __future__ import annotations
 
 from core.pagination import IdsBypassPagination
+from players.ai.report_factory import get_report_generator
 from players.filters import PlayerFilter
 from players.models import Player
 from players.serializers import PlayerListSerializer
+from scoring.services.summary import get_summary
 
 # The 8 real style fields (clubs/filters.py), addressed here as
 # club__<field>_min in the incoming filters dict.
@@ -68,3 +70,24 @@ def search_players(filters: dict, request) -> dict:
     page = paginator.paginate_queryset(qs, request, view=None)
     serialized = PlayerListSerializer(page, many=True).data
     return paginator.get_paginated_response(serialized).data
+
+
+def generate_scouting_report(player_id, club_id) -> dict:
+    """AI-03 orchestration for the player scouting-report slice.
+
+    Grounding comes ONLY from `scoring.services.summary.get_summary` --
+    never re-derived or re-computed here. The narrative comes from the
+    provider-agnostic `players.ai.report_factory.get_report_generator()`
+    (imported at module top so tests can patch `players.services.
+    get_report_generator`, matching test_search_view.py's binding-patch
+    convention).
+
+    `ReportGeneratorError` is deliberately NOT caught here -- the calling
+    view maps it to a clean 503, so a fabricated/template report is
+    structurally impossible at this layer. `get_summary` may raise
+    `Http404` for an unresolvable player/club; the caller (the view) is
+    responsible for resolving `club_id` (never None) before calling this.
+    """
+    grounding = get_summary(player_id, club_id)
+    report = get_report_generator().generate(grounding, "player_scouting_report")
+    return {"narrative": report.narrative, "grounding": report.grounding}
