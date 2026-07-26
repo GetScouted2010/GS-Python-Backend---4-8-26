@@ -428,7 +428,19 @@ def build_transfers_df() -> pd.DataFrame:
         "is_loan",
     ]
     qs = Transfer.objects.values(*fields, "club__name")
-    df = pd.DataFrame.from_records(list(qs))
+    records = list(qs)
+
+    if not records:
+        # A legitimately empty Transfer table (e.g. an isolated test DB with
+        # no transfer fixtures loaded) must not crash reconstruction --
+        # `pd.DataFrame.from_records([])` has zero columns, so the rename
+        # above would never populate the required literals and
+        # `assert_columns_present` would always raise. Mirrors
+        # `build_role_scores_wide`'s empty-table guard just above.
+        logger.warning("build_transfers_df: Transfer table is empty")
+        return pd.DataFrame(columns=_TRANSFERS_REQUIRED_COLUMNS)
+
+    df = pd.DataFrame.from_records(records)
     df = df.rename(columns=_TRANSFER_RENAME)
 
     assert_columns_present(df, _TRANSFERS_REQUIRED_COLUMNS, "build_transfers_df")

@@ -21,6 +21,7 @@ from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer, ClubListSerializer
 from core.pagination import IdsBypassPagination
 from players.ai.report_generator import ReportGeneratorError
+from scoring.services.matching import rank_replacement_players
 from workspace.models import RecentActivity
 
 
@@ -130,3 +131,26 @@ class PositionNeedsView(APIView):
     def get(self, request, pk):
         club = get_object_or_404(Club, pk=pk)
         return Response(services.classify_position_needs(club))
+
+
+class ReplacementsView(APIView):
+    """GET /api/clubs/{id}/replacements/?position=<POS> -- PLAN-02.
+
+    Deterministic ranked replacement suggestions for a club's (already-known-weak)
+    position. GET, no LLM/503 path. No explicit permission_classes -- global
+    IsAuthenticated default (matching PositionNeedsView; club data is not user-owned).
+    NOTE: this endpoint runs the arbitrary-other-club live scoring pass
+    (score_population) and takes ~40-50s on the full real dataset by design
+    (Phase 6 deferred this path here, uncached -- see 12-CONTEXT.md). Unknown club -> 404.
+    A missing/invalid `position` query param -> 400.
+    """
+
+    def get(self, request, pk):
+        get_object_or_404(Club, pk=pk)  # 404 fast on unknown club before the ~44s pass
+        position = request.query_params.get("position")
+        if not position:
+            return Response(
+                {"error": "position query parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(rank_replacement_players(pk, position))
