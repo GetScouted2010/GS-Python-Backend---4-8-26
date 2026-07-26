@@ -25,7 +25,7 @@ from workspace.models import RecentActivity
 
 pytestmark = pytest.mark.django_db
 
-ACTIVITY_URL = "/api/workspace/activity/"
+ACTIVITY_URL = "/api/v1/workspace/activity/"
 
 
 @pytest.fixture(autouse=True)
@@ -39,7 +39,7 @@ def test_viewing_player_logs_activity(authenticated_client, player_factory):
     client, user = authenticated_client()
     player = player_factory()
 
-    response = client.get(f"/api/players/{player.id}/")
+    response = client.get(f"/api/v1/players/{player.id}/")
 
     assert response.status_code == 200
     assert RecentActivity.objects.filter(
@@ -51,7 +51,7 @@ def test_viewing_club_logs_activity(authenticated_client, club_factory):
     client, user = authenticated_client()
     club = club_factory()
 
-    response = client.get(f"/api/clubs/{club.id}/")
+    response = client.get(f"/api/v1/clubs/{club.id}/")
 
     assert response.status_code == 200
     assert RecentActivity.objects.filter(
@@ -64,8 +64,8 @@ def test_activity_list_newest_first(authenticated_client, player_factory):
     player_a = player_factory()
     player_b = player_factory()
 
-    client.get(f"/api/players/{player_a.id}/")
-    client.get(f"/api/players/{player_b.id}/")
+    client.get(f"/api/v1/players/{player_a.id}/")
+    client.get(f"/api/v1/players/{player_b.id}/")
 
     response = client.get(ACTIVITY_URL)
 
@@ -79,7 +79,7 @@ def test_scoping_activity_excludes_other_users(authenticated_client, player_fact
     client_b, user_b = authenticated_client()
     player = player_factory()
 
-    client_b.get(f"/api/players/{player.id}/")
+    client_b.get(f"/api/v1/players/{player.id}/")
 
     response = client_a.get(ACTIVITY_URL)
 
@@ -91,7 +91,7 @@ def test_player_detail_response_shape_unchanged(authenticated_client, player_fac
     client, user = authenticated_client()
     player = player_factory()
 
-    response = client.get(f"/api/players/{player.id}/")
+    response = client.get(f"/api/v1/players/{player.id}/")
 
     assert response.status_code == 200
     assert "scores" in response.data

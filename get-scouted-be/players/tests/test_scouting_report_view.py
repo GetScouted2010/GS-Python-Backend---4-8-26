@@ -2,7 +2,7 @@
 
 Task 1 covers `players.services.generate_scouting_report` in isolation (a
 fake generator + a mocked `get_summary`, no real DB / no real LLM call).
-Task 2 adds `POST /api/players/{id}/scouting-report/` endpoint integration
+Task 2 adds `POST /api/v1/players/{id}/scouting-report/` endpoint integration
 tests, including the clean-error-on-failure (503) and missing-club (400)
 branches -- proving a `ReportGeneratorError` NEVER reaches the caller as a
 fabricated/template report.
@@ -121,7 +121,7 @@ def auth_client():
 
 def test_scouting_report_requires_authentication():
     client = APIClient()
-    response = client.post(f"/api/players/{uuid.uuid4()}/scouting-report/", {}, format="json")
+    response = client.post(f"/api/v1/players/{uuid.uuid4()}/scouting-report/", {}, format="json")
     assert response.status_code in (401, 403)
 
 
@@ -135,7 +135,7 @@ def test_scouting_report_success(auth_client, monkeypatch):
     monkeypatch.setattr("players.services.get_report_generator", _fake_generator(return_value=fake_report))
 
     response = auth_client.post(
-        f"/api/players/{player.id}/scouting-report/", {"club_id": club_id}, format="json"
+        f"/api/v1/players/{player.id}/scouting-report/", {"club_id": club_id}, format="json"
     )
 
     assert response.status_code == 200
@@ -154,7 +154,7 @@ def test_scouting_report_failure(auth_client, monkeypatch):
     )
 
     response = auth_client.post(
-        f"/api/players/{player.id}/scouting-report/", {"club_id": club_id}, format="json"
+        f"/api/v1/players/{player.id}/scouting-report/", {"club_id": club_id}, format="json"
     )
 
     assert response.status_code == 503
@@ -172,7 +172,7 @@ def test_scouting_report_missing_club_returns_400(auth_client, monkeypatch):
     monkeypatch.setattr("players.services.get_summary", mock_get_summary)
     monkeypatch.setattr("players.services.get_report_generator", mock_get_generator)
 
-    response = auth_client.post(f"/api/players/{player.id}/scouting-report/", {}, format="json")
+    response = auth_client.post(f"/api/v1/players/{player.id}/scouting-report/", {}, format="json")
 
     assert response.status_code == 400
     mock_get_summary.assert_not_called()

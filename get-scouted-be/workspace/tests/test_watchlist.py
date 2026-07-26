@@ -16,7 +16,7 @@ from workspace.models import Watchlist
 
 pytestmark = pytest.mark.django_db
 
-WATCHLIST_URL = "/api/workspace/watchlist/"
+WATCHLIST_URL = "/api/v1/workspace/watchlist/"
 
 
 def test_save_player_returns_201(authenticated_client, player_factory):

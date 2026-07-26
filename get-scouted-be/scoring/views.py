@@ -1,5 +1,5 @@
 """Thin DRF APIViews exposing the four score services + the combined
-summary as five authenticated endpoints under /api/scoring/ (04-06-PLAN.md).
+summary as five authenticated endpoints under /api/v1/scoring/ (04-06-PLAN.md).
 
 Completes SCORE-01..05's "exposed via API" clause. Views do exactly three
 things: validate the Player exists (get_object_or_404), delegate to the
@@ -28,7 +28,7 @@ from scoring.services import compatibility, financial_fit, rmm, summary, transfe
 
 
 class PlayerImpactView(APIView):
-    """GET /api/scoring/players/<uuid:player_id>/impact/ -- RMM (SCORE-01)."""
+    """GET /api/v1/scoring/players/<uuid:player_id>/impact/ -- RMM (SCORE-01)."""
 
     def get(self, request, player_id):
         get_object_or_404(Player, id=player_id)
@@ -36,28 +36,28 @@ class PlayerImpactView(APIView):
 
 
 class CompatibilityView(APIView):
-    """GET /api/scoring/players/<uuid:player_id>/clubs/<uuid:club_id>/compatibility/ -- SCORE-02."""
+    """GET /api/v1/scoring/players/<uuid:player_id>/clubs/<uuid:club_id>/compatibility/ -- SCORE-02."""
 
     def get(self, request, player_id, club_id):
         return Response(compatibility.get_compatibility(player_id, club_id))
 
 
 class FinancialFitView(APIView):
-    """GET /api/scoring/players/<uuid:player_id>/clubs/<uuid:club_id>/financial-fit/ -- SCORE-03."""
+    """GET /api/v1/scoring/players/<uuid:player_id>/clubs/<uuid:club_id>/financial-fit/ -- SCORE-03."""
 
     def get(self, request, player_id, club_id):
         return Response(financial_fit.get_financial_fit(player_id, club_id))
 
 
 class TransferProbabilityView(APIView):
-    """GET /api/scoring/players/<uuid:player_id>/clubs/<uuid:club_id>/transfer-probability/ -- SCORE-04."""
+    """GET /api/v1/scoring/players/<uuid:player_id>/clubs/<uuid:club_id>/transfer-probability/ -- SCORE-04."""
 
     def get(self, request, player_id, club_id):
         return Response(transfer_probability.get_transfer_probability(player_id, club_id))
 
 
 class PlayerScoreSummaryView(APIView):
-    """GET /api/scoring/players/<uuid:player_id>/summary/?club_id=<uuid> -- SCORE-05.
+    """GET /api/v1/scoring/players/<uuid:player_id>/summary/?club_id=<uuid> -- SCORE-05.
 
     club_id is a QUERY param here, not a path segment (the combined Player
     Profile view needs a single-player URL with the club chosen separately).

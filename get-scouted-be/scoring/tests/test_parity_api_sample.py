@@ -384,7 +384,7 @@ def test_endpoints_require_authentication():
     parity suite also proves the auth gate stays intact end-to-end."""
     client = APIClient()
     placeholder_id = uuid.uuid4()
-    response = client.get(f"/api/scoring/players/{placeholder_id}/impact/")
+    response = client.get(f"/api/v1/scoring/players/{placeholder_id}/impact/")
     assert response.status_code == 401
 
 
@@ -410,11 +410,11 @@ def test_endpoint_parity(endpoint_case, auth_client):
         patch("scoring.services.summary.reconstruct_population", return_value=_pop()),
         patch("scoring.services.summary.get_scored_population", return_value=_scored(None)),
     ):
-        resp = auth_client.get(f"/api/scoring/players/{pid}/impact/")
+        resp = auth_client.get(f"/api/v1/scoring/players/{pid}/impact/")
         assert resp.status_code == 200
         assert compare_scalar(oracle.loc[str(pid), "rmm"], resp.json()["rmm"], atol=RMM_CS_TP_ATOL)
 
-        resp = auth_client.get(f"/api/scoring/players/{pid}/clubs/{own_club_id}/compatibility/")
+        resp = auth_client.get(f"/api/v1/scoring/players/{pid}/clubs/{own_club_id}/compatibility/")
         assert resp.status_code == 200
         oracle_cs = oracle.loc[str(pid), "cs"]
         port_cs = resp.json().get("compatibility_score")
@@ -423,13 +423,13 @@ def test_endpoint_parity(endpoint_case, auth_client):
             assert _is_null(port_cs)
         assert compare_scalar(oracle_cs, port_cs, atol=RMM_CS_TP_ATOL)
 
-        resp = auth_client.get(f"/api/scoring/players/{pid}/clubs/{own_club_id}/financial-fit/")
+        resp = auth_client.get(f"/api/v1/scoring/players/{pid}/clubs/{own_club_id}/financial-fit/")
         assert resp.status_code == 200
         oracle_tfm_log = oracle.loc[str(pid), "tfm"]
         oracle_money = None if _is_null(oracle_tfm_log) else float(np.expm1(oracle_tfm_log))
         assert compare_scalar(oracle_money, resp.json().get("predicted_fee"), rtol=TFM_RTOL)
 
-        resp = auth_client.get(f"/api/scoring/players/{pid}/clubs/{own_club_id}/transfer-probability/")
+        resp = auth_client.get(f"/api/v1/scoring/players/{pid}/clubs/{own_club_id}/transfer-probability/")
         assert resp.status_code == 200
         oracle_tp = oracle.loc[str(pid), "transfer_probability"]
         port_tp = resp.json().get("transfer_probability")
@@ -438,5 +438,5 @@ def test_endpoint_parity(endpoint_case, auth_client):
             assert _is_null(port_tp)
         assert compare_scalar(oracle_tp, port_tp, atol=RMM_CS_TP_ATOL)
 
-        resp = auth_client.get(f"/api/scoring/players/{pid}/summary/?club_id={own_club_id}")
+        resp = auth_client.get(f"/api/v1/scoring/players/{pid}/summary/?club_id={own_club_id}")
         assert resp.status_code == 200

@@ -81,7 +81,7 @@ class PasswordResetConfirmView(APIView):
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
-    """Self-service profile at /api/auth/me/ -- always targets the calling
+    """Self-service profile at /api/v1/auth/me/ -- always targets the calling
     user (no pk in the URL); role is read-only via ProfileSerializer so a
     user can never self-escalate their own role.
     """
@@ -99,7 +99,7 @@ class AdminUserViewSet(
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
-    """Org-wide user management at /api/auth/admin/users/.
+    """Org-wide user management at /api/v1/auth/admin/users/.
 
     Director+ gets read-only visibility (list/retrieve); admin-only for
     writes (update/partial_update/deactivate). Deliberately excludes the

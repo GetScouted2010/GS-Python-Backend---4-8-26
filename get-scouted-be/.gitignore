@@ -15,3 +15,7 @@ scoring/ml_artifacts/*.metrics.json
 # scoring/tests/_parity_helpers.py) -- regenerated on every failing
 # parity test run, never committed.
 scoring/tests/_parity_reports/
+
+# Generated OpenAPI schema (make schema / manage.py spectacular) -- regenerate
+# on demand, never a source-of-truth artifact.
+schema.yaml

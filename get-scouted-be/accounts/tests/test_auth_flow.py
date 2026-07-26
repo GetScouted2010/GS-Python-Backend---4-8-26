@@ -14,7 +14,7 @@ def test_login_flow(api_client, user_factory):
     user = user_factory(role="director", password="testpass123")
 
     response = api_client.post(
-        "/api/auth/login/",
+        "/api/v1/auth/login/",
         {"email": user.email, "password": "testpass123"},
         format="json",
     )
@@ -32,7 +32,7 @@ def test_login_wrong_password_generic_401(api_client, user_factory):
     user = user_factory(password="testpass123")
 
     response = api_client.post(
-        "/api/auth/login/",
+        "/api/v1/auth/login/",
         {"email": user.email, "password": "wrong-password"},
         format="json",
     )
@@ -40,7 +40,7 @@ def test_login_wrong_password_generic_401(api_client, user_factory):
     wrong_password_detail = str(response.data["detail"])
 
     response2 = api_client.post(
-        "/api/auth/login/",
+        "/api/v1/auth/login/",
         {"email": "no-such-user@example.com", "password": "whatever"},
         format="json",
     )
@@ -54,14 +54,14 @@ def test_login_wrong_password_generic_401(api_client, user_factory):
 def test_refresh_rotation(api_client, user_factory):
     user = user_factory(password="testpass123")
     login_response = api_client.post(
-        "/api/auth/login/",
+        "/api/v1/auth/login/",
         {"email": user.email, "password": "testpass123"},
         format="json",
     )
     old_refresh = login_response.data["refresh"]
 
     refresh_response = api_client.post(
-        "/api/auth/token/refresh/", {"refresh": old_refresh}, format="json"
+        "/api/v1/auth/token/refresh/", {"refresh": old_refresh}, format="json"
     )
     assert refresh_response.status_code == 200
     assert "access" in refresh_response.data
@@ -69,7 +69,7 @@ def test_refresh_rotation(api_client, user_factory):
     assert refresh_response.data["refresh"] != old_refresh
 
     reuse_response = api_client.post(
-        "/api/auth/token/refresh/", {"refresh": old_refresh}, format="json"
+        "/api/v1/auth/token/refresh/", {"refresh": old_refresh}, format="json"
     )
     assert reuse_response.status_code == 401
 
@@ -78,19 +78,19 @@ def test_refresh_rotation(api_client, user_factory):
 def test_logout_blacklist(api_client, user_factory):
     user = user_factory(password="testpass123")
     login_response = api_client.post(
-        "/api/auth/login/",
+        "/api/v1/auth/login/",
         {"email": user.email, "password": "testpass123"},
         format="json",
     )
     refresh = login_response.data["refresh"]
 
     logout_response = api_client.post(
-        "/api/auth/logout/", {"refresh": refresh}, format="json"
+        "/api/v1/auth/logout/", {"refresh": refresh}, format="json"
     )
     assert logout_response.status_code == 200
 
     refresh_after_logout = api_client.post(
-        "/api/auth/token/refresh/", {"refresh": refresh}, format="json"
+        "/api/v1/auth/token/refresh/", {"refresh": refresh}, format="json"
     )
     assert refresh_after_logout.status_code == 401
 

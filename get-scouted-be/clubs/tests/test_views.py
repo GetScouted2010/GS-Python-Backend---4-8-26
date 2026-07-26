@@ -39,13 +39,13 @@ def auth_client():
 # ---------------------------------------------------------------------------
 def test_list_requires_authentication():
     client = APIClient()
-    response = client.get("/api/clubs/")
+    response = client.get("/api/v1/clubs/")
     assert response.status_code in (401, 403)
 
 
 def test_detail_requires_authentication():
     client = APIClient()
-    response = client.get(f"/api/clubs/{uuid.uuid4()}/")
+    response = client.get(f"/api/v1/clubs/{uuid.uuid4()}/")
     assert response.status_code in (401, 403)
 
 
@@ -56,7 +56,7 @@ def test_list_filters_by_league(real_data_available, auth_client):
     league = Club.objects.exclude(league__isnull=True).values_list("league", flat=True).first()
     assert league, "expected at least one real Club.league value"
 
-    response = auth_client.get(f"/api/clubs/?league={league}&page_size=10")
+    response = auth_client.get(f"/api/v1/clubs/?league={league}&page_size=10")
 
     assert response.status_code == 200
     results = response.data["results"]
@@ -68,7 +68,7 @@ def test_list_filters_by_country(real_data_available, auth_client):
     country = Club.objects.exclude(country__isnull=True).values_list("country", flat=True).first()
     assert country, "expected at least one real Club.country value"
 
-    response = auth_client.get(f"/api/clubs/?country={country}&page_size=10")
+    response = auth_client.get(f"/api/v1/clubs/?country={country}&page_size=10")
 
     assert response.status_code == 200
     results = response.data["results"]
@@ -77,7 +77,7 @@ def test_list_filters_by_country(real_data_available, auth_client):
 
 
 def test_list_pagination_shape(real_data_available, auth_client):
-    response = auth_client.get("/api/clubs/?page_size=5")
+    response = auth_client.get("/api/v1/clubs/?page_size=5")
 
     assert response.status_code == 200
     assert {"results", "count"}.issubset(response.data)
@@ -93,7 +93,7 @@ def test_detail_returns_profile_squad_and_transfer_aggregates(real_data_availabl
         club_id = Club.objects.values_list("id", flat=True).first()
     assert club_id is not None, "expected at least one real Club"
 
-    response = auth_client.get(f"/api/clubs/{club_id}/")
+    response = auth_client.get(f"/api/v1/clubs/{club_id}/")
 
     assert response.status_code == 200
     assert isinstance(response.data["squad"], list)
@@ -110,7 +110,7 @@ def test_detail_aggregates_use_market_value_not_fee(real_data_available, auth_cl
         club_id = Club.objects.values_list("id", flat=True).first()
     assert club_id is not None, "expected at least one real Club"
 
-    response = auth_client.get(f"/api/clubs/{club_id}/")
+    response = auth_client.get(f"/api/v1/clubs/{club_id}/")
 
     # A fee aggregation (Sum/Avg on the free-text CharField) would have
     # raised a DataError before reaching this point -- 200 + the key's
@@ -126,7 +126,7 @@ def test_ids_multifetch_returns_unpaginated_exact_set(real_data_available, auth_
     ids = list(Club.objects.values_list("id", flat=True)[:3])
     assert len(ids) == 3
 
-    response = auth_client.get(f"/api/clubs/?ids={','.join(str(i) for i in ids)}")
+    response = auth_client.get(f"/api/v1/clubs/?ids={','.join(str(i) for i in ids)}")
 
     assert response.status_code == 200
     assert isinstance(response.data, list)
@@ -136,6 +136,6 @@ def test_ids_multifetch_returns_unpaginated_exact_set(real_data_available, auth_
 def test_ids_over_cap_returns_400(auth_client):
     ids = ",".join(str(uuid.uuid4()) for _ in range(101))
 
-    response = auth_client.get(f"/api/clubs/?ids={ids}")
+    response = auth_client.get(f"/api/v1/clubs/?ids={ids}")
 
     assert response.status_code == 400

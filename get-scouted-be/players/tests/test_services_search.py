@@ -25,7 +25,7 @@ pytestmark = pytest.mark.django_db
 
 
 def _request():
-    return Request(APIRequestFactory().post("/api/players/search/"))
+    return Request(APIRequestFactory().post("/api/v1/players/search/"))
 
 
 # ---------------------------------------------------------------------------

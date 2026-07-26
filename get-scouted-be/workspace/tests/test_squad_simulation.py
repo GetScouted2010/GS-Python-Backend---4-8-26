@@ -1,7 +1,7 @@
 """Tests for PLAN-03 squad simulation (11-02-PLAN.md).
 
 Unit tests exercise workspace.services.simulate_squad_change directly;
-integration tests exercise POST /api/workspace/squad-plans/{id}/simulate/
+integration tests exercise POST /api/v1/workspace/squad-plans/{id}/simulate/
 on SquadPlanViewSet.
 
 Uses the `authenticated_client`, `club_factory`, and `player_factory`
@@ -20,7 +20,7 @@ from workspace.models import SquadPlan
 
 pytestmark = pytest.mark.django_db
 
-SQUAD_PLANS_URL = "/api/workspace/squad-plans/"
+SQUAD_PLANS_URL = "/api/v1/workspace/squad-plans/"
 
 
 # --- Unit tests: workspace.services.simulate_squad_change ---
@@ -111,7 +111,7 @@ def test_uses_stored_proposed_changes_when_no_override(authenticated_client, clu
     assert result["simulated"]["squad_size"] == result["baseline"]["squad_size"] + 1
 
 
-# --- Integration tests: POST /api/workspace/squad-plans/{id}/simulate/ ---
+# --- Integration tests: POST /api/v1/workspace/squad-plans/{id}/simulate/ ---
 
 
 def test_simulate_response_shape(authenticated_client, club_factory, player_factory):

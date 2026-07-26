@@ -13,7 +13,7 @@ def api_client():
 @pytest.mark.parametrize("role", ["scout", "analyst", "director"])
 def test_register_allowed_role_creates_active_account(api_client, role):
     response = api_client.post(
-        "/api/auth/register/",
+        "/api/v1/auth/register/",
         {
             "email": f"{role}@example.com",
             "password": "S3cure-pass-word",
@@ -31,7 +31,7 @@ def test_register_allowed_role_creates_active_account(api_client, role):
 @pytest.mark.django_db
 def test_register_admin_role_rejected(api_client):
     response = api_client.post(
-        "/api/auth/register/",
+        "/api/v1/auth/register/",
         {
             "email": "wannabe-admin@example.com",
             "password": "S3cure-pass-word",
@@ -47,7 +47,7 @@ def test_register_admin_role_rejected(api_client):
 @pytest.mark.django_db
 def test_register_weak_password_rejected(api_client):
     response = api_client.post(
-        "/api/auth/register/",
+        "/api/v1/auth/register/",
         {
             "email": "weakpass@example.com",
             "password": "123",

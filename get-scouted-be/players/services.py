@@ -43,7 +43,7 @@ STYLE_FIELDS = {
 def search_players(filters: dict, request) -> dict:
     """Compose PlayerFilter + a separate manual style-filter step +
     IdsBypassPagination + PlayerListSerializer into the standard paginated
-    envelope (same shape as GET /api/players/).
+    envelope (same shape as GET /api/v1/players/).
 
     `filters` (a plain dict, e.g. from the tier-2 keyword extractor or an
     LLM parser) drives PlayerFilter and the manual style step. `request`

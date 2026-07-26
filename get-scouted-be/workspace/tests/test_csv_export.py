@@ -38,7 +38,7 @@ def test_shortlist_export_returns_csv(authenticated_client, player_factory, club
     ShortlistEntry.objects.create(shortlist=shortlist, player=player_a)
     ShortlistEntry.objects.create(shortlist=shortlist, player=player_b)
 
-    response = client.get(f"/api/workspace/shortlists/{shortlist.id}/export/")
+    response = client.get(f"/api/v1/workspace/shortlists/{shortlist.id}/export/")
 
     assert response.status_code == 200
     assert response["Content-Type"].startswith("text/csv")
@@ -53,7 +53,7 @@ def test_shortlist_export_ownership(authenticated_client, club_factory):
     club = club_factory()
     shortlist_b = Shortlist.objects.create(user=user_b, club=club, name="B's Shortlist")
 
-    response = client_a.get(f"/api/workspace/shortlists/{shortlist_b.id}/export/")
+    response = client_a.get(f"/api/v1/workspace/shortlists/{shortlist_b.id}/export/")
 
     assert response.status_code == 404
 
@@ -62,7 +62,7 @@ def test_club_export_returns_csv(authenticated_client, club_factory):
     client, user = authenticated_client()
     club = club_factory()
 
-    response = client.get(f"/api/clubs/{club.id}/export/")
+    response = client.get(f"/api/v1/clubs/{club.id}/export/")
 
     assert response.status_code == 200
     assert response["Content-Type"].startswith("text/csv")
@@ -76,7 +76,7 @@ def test_club_export_content_disposition(authenticated_client, club_factory):
     client, user = authenticated_client()
     club = club_factory()
 
-    response = client.get(f"/api/clubs/{club.id}/export/")
+    response = client.get(f"/api/v1/clubs/{club.id}/export/")
 
     disposition = response["Content-Disposition"]
     assert "attachment" in disposition
@@ -87,6 +87,6 @@ def test_unauthenticated_export_denied(club_factory):
     club = club_factory()
     shortlist_owner_client = APIClient()
 
-    response = shortlist_owner_client.get("/api/workspace/shortlists/00000000-0000-0000-0000-000000000000/export/")
+    response = shortlist_owner_client.get("/api/v1/workspace/shortlists/00000000-0000-0000-0000-000000000000/export/")
 
     assert response.status_code == 401

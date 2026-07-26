@@ -36,7 +36,7 @@ class Echo:
 
 
 class ClubListView(generics.ListAPIView):
-    """GET /api/clubs/ -- CRUD-02 (filter/paginate) + CRUD-05 (?ids=)."""
+    """GET /api/v1/clubs/ -- CRUD-02 (filter/paginate) + CRUD-05 (?ids=)."""
 
     queryset = Club.objects.all()
     serializer_class = ClubListSerializer
@@ -47,7 +47,7 @@ class ClubListView(generics.ListAPIView):
 
 
 class ClubDetailView(generics.RetrieveAPIView):
-    """GET /api/clubs/{id}/ -- CRUD-04 (profile + squad + transfer aggregates).
+    """GET /api/v1/clubs/{id}/ -- CRUD-04 (profile + squad + transfer aggregates).
 
     Pure ORM aggregation (bounded to one club) -- no scoring service call,
     so a plain RetrieveAPIView + ClubDetailSerializer is sufficient.
@@ -66,7 +66,7 @@ class ClubDetailView(generics.RetrieveAPIView):
 
 
 class ClubExportView(APIView):
-    """GET /api/clubs/{id}/export/ -- CRUD-10: streams a text/csv of the club
+    """GET /api/v1/clubs/{id}/export/ -- CRUD-10: streams a text/csv of the club
     profile + transfer aggregates, reusing ClubDetailSerializer so the
     exported numbers never diverge from the API. IsAuthenticated only (the
     project global default) -- club data is not user-owned, so no IsOwner."""
@@ -98,7 +98,7 @@ class ClubExportView(APIView):
 
 
 class ClubInsightsView(APIView):
-    """POST /api/clubs/{id}/insights/ -- AI-04: AI-generated club insights
+    """POST /api/v1/clubs/{id}/insights/ -- AI-04: AI-generated club insights
     (recruitment gaps, over-aged positions, financial constraints), grounded
     in position-needs + transfer-behaviour aggregates. No explicit
     permission_classes -- global IsAuthenticated default (matching
@@ -121,7 +121,7 @@ class ClubInsightsView(APIView):
 
 
 class PositionNeedsView(APIView):
-    """GET /api/clubs/{id}/position-needs/ -- PLAN-01 (11-01-PLAN.md):
+    """GET /api/v1/clubs/{id}/position-needs/ -- PLAN-01 (11-01-PLAN.md):
     per-position strong/weak/at-risk classification, extending Phase 10's
     position_needs_aggregate. Deterministic read (GET, not POST) -- no
     LLM call, no 503 path. No explicit permission_classes -- global
@@ -134,7 +134,7 @@ class PositionNeedsView(APIView):
 
 
 class ReplacementsView(APIView):
-    """GET /api/clubs/{id}/replacements/?position=<POS> -- PLAN-02.
+    """GET /api/v1/clubs/{id}/replacements/?position=<POS> -- PLAN-02.
 
     Deterministic ranked replacement suggestions for a club's (already-known-weak)
     position. GET, no LLM/503 path. No explicit permission_classes -- global

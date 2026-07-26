@@ -58,13 +58,13 @@ def _warm_scored_population(django_db_setup, django_db_blocker):
 # ---------------------------------------------------------------------------
 def test_list_requires_authentication():
     client = APIClient()
-    response = client.get("/api/players/")
+    response = client.get("/api/v1/players/")
     assert response.status_code in (401, 403)
 
 
 def test_detail_requires_authentication():
     client = APIClient()
-    response = client.get(f"/api/players/{uuid.uuid4()}/")
+    response = client.get(f"/api/v1/players/{uuid.uuid4()}/")
     assert response.status_code in (401, 403)
 
 
@@ -75,7 +75,7 @@ def test_list_filters_by_position(real_data_available, auth_client):
     position = Player.objects.exclude(position__isnull=True).values_list("position", flat=True).first()
     assert position, "expected at least one real Player.position value"
 
-    response = auth_client.get(f"/api/players/?position={position}&page_size=10")
+    response = auth_client.get(f"/api/v1/players/?position={position}&page_size=10")
 
     assert response.status_code == 200
     results = response.data["results"]
@@ -84,7 +84,7 @@ def test_list_filters_by_position(real_data_available, auth_client):
 
 
 def test_list_ordering_by_impact_score(real_data_available, auth_client):
-    response = auth_client.get("/api/players/?ordering=-impact_score&page_size=10")
+    response = auth_client.get("/api/v1/players/?ordering=-impact_score&page_size=10")
 
     assert response.status_code == 200
     scores = [row["impact_score"] for row in response.data["results"] if row["impact_score"] is not None]
@@ -92,7 +92,7 @@ def test_list_ordering_by_impact_score(real_data_available, auth_client):
 
 
 def test_list_pagination_shape(real_data_available, auth_client):
-    response = auth_client.get("/api/players/?page_size=5")
+    response = auth_client.get("/api/v1/players/?page_size=5")
 
     assert response.status_code == 200
     assert {"results", "count"}.issubset(response.data)
@@ -100,7 +100,7 @@ def test_list_pagination_shape(real_data_available, auth_client):
 
 
 def test_list_age_range_filter(real_data_available, auth_client):
-    response = auth_client.get("/api/players/?age_min=18&age_max=23&page_size=20")
+    response = auth_client.get("/api/v1/players/?age_min=18&age_max=23&page_size=20")
 
     assert response.status_code == 200
     results = response.data["results"]
@@ -115,7 +115,7 @@ def test_detail_returns_profile_and_score_breakdowns(real_data_available, auth_c
     player = Player.objects.filter(club__isnull=False).first()
     assert player is not None, "expected at least one real player with a club"
 
-    response = auth_client.get(f"/api/players/{player.id}/")
+    response = auth_client.get(f"/api/v1/players/{player.id}/")
 
     assert response.status_code == 200
     assert "season" in response.data
@@ -137,7 +137,7 @@ def test_detail_club_none_returns_null_with_reason(auth_client, monkeypatch):
     monkeypatch.setattr("players.views.summary.get_summary", mock_get_summary)
     monkeypatch.setattr("players.views.rmm.get_rmm", mock_get_rmm)
 
-    response = auth_client.get(f"/api/players/{player.id}/")
+    response = auth_client.get(f"/api/v1/players/{player.id}/")
 
     assert response.status_code == 200
     mock_get_summary.assert_not_called()
@@ -156,7 +156,7 @@ def test_ids_multifetch_returns_unpaginated_exact_set(real_data_available, auth_
     ids = list(Player.objects.values_list("id", flat=True)[:3])
     assert len(ids) == 3
 
-    response = auth_client.get(f"/api/players/?ids={','.join(str(i) for i in ids)}")
+    response = auth_client.get(f"/api/v1/players/?ids={','.join(str(i) for i in ids)}")
 
     assert response.status_code == 200
     assert isinstance(response.data, list)
@@ -166,6 +166,6 @@ def test_ids_multifetch_returns_unpaginated_exact_set(real_data_available, auth_
 def test_ids_over_cap_returns_400(auth_client):
     ids = ",".join(str(uuid.uuid4()) for _ in range(101))
 
-    response = auth_client.get(f"/api/players/?ids={ids}")
+    response = auth_client.get(f"/api/v1/players/?ids={ids}")
 
     assert response.status_code == 400

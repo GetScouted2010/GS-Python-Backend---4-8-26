@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
+    "drf_spectacular",
     "clubs",
     "players",
     "transfers",
@@ -140,11 +141,39 @@ REST_FRAMEWORK = {
     ],
     # No DEFAULT_PAGINATION_CLASS here deliberately: setting one project-wide
     # retroactively paginates every existing ListAPIView, including Phase 2's
-    # /api/auth/admin/users/ (which returns a plain list and isn't written to
+    # /api/v1/auth/admin/users/ (which returns a plain list and isn't written to
     # expect a paginated {count,next,previous,results} envelope). The Phase 7
     # read layer's list views (players/clubs) explicitly set their own
     # `pagination_class = core.pagination.IdsBypassPagination` instead, so no
     # global default is needed for them either.
+    # API versioning: every route lives under the literal /api/v1/ URL prefix
+    # (config/urls.py). URLPathVersioning is enabled so `request.version` is
+    # populated ("v1") without requiring every urlpattern to declare a captured
+    # <version> group -- it falls back to DEFAULT_VERSION when the URLconf
+    # doesn't supply one, which is exactly this project's literal-prefix setup.
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_VERSION": "v1",
+    "ALLOWED_VERSIONS": ["v1"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# OpenAPI schema / Swagger UI (drf-spectacular). Docs live outside the /api/v1/
+# prefix (/api/schema/, /api/docs/, /api/redoc/) since the schema/docs surface
+# itself isn't versioned data — only the API it describes is. SimpleJWT's Bearer
+# scheme is picked up automatically (drf-spectacular ships a built-in
+# `rest_framework_simplejwt` auth extension), so the Swagger UI "Authorize"
+# button works out of the box.
+SPECTACULAR_SETTINGS = {
+    "TITLE": "GetScouted API",
+    "DESCRIPTION": (
+        "AI-powered football recruitment and scouting platform backend "
+        "(World In Motion Ltd)."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SCHEMA_PATH_PREFIX": r"/api/v1",
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
 }
 
 # simplejwt lifetimes 15min/7days are a deliberate discretionary bump over simplejwt's

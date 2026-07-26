@@ -1,5 +1,5 @@
 """DRF APIClient integration tests for players/views.py::PlayerSearchView
-(09-04-PLAN.md) -- covers POST /api/players/search/'s 3-tier degradation
+(09-04-PLAN.md) -- covers POST /api/v1/players/search/'s 3-tier degradation
 (AI-01/AI-02), the RecentActivity "searched" logging contract completed
 from Phase 8, and the auth gate.
 
@@ -57,7 +57,7 @@ def _fake_parser(return_value=None, side_effect=None):
 # ---------------------------------------------------------------------------
 def test_search_requires_authentication():
     client = APIClient()
-    response = client.post("/api/players/search/", {"query": "x"})
+    response = client.post("/api/v1/players/search/", {"query": "x"})
     assert response.status_code in (401, 403)
 
 
@@ -70,7 +70,7 @@ def test_search_success_returns_filters_and_results(real_data_available, auth_cl
         _fake_parser(return_value=ParsedQuery(filters={"position": "CB"}, raw_query="central defenders")),
     )
 
-    response = auth_client.post("/api/players/search/", {"query": "central defenders"}, format="json")
+    response = auth_client.post("/api/v1/players/search/", {"query": "central defenders"}, format="json")
 
     assert response.status_code == 200
     assert response.data["fallback_used"] is False
@@ -90,7 +90,7 @@ def test_search_llm_failure_falls_back_to_keyword(real_data_available, auth_clie
         _fake_parser(side_effect=NLQueryParserError("provider unavailable")),
     )
 
-    response = auth_client.post("/api/players/search/", {"query": "strikers under €5M"}, format="json")
+    response = auth_client.post("/api/v1/players/search/", {"query": "strikers under €5M"}, format="json")
 
     assert response.status_code == 200
     assert response.data["fallback_used"] is True
@@ -107,7 +107,7 @@ def test_search_tier3_fallback_unfiltered_when_nothing_extractable(real_data_ava
         _fake_parser(side_effect=NLQueryParserError("provider unavailable")),
     )
 
-    response = auth_client.post("/api/players/search/", {"query": "asdfghjkl"}, format="json")
+    response = auth_client.post("/api/v1/players/search/", {"query": "asdfghjkl"}, format="json")
 
     assert response.status_code == 200
     assert response.data["parsed_filters"] == {}
@@ -124,7 +124,7 @@ def test_search_logs_recent_activity(real_data_available, auth_client, monkeypat
         _fake_parser(return_value=ParsedQuery(filters={"position": "CB"}, raw_query="central defenders")),
     )
 
-    response = auth_client.post("/api/players/search/", {"query": "central defenders"}, format="json")
+    response = auth_client.post("/api/v1/players/search/", {"query": "central defenders"}, format="json")
     assert response.status_code == 200
 
     activities = RecentActivity.objects.filter(activity_type="searched")
@@ -143,7 +143,7 @@ def test_search_never_errors_on_blank_query(real_data_available, auth_client, mo
         _fake_parser(side_effect=NLQueryParserError("provider unavailable")),
     )
 
-    response = auth_client.post("/api/players/search/", {}, format="json")
+    response = auth_client.post("/api/v1/players/search/", {}, format="json")
 
     assert response.status_code == 200
     assert response.data["parsed_filters"] == {}

@@ -23,7 +23,7 @@ def test_password_reset_request_existing_user_sends_email(api_client, user_facto
     mail.outbox = []
 
     response = api_client.post(
-        "/api/auth/password-reset/", {"email": user.email}, format="json"
+        "/api/v1/auth/password-reset/", {"email": user.email}, format="json"
     )
 
     assert response.status_code == 200
@@ -36,7 +36,7 @@ def test_password_reset_request_nonexistent_email_still_generic_200(api_client):
     mail.outbox = []
 
     response = api_client.post(
-        "/api/auth/password-reset/",
+        "/api/v1/auth/password-reset/",
         {"email": "no-such-user@example.com"},
         format="json",
     )
@@ -51,7 +51,7 @@ def test_password_reset_confirm_valid_token_changes_password(api_client, user_fa
     uid, token = _uid_and_token(user)
 
     response = api_client.post(
-        "/api/auth/password-reset/confirm/",
+        "/api/v1/auth/password-reset/confirm/",
         {"uid": uid, "token": token, "new_password": "BrandNewPass9"},
         format="json",
     )
@@ -68,7 +68,7 @@ def test_password_reset_confirm_invalid_token_rejected(api_client, user_factory)
     uid, _ = _uid_and_token(user)
 
     response = api_client.post(
-        "/api/auth/password-reset/confirm/",
+        "/api/v1/auth/password-reset/confirm/",
         {"uid": uid, "token": "tampered-token", "new_password": "BrandNewPass9"},
         format="json",
     )
@@ -85,7 +85,7 @@ def test_password_reset_confirm_weak_password_rejected(api_client, user_factory)
     uid, token = _uid_and_token(user)
 
     response = api_client.post(
-        "/api/auth/password-reset/confirm/",
+        "/api/v1/auth/password-reset/confirm/",
         {"uid": uid, "token": token, "new_password": "123"},
         format="json",
     )
@@ -101,14 +101,14 @@ def test_password_reset_confirm_token_single_use(api_client, user_factory):
     uid, token = _uid_and_token(user)
 
     first_response = api_client.post(
-        "/api/auth/password-reset/confirm/",
+        "/api/v1/auth/password-reset/confirm/",
         {"uid": uid, "token": token, "new_password": "BrandNewPass9"},
         format="json",
     )
     assert first_response.status_code == 200
 
     second_response = api_client.post(
-        "/api/auth/password-reset/confirm/",
+        "/api/v1/auth/password-reset/confirm/",
         {"uid": uid, "token": token, "new_password": "AnotherPass8"},
         format="json",
     )

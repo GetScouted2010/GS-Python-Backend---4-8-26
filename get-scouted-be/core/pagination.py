@@ -1,7 +1,7 @@
 """Shared DRF pagination for the Phase 7 read layer (CRUD-01, CRUD-05).
 
 Not wired as a project-wide DEFAULT_PAGINATION_CLASS — that would retroactively
-paginate every existing ListAPIView (e.g. Phase 2's /api/auth/admin/users/,
+paginate every existing ListAPIView (e.g. Phase 2's /api/v1/auth/admin/users/,
 which returns a plain list). Instead, each Phase 7 list view sets
 `pagination_class` explicitly.
 

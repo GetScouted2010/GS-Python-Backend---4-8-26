@@ -1,5 +1,5 @@
 """DRF APIClient integration tests for clubs/views.py::ClubInsightsView
-(10-04-PLAN.md, AI-04) -- covers POST /api/clubs/{id}/insights/'s success
+(10-04-PLAN.md, AI-04) -- covers POST /api/v1/clubs/{id}/insights/'s success
 shape, the clean-error-on-failure (503, locked decision #6) branch, and the
 natural 404 for an unknown club.
 
@@ -82,7 +82,7 @@ def test_club_insights_success(auth_client, monkeypatch):
     )
     monkeypatch.setattr("clubs.services.get_report_generator", _fake_generator(return_value=fake_report))
 
-    response = auth_client.post(f"/api/clubs/{club.id}/insights/")
+    response = auth_client.post(f"/api/v1/clubs/{club.id}/insights/")
 
     assert response.status_code == 200
     assert set(response.data["narrative"].keys()) == {
@@ -106,7 +106,7 @@ def test_club_insights_failure(auth_client, monkeypatch):
         _fake_generator(side_effect=ReportGeneratorError("provider failed")),
     )
 
-    response = auth_client.post(f"/api/clubs/{club.id}/insights/")
+    response = auth_client.post(f"/api/v1/clubs/{club.id}/insights/")
 
     assert response.status_code == 503
     assert "narrative" not in response.data
@@ -122,7 +122,7 @@ def test_club_insights_unknown_club_404(auth_client, monkeypatch):
     mock_get_generator = MagicMock()
     monkeypatch.setattr("clubs.services.get_report_generator", mock_get_generator)
 
-    response = auth_client.post(f"/api/clubs/{uuid.uuid4()}/insights/")
+    response = auth_client.post(f"/api/v1/clubs/{uuid.uuid4()}/insights/")
 
     assert response.status_code == 404
     mock_get_generator.assert_not_called()
@@ -133,5 +133,5 @@ def test_club_insights_unknown_club_404(auth_client, monkeypatch):
 # ---------------------------------------------------------------------------
 def test_club_insights_requires_authentication():
     client = APIClient()
-    response = client.post(f"/api/clubs/{uuid.uuid4()}/insights/")
+    response = client.post(f"/api/v1/clubs/{uuid.uuid4()}/insights/")
     assert response.status_code in (401, 403)

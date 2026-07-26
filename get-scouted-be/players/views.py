@@ -28,7 +28,7 @@ from workspace.models import RecentActivity
 
 
 class PlayerListView(generics.ListAPIView):
-    """GET /api/players/ -- CRUD-01 (filter/sort/paginate) + CRUD-05 (?ids=)."""
+    """GET /api/v1/players/ -- CRUD-01 (filter/sort/paginate) + CRUD-05 (?ids=)."""
 
     queryset = Player.objects.all()
     serializer_class = PlayerListSerializer
@@ -43,7 +43,7 @@ class PlayerListView(generics.ListAPIView):
 
 
 class PlayerDetailView(APIView):
-    """GET /api/players/{id}/?club_id=<uuid> -- CRUD-03.
+    """GET /api/v1/players/{id}/?club_id=<uuid> -- CRUD-03.
 
     Full profile + single labeled season + all four score breakdowns.
     club_id defaults to the player's own current club (the Phase-6 fast
@@ -75,7 +75,7 @@ class PlayerDetailView(APIView):
 
 
 class PlayerScoutingReportView(APIView):
-    """POST /api/players/{id}/scouting-report/ -- AI-03.
+    """POST /api/v1/players/{id}/scouting-report/ -- AI-03.
 
     Thin orchestration: all grounding/retry/validation logic lives inside
     the Wave-2 generator (players.ai.report_generator /
@@ -108,7 +108,7 @@ class PlayerScoutingReportView(APIView):
 
 
 class ClubMatchesView(APIView):
-    """GET /api/players/{id}/club-matches/ -- PLAN-04.
+    """GET /api/v1/players/{id}/club-matches/ -- PLAN-04.
 
     Deterministic ranked list of clubs that fit this player (Player -> Club
     matching), scored by CS + real TFM, sorted by transfer_probability, own
@@ -129,7 +129,7 @@ class ClubMatchesView(APIView):
 
 
 class PlayerSearchView(APIView):
-    """POST /api/players/search/ -- AI-01/AI-02 natural-language search.
+    """POST /api/v1/players/search/ -- AI-01/AI-02 natural-language search.
 
     3-tier degradation, always HTTP 200:
       tier 1: the provider-agnostic LLM parser (players.ai.factory).

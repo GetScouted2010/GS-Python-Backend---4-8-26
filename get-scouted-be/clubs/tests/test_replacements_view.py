@@ -1,5 +1,5 @@
 """Wave 0 RED scaffold: DRF APIClient integration tests for
-GET /api/clubs/{id}/replacements/ (PLAN-02, 12-01-PLAN.md).
+GET /api/v1/clubs/{id}/replacements/ (PLAN-02, 12-01-PLAN.md).
 
 Mirrors clubs/tests/test_views_position_needs.py's auth_client + route-not-
 swallowed + unknown-id-404 + requires-auth patterns. The route does not exist
@@ -44,7 +44,7 @@ def _make_club_with_squad(name="Replacements United"):
 def test_replacements_endpoint_returns_ranked_list(auth_client):
     club = _make_club_with_squad()
 
-    response = auth_client.get(f"/api/clubs/{club.id}/replacements/?position=CB")
+    response = auth_client.get(f"/api/v1/clubs/{club.id}/replacements/?position=CB")
 
     assert response.status_code == 200
     assert "results" in response.data
@@ -54,7 +54,7 @@ def test_replacements_endpoint_returns_ranked_list(auth_client):
 def test_replacements_route_not_swallowed_by_catchall(auth_client):
     club = _make_club_with_squad("Route Order Replacements United")
 
-    response = auth_client.get(f"/api/clubs/{club.id}/replacements/?position=CB")
+    response = auth_client.get(f"/api/v1/clubs/{club.id}/replacements/?position=CB")
 
     assert response.status_code == 200
     assert "id" not in response.data
@@ -62,7 +62,7 @@ def test_replacements_route_not_swallowed_by_catchall(auth_client):
 
 
 def test_unknown_club_404(auth_client):
-    response = auth_client.get(f"/api/clubs/{uuid.uuid4()}/replacements/?position=CB")
+    response = auth_client.get(f"/api/v1/clubs/{uuid.uuid4()}/replacements/?position=CB")
 
     assert response.status_code == 404
 
@@ -71,6 +71,6 @@ def test_replacements_requires_auth():
     client = APIClient()
     club = _make_club_with_squad("Anon Replacements United")
 
-    response = client.get(f"/api/clubs/{club.id}/replacements/?position=CB")
+    response = client.get(f"/api/v1/clubs/{club.id}/replacements/?position=CB")
 
     assert response.status_code == 401

@@ -1,5 +1,5 @@
 """DRF APIClient integration tests for scoring/views.py (04-06-PLAN.md) --
-covers all 5 endpoints under /api/scoring/ plus the cross-cutting
+covers all 5 endpoints under /api/v1/scoring/ plus the cross-cutting
 authentication gate (IsAuthenticated is the project's global DRF default;
 no bespoke permission class is added for these views).
 
@@ -33,11 +33,11 @@ pytestmark = pytest.mark.django_db
 
 
 ENDPOINTS = [
-    lambda p, c: f"/api/scoring/players/{p}/impact/",
-    lambda p, c: f"/api/scoring/players/{p}/clubs/{c}/compatibility/",
-    lambda p, c: f"/api/scoring/players/{p}/clubs/{c}/financial-fit/",
-    lambda p, c: f"/api/scoring/players/{p}/clubs/{c}/transfer-probability/",
-    lambda p, c: f"/api/scoring/players/{p}/summary/?club_id={c}",
+    lambda p, c: f"/api/v1/scoring/players/{p}/impact/",
+    lambda p, c: f"/api/v1/scoring/players/{p}/clubs/{c}/compatibility/",
+    lambda p, c: f"/api/v1/scoring/players/{p}/clubs/{c}/financial-fit/",
+    lambda p, c: f"/api/v1/scoring/players/{p}/clubs/{c}/transfer-probability/",
+    lambda p, c: f"/api/v1/scoring/players/{p}/summary/?club_id={c}",
 ]
 
 
@@ -160,7 +160,7 @@ def test_rmm_endpoint_returns_real_score(real_data_available, auth_client):
     player_id, _club = _pick_player_and_club()
 
     with _patched_services():
-        response = auth_client.get(f"/api/scoring/players/{player_id}/impact/")
+        response = auth_client.get(f"/api/v1/scoring/players/{player_id}/impact/")
 
     assert response.status_code == 200
     assert response.data["rmm"] is not None
@@ -172,7 +172,7 @@ def test_compatibility_endpoint(real_data_available, auth_client):
     player_id, club = _pick_player_and_club()
 
     with _patched_services():
-        response = auth_client.get(f"/api/scoring/players/{player_id}/clubs/{club.id}/compatibility/")
+        response = auth_client.get(f"/api/v1/scoring/players/{player_id}/clubs/{club.id}/compatibility/")
 
     assert response.status_code == 200
     assert "compatibility_score" in response.data
@@ -191,7 +191,7 @@ def test_financial_fit_endpoint(real_data_available, auth_client):
     with _patched_services():
         for candidate_club in Club.objects.all()[:5]:
             response = auth_client.get(
-                f"/api/scoring/players/{player_id}/clubs/{candidate_club.id}/financial-fit/"
+                f"/api/v1/scoring/players/{player_id}/clubs/{candidate_club.id}/financial-fit/"
             )
             assert response.status_code == 200
             if response.data.get("predicted_fee") is not None:
@@ -212,7 +212,7 @@ def test_transfer_probability_endpoint(real_data_available, auth_client):
 
     with _patched_services():
         response = auth_client.get(
-            f"/api/scoring/players/{player_id}/clubs/{club.id}/transfer-probability/"
+            f"/api/v1/scoring/players/{player_id}/clubs/{club.id}/transfer-probability/"
         )
 
     assert response.status_code == 200
@@ -227,7 +227,7 @@ def test_summary_endpoint(real_data_available, auth_client):
     player_id, club = _pick_player_and_club()
 
     with _patched_services():
-        response = auth_client.get(f"/api/scoring/players/{player_id}/summary/?club_id={club.id}")
+        response = auth_client.get(f"/api/v1/scoring/players/{player_id}/summary/?club_id={club.id}")
 
     assert response.status_code == 200
     assert set(response.data.keys()) == {"rmm", "compatibility", "financial_fit", "transfer_probability"}
@@ -238,6 +238,6 @@ def test_unknown_player_returns_404(real_data_available, auth_client):
     unknown_player_id = uuid.uuid4()
 
     with _patched_services():
-        response = auth_client.get(f"/api/scoring/players/{unknown_player_id}/impact/")
+        response = auth_client.get(f"/api/v1/scoring/players/{unknown_player_id}/impact/")
 
     assert response.status_code == 404

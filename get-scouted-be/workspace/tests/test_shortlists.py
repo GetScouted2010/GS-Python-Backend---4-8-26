@@ -17,7 +17,7 @@ from workspace.models import Shortlist, ShortlistEntry
 
 pytestmark = pytest.mark.django_db
 
-SHORTLISTS_URL = "/api/workspace/shortlists/"
+SHORTLISTS_URL = "/api/v1/workspace/shortlists/"
 
 
 def test_create_named_shortlist_tied_to_club(authenticated_client, club_factory):

@@ -16,7 +16,7 @@ from workspace.models import SquadPlan
 
 pytestmark = pytest.mark.django_db
 
-SQUAD_PLANS_URL = "/api/workspace/squad-plans/"
+SQUAD_PLANS_URL = "/api/v1/workspace/squad-plans/"
 
 
 def test_create_squad_plan(authenticated_client, club_factory, player_factory):
