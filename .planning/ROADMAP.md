@@ -200,7 +200,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. User can view a Position Needs analysis (strong/weak/at-risk) for a club's squad, based on depth, contract expiry, and age profile.
   2. User can simulate a squad change (add/remove/swap) and see recalculated aggregate squad metrics (avg age, avg score, budget/wage impact).
   3. A simulated change is not persisted to the real Squad Plan until the user explicitly commits it.
-**Plans**: TBD
+**Plans**: 2 plans (1 wave)
+- [ ] 11-01-PLAN.md — Position Needs classification service + GET /api/clubs/{id}/position-needs/ endpoint (wave 1)
+- [ ] 11-02-PLAN.md — Squad simulation: workspace/services.py + POST /squad-plans/{id}/simulate/ in-memory add/remove/swap metrics (wave 1)
 
 ### Phase 12: Bidirectional Matching - Replacements & Player-Club Fit
 **Goal**: Users can get ranked matches in both directions — replacement players for a weak position, and clubs that fit a given player.
@@ -229,7 +231,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. User Workspace CRUD | 6/6 | Complete   | 2026-07-25 |
 | 9. AI Provider Interface & Natural-Language Search | 4/4 | Complete   | 2026-07-25 |
 | 10. AI Grounded Report Generation | 5/5 | Complete   | 2026-07-26 |
-| 11. Position Needs & Squad Simulation | 0/TBD | Not started | - |
+| 11. Position Needs & Squad Simulation | 0/2 | Not started | - |
 | 12. Bidirectional Matching - Replacements & Player-Club Fit | 0/TBD | Not started | - |
 
 ---
