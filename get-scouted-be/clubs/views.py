@@ -117,3 +117,16 @@ class ClubInsightsView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         return Response(insights)
+
+
+class PositionNeedsView(APIView):
+    """GET /api/clubs/{id}/position-needs/ -- PLAN-01 (11-01-PLAN.md):
+    per-position strong/weak/at-risk classification, extending Phase 10's
+    position_needs_aggregate. Deterministic read (GET, not POST) -- no
+    LLM call, no 503 path. No explicit permission_classes -- global
+    IsAuthenticated default (matching ClubExportView/ClubInsightsView;
+    club data is not user-owned). Nonexistent club -> natural Http404."""
+
+    def get(self, request, pk):
+        club = get_object_or_404(Club, pk=pk)
+        return Response(services.classify_position_needs(club))
