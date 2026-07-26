@@ -183,3 +183,11 @@ ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
 # time." The default below was verified at build time (see build-time verification
 # step) — never trust a stale model string.
 ANTHROPIC_MODEL = env("ANTHROPIC_MODEL", default="claude-haiku-4-5")
+# Report generation (AI-03/AI-04) uses a separate, independently-configurable,
+# stronger/flagship-tier model -- reports are low-volume, on-demand narrative
+# generation (quality over cost), unlike ANTHROPIC_MODEL's per-search cheap
+# extraction use case. Default verified at build time against the installed
+# anthropic SDK's own ModelParam Literal type (no API key available to hit
+# the live /v1/models endpoint) -- see 10-01-SUMMARY.md for the exact command
+# output. Never trust a stale model string; re-verify if executed much later.
+ANTHROPIC_REPORT_MODEL = env("ANTHROPIC_REPORT_MODEL", default="claude-sonnet-5")
