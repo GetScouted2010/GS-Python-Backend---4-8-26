@@ -123,9 +123,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-03 | Phase 10 | Complete (`players/services.py::generate_scouting_report` assembles grounding from `get_summary()`, generates via `get_report_generator()`; `POST /api/players/{id}/scouting-report/` returns `{narrative, grounding}` or a clean 503, never a fabricated report) |
 | AI-04 | Phase 10 | Complete (`clubs/services.py::generate_club_insights` combines a bounded single-club ORM position-needs aggregation with `ClubDetailSerializer.get_transfer_aggregates`, generated via the cross-app `get_report_generator()`; `POST /api/clubs/{id}/insights/` returns `{narrative, grounding}` or a clean 503, never a fabricated report) |
 | AI-05 | Phase 9 | Complete (`get_nl_query_parser()` factory dispatches on `LLM_PROVIDER`; calling code imports only the abstract interface, never `AnthropicNLQueryParser` directly — verified via grep, not just declared) |
-| PLAN-01 | Phase 11 | Complete |
+| PLAN-01 | Phase 11 | Complete (`classify_position_needs` extends Phase 10's `position_needs_aggregate` with weak/at-risk/strong labels — weak if depth<2, at-risk if adequate depth but avg_age>30 or half+ contracts expire within 12mo, strong otherwise; `GET /api/clubs/{id}/position-needs/`) |
 | PLAN-02 | Phase 12 | Pending |
-| PLAN-03 | Phase 11 | Complete |
+| PLAN-03 | Phase 11 | Complete (`workspace/services.py::simulate_squad_change` applies add/remove/swap entirely in memory, never persists — live-verified DB unchanged after `/simulate/`; uses `impact_score` (club-independent) for avg-score, `market_value` delta for budget impact, nulls excluded from averages not coerced to 0) |
 | PLAN-04 | Phase 12 | Pending |
 
 **Coverage:**
