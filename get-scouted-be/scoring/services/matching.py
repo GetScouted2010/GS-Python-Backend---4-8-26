@@ -219,7 +219,30 @@ def rank_clubs_for_player(player_id, top_n: int = DEFAULT_TOP_N) -> dict:
     ranked = pd.DataFrame(rows).sort_values(
         ["transfer_probability", "compatibility_score"], ascending=False, na_position="last"
     ).head(top_n)
-    return {"player_id": str(player_id), "results": ranked.to_dict("records")}
+
+    results = ranked.to_dict("records")
+    top_names = [r["club"] for r in results]
+
+    from clubs.models import Club  # local import: no circular (matching.py has no module-level clubs import)
+
+    name_to_id = dict(Club.objects.filter(name__in=top_names).values_list("name", "id"))
+    for r in results:
+        r["club_id"] = str(name_to_id[r["club"]]) if r.get("club") in name_to_id else None
+
+    # GUARD: an unresolvable club name (no matching Club row) would make get_financial_fit
+    # receive club_id=None and raise Http404 via resolve_club_name(None). Route ONLY the
+    # resolvable (player, club_id) pairs through the shared helper; give any unresolved entry
+    # a null financial_fit directly. In practice name_to_id always resolves (Club.name is
+    # DB-unique and team_styles_df.Team is sourced from Club.name), so this is defensive.
+    resolvable_pairs = [(player_id, name_to_id[r["club"]]) for r in results if r["club_id"] is not None]
+    _attach_real_tfm(
+        [r for r in results if r["club_id"] is not None],
+        resolvable_pairs,
+    )  # adds r["financial_fit"] = {predicted_fee, value_verdict} for resolvable clubs
+    for r in results:
+        r.setdefault("financial_fit", {"predicted_fee": None, "value_verdict": None})
+
+    return {"player_id": str(player_id), "results": results}
 
 
 def _attach_real_tfm(entries, pairs, key: str = "financial_fit"):
