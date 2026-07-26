@@ -59,6 +59,27 @@ def position_needs_aggregate(club) -> dict:
     }
 
 
+def classify_position_needs(club) -> dict:
+    """PLAN-01 (11-01-PLAN.md): layers strong/weak/at-risk classification
+    onto position_needs_aggregate's existing numbers. Never recomputes the
+    underlying aggregation -- reuses it as-is (see module docstring / the
+    Phase-10-vs-Phase-11 scoping decision)."""
+    needs = position_needs_aggregate(club)
+    result = {}
+    for position, stats in needs.items():
+        depth = stats["squad_depth"]
+        avg_age = stats["avg_age"]
+        expiring = stats["contracts_expiring_within_12mo"]
+        if depth < 2:
+            label = "weak"
+        elif (avg_age is not None and avg_age > 30) or expiring >= depth / 2:
+            label = "at-risk"
+        else:
+            label = "strong"
+        result[position] = {**stats, "classification": label}
+    return result
+
+
 def generate_club_insights(club_id) -> dict:
     """AI-04 orchestration: grounding = position needs (this module) +
     reused transfer aggregates (`ClubDetailSerializer.get_transfer_aggregates`);
