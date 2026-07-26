@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from players.serializers import PlayerListSerializer
+from workspace import services as workspace_services
 from workspace.models import RecentActivity, Shortlist, ShortlistEntry, SquadPlan, Watchlist
 from workspace.permissions import IsOwner
 from workspace.serializers import (
@@ -116,6 +117,18 @@ class SquadPlanViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return SquadPlanListSerializer
         return SquadPlanDetailSerializer
+
+    @action(detail=True, methods=["post"], url_path="simulate")
+    def simulate(self, request, pk=None):
+        squad_plan = self.get_object()  # IsOwner enforced via check_object_permissions
+        override = request.data.get("proposed_changes")
+        try:
+            result = workspace_services.simulate_squad_change(
+                squad_plan, proposed_changes=override
+            )
+        except workspace_services.InvalidPlayerReference as exc:
+            return Response({"error": str(exc)}, status=400)
+        return Response(result)
 
 
 class RecentActivityListView(generics.ListAPIView):
