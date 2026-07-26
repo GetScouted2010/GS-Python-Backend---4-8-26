@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-07-26T17:37:50.434Z"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-07-26T18:10:28.203Z"
 progress:
   total_phases: 12
   completed_phases: 11
   total_plans: 60
-  completed_plans: 58
+  completed_plans: 59
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 12 (bidirectional-matching-replacements-player-club-fit) — EXECUTING
-Plan: 2 of 4 complete (next: 12-03)
+Plan: 3 of 4 complete (next: 12-04)
 
 ## Performance Metrics
 
@@ -99,6 +99,7 @@ Plan: 2 of 4 complete (next: 12-03)
 | Phase 11 P02 | 12min | 2 tasks | 3 files |
 | Phase 12 P01 | 15min | 2 tasks | 4 files |
 | Phase 12 P02 | 20min | 3 tasks | 4 files |
+| Phase 12 P03 | 15min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,7 @@ Recent decisions affecting current work:
 - [Phase 11]: PLAN-01 classify_position_needs layers weak/at-risk/strong onto position_needs_aggregate (never recomputes); thresholds locked by 11-CONTEXT.md, avg_age None-guard mandatory; GET /api/clubs/{id}/position-needs/ route placed above the <uuid:pk>/ catch-all
 - [Phase 11-position-needs-squad-simulation]: [Phase 11]: [11-02]: POST /api/workspace/squad-plans/{id}/simulate/ applies add/remove/swap proposed_changes (stored or ad-hoc override) to a club's live squad entirely in memory via a NEW workspace/services.py::simulate_squad_change -- never writes to the DB; avg score uses Player.impact_score exclusively (club-independent RMM), never the three own-club-context denormalized score fields; single bulk Player.objects.filter(id__in=...) fetch (no N+1) raises InvalidPlayerReference (mapped to 400) on unknown ids; null age/impact_score/market_value excluded from averages/sums, never coerced to 0. Full backend suite 231 passed/315 skipped/0 failed, no regression.
 - [Phase 12]: [Phase 12-01]: scoring/services/matching.py created as the single shared module both bidirectional-matching directions (rank_replacement_players/rank_clubs_for_player) will implement against, with a fully-implemented shared _attach_real_tfm helper that bounds real-TFM enrichment to the top-N only; test_matching_reuses_shared_primitives uses ast-based import parsing (not substring matching) to be a genuine structural guard, not a docstring-fooled false pass
+- [Phase 12]: [Phase 12-03]: rank_clubs_for_player implemented via Pattern 2 (locked correctness fix) -- squad_stats computed ONCE over the full population (never a compute_cs_tp_for_pairs single-row slice), club-independent terms (player_impact, performance_score, own_best_role, contract_fit) computed once, per-club loop varies only role-fit/compatibility + O(1) squad_stats lookup. test_matching_reuses_shared_primitives now genuinely green (also fixed a latent unhashable-set TypeError in its Wave-0 scaffold that only surfaced once the real imports landed). Live-measured Pattern 2 latency: ~78.3-78.7s cold (no prior benchmark), exceeding the plan's own ~60s flag threshold -- no caching added per 12-CONTEXT.md's deferred-caching decision; flagged for the 12-04 phase gate.
 
 ### Pending Todos
 
@@ -195,6 +197,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T17:02:27.028Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-07-26T18:10:28.199Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None

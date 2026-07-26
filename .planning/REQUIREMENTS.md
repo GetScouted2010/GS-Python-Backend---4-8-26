@@ -57,7 +57,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PLAN-01**: User can view Position Needs analysis (strong/weak/at-risk) for a club's squad, based on depth, contract expiry, and age profile
 - [ ] **PLAN-02**: User can get AI-suggested replacement players for a weak position, ranked by RMM/CS/TFM fit
 - [x] **PLAN-03**: User can simulate a squad change (add/remove/swap) and get recalculated aggregate squad metrics (avg age, avg score, budget/wage impact) without persisting until committed
-- [ ] **PLAN-04**: User can get a ranked list of clubs that fit a given player (Player → Club Matching), scored by CS/TFM
+- [x] **PLAN-04**: User can get a ranked list of clubs that fit a given player (Player → Club Matching), scored by CS/TFM
 
 ## v2 Requirements
 
@@ -126,7 +126,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-01 | Phase 11 | Complete (`classify_position_needs` extends Phase 10's `position_needs_aggregate` with weak/at-risk/strong labels — weak if depth<2, at-risk if adequate depth but avg_age>30 or half+ contracts expire within 12mo, strong otherwise; `GET /api/clubs/{id}/position-needs/`) |
 | PLAN-02 | Phase 12 | Pending |
 | PLAN-03 | Phase 11 | Complete (`workspace/services.py::simulate_squad_change` applies add/remove/swap entirely in memory, never persists — live-verified DB unchanged after `/simulate/`; uses `impact_score` (club-independent) for avg-score, `market_value` delta for budget impact, nulls excluded from averages not coerced to 0) |
-| PLAN-04 | Phase 12 | Pending |
+| PLAN-04 | Phase 12 | Complete |
 
 **Coverage:**
 - v1 requirements: 34 total
