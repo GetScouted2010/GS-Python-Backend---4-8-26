@@ -213,8 +213,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can get a ranked list of clubs that fit a given player (Player → Club Matching), scored by CS/TFM.
   3. Both ranking directions reuse one shared underlying "rank the other side by fit" service rather than duplicated logic.
 **Plans**: 4 plans (4 waves)
-- [ ] 12-01-PLAN.md — Foundation: scoring/services/matching.py skeleton (both ranking signatures + shared _attach_real_tfm top-N enrichment helper) + Wave 0 test scaffolds (wave 1)
-- [ ] 12-02-PLAN.md — PLAN-02: rank_replacement_players (Pattern 1, direct score_population reuse) + top-N real-TFM + GET /api/clubs/{id}/replacements/ (wave 2)
+- [x] 12-01-PLAN.md — Foundation: scoring/services/matching.py skeleton (both ranking signatures + shared _attach_real_tfm top-N enrichment helper) + Wave 0 test scaffolds (wave 1)
+- [x] 12-02-PLAN.md — PLAN-02: rank_replacement_players (Pattern 1, direct score_population reuse) + top-N real-TFM + GET /api/clubs/{id}/replacements/ (wave 2)
 - [ ] 12-03-PLAN.md — PLAN-04 service: rank_clubs_for_player (Pattern 2, squad_stats computed once) + live latency spike + top-N real-TFM (wave 3)
 - [ ] 12-04-PLAN.md — PLAN-04 endpoint: GET /api/players/{id}/club-matches/ + phase gate (full suite + live dual-endpoint spike) (wave 4)
 
@@ -236,7 +236,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 9. AI Provider Interface & Natural-Language Search | 4/4 | Complete   | 2026-07-25 |
 | 10. AI Grounded Report Generation | 5/5 | Complete   | 2026-07-26 |
 | 11. Position Needs & Squad Simulation | 2/2 | Complete    | 2026-07-26 |
-| 12. Bidirectional Matching - Replacements & Player-Club Fit | 1/4 | In Progress|  |
+| 12. Bidirectional Matching - Replacements & Player-Club Fit | 2/4 | In Progress|  |
 
 ---
 *Roadmap created: 2026-07-20*
