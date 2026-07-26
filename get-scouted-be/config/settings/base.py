@@ -167,13 +167,97 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "GetScouted API",
     "DESCRIPTION": (
         "AI-powered football recruitment and scouting platform backend "
-        "(World In Motion Ltd)."
+        "(World In Motion Ltd).\n\n"
+        "## Typical flow\n\n"
+        "1. **Auth** — `POST /auth/register/` (role: scout/analyst/director — "
+        "admin is granted separately, never self-service), then "
+        "`POST /auth/login/` for an access + refresh token pair. Send the "
+        "access token as `Authorization: Bearer <token>` on every other call; "
+        "refresh it via `POST /auth/token/refresh/` when it expires (15 min).\n"
+        "2. **Discover players/clubs** — browse/filter `GET /players/` and "
+        "`GET /clubs/`, or skip straight to `POST /players/search/` with a "
+        "plain-English query (e.g. *\"young left-backs under €5M at "
+        "possession-based clubs\"*) — it always returns 200, degrading "
+        "through an LLM parse -> deterministic keyword fallback -> "
+        "unfiltered list.\n"
+        "3. **Inspect a player or club** — `GET /players/{id}/` and "
+        "`GET /clubs/{id}/` return full profiles plus real computed scores "
+        "(RMM, Compatibility, Financial Fit, Transfer Probability); the "
+        "`scoring/` endpoints expose each score individually with its "
+        "breakdown if you only need one.\n"
+        "4. **Go deeper with AI** (optional) — `POST /players/{id}/"
+        "scouting-report/` and `POST /clubs/{id}/insights/` turn those same "
+        "computed scores into a narrative. Every number in the narrative is "
+        "validated against the real scores before being returned — a 503 "
+        "means generation failed, never a fabricated report.\n"
+        "5. **Save work** — `workspace/` endpoints hold a user's Watchlist, "
+        "Shortlists, and Squad Plans. All are private to the requesting user.\n"
+        "6. **Plan a squad** — `GET /clubs/{id}/position-needs/` flags which "
+        "positions are weak/at-risk, `GET /clubs/{id}/replacements/"
+        "?position=<POS>` ranks real replacement candidates for a weak "
+        "position, and `POST /workspace/squad-plans/{id}/simulate/` previews "
+        "an add/remove/swap change in memory (never persisted until you "
+        "explicitly save the Squad Plan itself).\n"
+        "7. **Match the other direction** — `GET /players/{id}/club-matches/` "
+        "ranks clubs that fit a given player, the mirror image of step 6's "
+        "replacement search.\n\n"
+        "Endpoints under `scoring/`, `players/{id}/club-matches/`, and "
+        "`clubs/{id}/replacements/` compute against the real ~41,708-player "
+        "dataset live — most respond in well under a second (Phase 6 "
+        "caching), but the two arbitrary-other-club matching endpoints are "
+        "intentionally uncached and can take 40s-2min. That's expected, not "
+        "a bug."
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": r"/api/v1",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
+    "TAGS": [
+        {
+            "name": "auth",
+            "description": (
+                "Registration, login/refresh/logout, password reset, and "
+                "user management. Everything else in the API requires a "
+                "Bearer token obtained here."
+            ),
+        },
+        {
+            "name": "players",
+            "description": (
+                "Browse, filter, search, and inspect players — including "
+                "natural-language search, AI scouting reports, and "
+                "Player -> Club fit matching."
+            ),
+        },
+        {
+            "name": "clubs",
+            "description": (
+                "Browse, filter, and inspect clubs — including AI insights, "
+                "position-needs analysis, CSV export, and replacement-player "
+                "suggestions."
+            ),
+        },
+        {
+            "name": "scoring",
+            "description": (
+                "The four core scores (RMM, Compatibility, Financial Fit, "
+                "Transfer Probability) exposed individually with full "
+                "breakdowns, plus a combined summary. Every number shown "
+                "elsewhere in the API (player/club detail, reports, "
+                "matching) is computed by this same layer."
+            ),
+        },
+        {
+            "name": "workspace",
+            "description": (
+                "A user's private workspace: Watchlist, Shortlists (with "
+                "CSV export), Squad Plans (with in-memory simulation), and "
+                "an auto-logged Recent Activity feed. Every row here is "
+                "scoped to the authenticated user."
+            ),
+        },
+    ],
 }
 
 # simplejwt lifetimes 15min/7days are a deliberate discretionary bump over simplejwt's

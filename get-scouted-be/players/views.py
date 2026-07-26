@@ -8,7 +8,15 @@ _CLASSES (JWTAuthentication) already deny-by-default (config/settings/base.py).
 """
 
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
+from rest_framework import generics, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -27,6 +35,28 @@ from scoring.services.matching import rank_clubs_for_player
 from workspace.models import RecentActivity
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=["players"],
+        summary="List / filter / search players",
+        description=(
+            "Browse the full player dataset with filtering, sorting, and "
+            "pagination — position, age, market value, league, score "
+            "thresholds, and playing style (resolved through the player's "
+            "current club). Pass `?ids=<uuid>,<uuid>,...` instead of the "
+            "normal filters to fetch a specific set of players by id in "
+            "one call (used for side-by-side comparison) — this bypasses "
+            "pagination entirely and returns a plain list. For plain-English "
+            "queries instead of structured filters, use **Search players** "
+            "below."
+        ),
+        parameters=[
+            OpenApiParameter("ids", type=str, location=OpenApiParameter.QUERY, required=False, description="Comma-separated player UUIDs — bypasses filtering/pagination, returns exactly these players."),
+            OpenApiParameter("ordering", type=str, location=OpenApiParameter.QUERY, required=False, description="Sort field, e.g. `-impact_score` (default) or `age`."),
+            OpenApiParameter("page_size", type=int, location=OpenApiParameter.QUERY, required=False, description="Results per page (only applies when not using ?ids=)."),
+        ],
+    )
+)
 class PlayerListView(generics.ListAPIView):
     """GET /api/v1/players/ -- CRUD-01 (filter/sort/paginate) + CRUD-05 (?ids=)."""
 
@@ -53,6 +83,25 @@ class PlayerDetailView(APIView):
     club-dependent scores return the shared null+reason envelope.
     """
 
+    @extend_schema(
+        tags=["players"],
+        summary="Get a player's full profile + scores",
+        description=(
+            "Full player profile (identity, position, contract, latest "
+            "season stats) plus all four computed scores (RMM, "
+            "Compatibility, Financial Fit, Transfer Probability). "
+            "`club_id` defaults to the player's own current club if "
+            "omitted. If the player has no club at all, RMM is still "
+            "computed (it's club-independent) but the three club-dependent "
+            "scores come back as `null` with an explicit `reason` — never "
+            "silently zeroed or omitted. Also logs a `viewed_player` "
+            "entry to the caller's Recent Activity."
+        ),
+        parameters=[
+            OpenApiParameter("club_id", type=str, location=OpenApiParameter.QUERY, required=False, description="UUID of the club to score against. Defaults to the player's own current club."),
+        ],
+        responses={200: OpenApiResponse(description="Player profile + scores object."), 404: OpenApiResponse(description="Unknown player.")},
+    )
     def get(self, request, pk):
         player = get_object_or_404(Player, id=pk)
         RecentActivity.objects.create(
@@ -87,6 +136,35 @@ class PlayerScoutingReportView(APIView):
     already denies anonymous, matching every other players view.
     """
 
+    @extend_schema(
+        tags=["players"],
+        summary="Generate an AI scouting report for a player",
+        description=(
+            "Generates narrative scouting text (strengths, weaknesses, fit "
+            "assessment) grounded in this player's real computed scores "
+            "against the given club. **Every number that appears in the "
+            "narrative is validated against the real pre-computed scores "
+            "before the response is returned** — if the LLM's output "
+            "doesn't check out, generation is retried once with corrective "
+            "feedback, then fails clean rather than ever return a "
+            "fabricated report. `club_id` defaults to the player's own "
+            "current club; if the player has no club at all, `club_id` "
+            "must be supplied explicitly (400 otherwise). Slower than the "
+            "deterministic endpoints — this is a real LLM call, not a "
+            "cached lookup."
+        ),
+        request=inline_serializer(
+            "ScoutingReportRequest",
+            fields={"club_id": serializers.UUIDField(required=False)},
+        ),
+        responses={
+            200: OpenApiResponse(description="Generated report + the grounding scores it's based on."),
+            400: OpenApiResponse(description="club_id required (player has no current club)."),
+            404: OpenApiResponse(description="Unknown player."),
+            503: OpenApiResponse(description="Report generation failed (LLM error or failed grounding validation twice) — never a fabricated report."),
+        },
+        examples=[OpenApiExample("Request body", value={"club_id": "b3f1e2a0-....."}, request_only=True)],
+    )
     def post(self, request, pk):
         player = get_object_or_404(Player, id=pk)
 
@@ -123,6 +201,24 @@ class ClubMatchesView(APIView):
     404 (Http404 raised inside rank_clubs_for_player).
     """
 
+    @extend_schema(
+        tags=["players"],
+        summary="Rank clubs that fit this player (Player -> Club matching)",
+        description=(
+            "The mirror image of **Rank replacement players** on the "
+            "clubs side: given a player, ranks real candidate clubs by how "
+            "well they fit — Compatibility Score + real Financial Fit, "
+            "sorted by Transfer Probability. The player's own current club "
+            "is excluded (matching a player to their existing club isn't a "
+            "transfer suggestion). Bounded to a top-N list, not a full "
+            "browse. Fully deterministic — no LLM, no 503 path. "
+            "**Slow by design**: computes live against every real club "
+            "(~1,060), typically 40s-2min on the full dataset — this is a "
+            "\"suggestions\" surface, not a hot path, and isn't cached "
+            "on purpose."
+        ),
+        responses={200: OpenApiResponse(description="Top-N ranked club list with CS/TFM breakdown per entry."), 404: OpenApiResponse(description="Unknown player.")},
+    )
     def get(self, request, pk):
         get_object_or_404(Player, id=pk)  # fast 404 on unknown player
         return Response(rank_clubs_for_player(pk))
@@ -143,6 +239,27 @@ class PlayerSearchView(APIView):
     already denies anonymous, matching every other players view.
     """
 
+    @extend_schema(
+        tags=["players"],
+        summary="Search players with a plain-English query",
+        description=(
+            "Turns a natural-language description into structured player "
+            "filters and returns matching results — the alternative to "
+            "manually building query params on **List / filter players**. "
+            "**Always returns 200**, degrading gracefully through 3 tiers: "
+            "(1) an LLM parses the query into structured filters, "
+            "(2) if the LLM call fails, a deterministic keyword/regex "
+            "extractor takes over, (3) if that also finds nothing usable, "
+            "an unfiltered list is returned rather than an error. The "
+            "response's `fallback_used` field tells you whether tier 1 "
+            "(LLM) or tier 2 (keyword fallback) actually served the "
+            "request — a successful-but-empty LLM parse still counts as "
+            "tier 1. Logs a `searched` entry to the caller's Recent Activity."
+        ),
+        request=inline_serializer("PlayerSearchRequest", fields={"query": serializers.CharField()}),
+        examples=[OpenApiExample("Request body", value={"query": "young left-backs under €5M at possession-based clubs"}, request_only=True)],
+        responses={200: OpenApiResponse(description="query, parsed_filters, fallback_used, and results.")},
+    )
     def post(self, request):
         query = request.data.get("query", "")
 
