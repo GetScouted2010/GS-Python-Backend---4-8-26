@@ -54,7 +54,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Squad Planning & Matching
 
-- [ ] **PLAN-01**: User can view Position Needs analysis (strong/weak/at-risk) for a club's squad, based on depth, contract expiry, and age profile
+- [x] **PLAN-01**: User can view Position Needs analysis (strong/weak/at-risk) for a club's squad, based on depth, contract expiry, and age profile
 - [ ] **PLAN-02**: User can get AI-suggested replacement players for a weak position, ranked by RMM/CS/TFM fit
 - [ ] **PLAN-03**: User can simulate a squad change (add/remove/swap) and get recalculated aggregate squad metrics (avg age, avg score, budget/wage impact) without persisting until committed
 - [ ] **PLAN-04**: User can get a ranked list of clubs that fit a given player (Player → Club Matching), scored by CS/TFM
@@ -123,7 +123,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-03 | Phase 10 | Complete (`players/services.py::generate_scouting_report` assembles grounding from `get_summary()`, generates via `get_report_generator()`; `POST /api/players/{id}/scouting-report/` returns `{narrative, grounding}` or a clean 503, never a fabricated report) |
 | AI-04 | Phase 10 | Complete (`clubs/services.py::generate_club_insights` combines a bounded single-club ORM position-needs aggregation with `ClubDetailSerializer.get_transfer_aggregates`, generated via the cross-app `get_report_generator()`; `POST /api/clubs/{id}/insights/` returns `{narrative, grounding}` or a clean 503, never a fabricated report) |
 | AI-05 | Phase 9 | Complete (`get_nl_query_parser()` factory dispatches on `LLM_PROVIDER`; calling code imports only the abstract interface, never `AnthropicNLQueryParser` directly — verified via grep, not just declared) |
-| PLAN-01 | Phase 11 | Pending |
+| PLAN-01 | Phase 11 | Complete |
 | PLAN-02 | Phase 12 | Pending |
 | PLAN-03 | Phase 11 | Pending |
 | PLAN-04 | Phase 12 | Pending |

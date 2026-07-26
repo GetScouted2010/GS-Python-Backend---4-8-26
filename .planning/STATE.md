@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 11 context gathered
-last_updated: "2026-07-26T05:45:38.319Z"
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-07-26T06:23:24.547Z"
 progress:
   total_phases: 12
-  completed_phases: 10
-  total_plans: 54
-  completed_plans: 54
+  completed_phases: 11
+  total_plans: 56
+  completed_plans: 56
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** The backend must serve accurate, real scouting data and real (not approximated) Impact RMM scoring — the product's credibility rests on the scores being right, not just on the API being reachable.
-**Current focus:** Phase 10 — ai-grounded-report-generation
+**Current focus:** Phase 11 — position-needs-squad-simulation
 
 ## Current Position
 
-Phase: 10 (ai-grounded-report-generation) — COMPLETE (pending goal-backward verification)
-Plan: 5 of 5
+Phase: 11 (position-needs-squad-simulation) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -95,6 +95,7 @@ Plan: 5 of 5
 | Phase 10-ai-grounded-report-generation P03 | 12min | 2 tasks | 4 files |
 | Phase 10-ai-grounded-report-generation P04 | 12min | 3 tasks | 7 files |
 | Phase 10-ai-grounded-report-generation P05 | 8min | 1 tasks | 1 files |
+| Phase 11 P01 | 12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -171,6 +172,7 @@ Recent decisions affecting current work:
 - [Phase 10-ai-grounded-report-generation]: [Phase 10]: [10-03]: AI-03 complete end-to-end -- generate_scouting_report never catches ReportGeneratorError (propagates to the view, which alone maps it to a clean 503, making a fabricated report structurally impossible); club_id resolution (body club_id or player.club_id) happens in the view before calling get_summary to avoid its misleading Http404 for a genuinely club-less player, surfaced instead as a clean 400; an unresolvable-but-present club_id is left to surface as get_summary's natural Http404, matching PlayerDetailView's posture. Full backend suite verified green: 204 passed, 315 skipped, 0 failed.
 - [Phase 10-ai-grounded-report-generation]: [10-04]: AI-04 complete end-to-end -- clubs/tests/conftest.py gained its own ported autouse _block_real_anthropic_calls guard (closing the confirmed cross-app safety-net gap, sequenced/committed first); clubs/services.py::position_needs_aggregate(club) is a single bounded ORM .values("position").annotate() group-by scoped to club.players (never pandas, matching Phase 6 SCORE-07 precedent); generate_club_insights(club_id) combines it with ClubDetailSerializer().get_transfer_aggregates(club) (called on a bare instance to skip the heavy get_squad path) and generates narrative via the cross-app players.ai.report_factory.get_report_generator(), propagating ReportGeneratorError unswallowed; ClubInsightsView (POST /api/clubs/{id}/insights/) is the single catch point mapping it to a clean 503 (locked decision #6), with unknown-club Http404 left to surface naturally. Full clubs suite green (17 passed, 6 skipped, no regression). Note: a concurrent 10-03 executor's completion commit (651758c) incidentally captured this plan's already-staged Task 3 files (clubs/views.py, clubs/urls.py, clubs/tests/test_ai_club_insights.py) due to a parallel-execution git race -- content verified correct and fully authored by this plan, zero functional impact, documented in 10-04-SUMMARY.md.
 - [Phase 10-ai-grounded-report-generation]: [10-05]: Phase gate complete -- independently re-derived full-suite result (214 passed, 315 skipped, 0 failed), confirmed all 8 Phase-10 test files collect their 40 tests, confirmed zero regression in players+clubs (89 passed, 22 skipped, 0 failed), confirmed both new AI routes resolve; live real-LLM narrative check recorded as an explicit deferred manual follow-up since no ANTHROPIC_API_KEY is available in this environment, mirroring Phase 9's 09-01 same-constraint handling. Phase 10 (AI-03, AI-04) is functionally complete.
+- [Phase 11]: PLAN-01 classify_position_needs layers weak/at-risk/strong onto position_needs_aggregate (never recomputes); thresholds locked by 11-CONTEXT.md, avg_age None-guard mandatory; GET /api/clubs/{id}/position-needs/ route placed above the <uuid:pk>/ catch-all
 
 ### Pending Todos
 
@@ -188,6 +190,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T05:45:38.313Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-position-needs-squad-simulation/11-CONTEXT.md
+Last session: 2026-07-26T06:22:45.954Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: None

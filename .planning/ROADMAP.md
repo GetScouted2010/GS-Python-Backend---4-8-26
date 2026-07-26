@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 8: User Workspace CRUD** - Users can manage Watchlist, Shortlists, Squad Plans, Recent Activity, and CSV export (completed 2026-07-25)
 - [x] **Phase 9: AI Provider Interface & Natural-Language Search** - Users can search in plain language against a provider-agnostic LLM interface (completed 2026-07-25)
 - [x] **Phase 10: AI Grounded Report Generation** - Users can request AI-written scouting reports and club insights grounded in real computed scores (completed 2026-07-26)
-- [ ] **Phase 11: Position Needs & Squad Simulation** - Users can see squad weaknesses and simulate changes before committing
+- [x] **Phase 11: Position Needs & Squad Simulation** - Users can see squad weaknesses and simulate changes before committing (completed 2026-07-26)
 - [ ] **Phase 12: Bidirectional Matching - Replacements & Player-Club Fit** - Users can get ranked replacement players and ranked club fits off one shared ranking primitive
 
 ## Phase Details
@@ -231,7 +231,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. User Workspace CRUD | 6/6 | Complete   | 2026-07-25 |
 | 9. AI Provider Interface & Natural-Language Search | 4/4 | Complete   | 2026-07-25 |
 | 10. AI Grounded Report Generation | 5/5 | Complete   | 2026-07-26 |
-| 11. Position Needs & Squad Simulation | 0/2 | Not started | - |
+| 11. Position Needs & Squad Simulation | 2/2 | Complete   | 2026-07-26 |
 | 12. Bidirectional Matching - Replacements & Player-Club Fit | 0/TBD | Not started | - |
 
 ---
