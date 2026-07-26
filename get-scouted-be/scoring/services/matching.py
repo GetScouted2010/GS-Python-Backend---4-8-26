@@ -27,15 +27,71 @@ implemented shared enrichment primitive.
 
 from __future__ import annotations
 
+import pandas as pd
+
 from scoring.services.financial_fit import get_financial_fit
+from scoring.services.population import reconstruct_population, resolve_club_name, score_population
 
 DEFAULT_TOP_N = 10
 
 
+def _none_if_nan(v):
+    """Return `None` for a genuinely-unresolvable pandas/NaN value, otherwise
+    a plain `float`. Keeps unknowns visible as null rather than fabricating a
+    number or silently dropping the candidate row (12-RESEARCH.md)."""
+    if pd.isna(v):
+        return None
+    return float(v)
+
+
 def rank_replacement_players(club_id, position: str, top_n: int = DEFAULT_TOP_N) -> dict:
     """PLAN-02 (Pattern 1): rank replacement players for a club's weak position.
-    Implemented in 12-02-PLAN.md."""
-    raise NotImplementedError
+
+    Reuses `score_population(pop, club_name)` wholesale -- the arbitrary-
+    other-club live scoring pass Phase 6 explicitly deferred to this phase
+    (~44.6s on the real dev DB, accepted/uncached, see 12-CONTEXT.md). Filters
+    the full-population result to the requested `position`, excludes players
+    already on the target club, sorts by `transfer_probability` (primary),
+    and bounds to `top_n`. The REAL TFM (predicted_fee/value_verdict) is
+    attached only to that bounded top-N via the shared `_attach_real_tfm`
+    helper -- never to the full candidate set.
+    """
+    club_name = resolve_club_name(club_id)  # Http404 on unknown club
+    pop = reconstruct_population()
+    scored, cs_tp = score_population(pop, club_name)  # ~44.6s live, accepted, single pass
+
+    scored = scored.copy()
+    scored["_pid_str"] = scored["player_id"].astype(str)
+    candidates = scored[
+        (scored["Position"] == position)  # requested (weak) position filter
+        & (scored["Team"] != club_name)  # exclude "already there"
+    ]
+    if candidates.empty:
+        return {"club": club_name, "club_id": str(club_id), "position": position, "results": []}
+
+    cs_tp_str = cs_tp.reset_index()
+    cs_tp_str["_pid_str"] = cs_tp_str["player_id"].astype(str)
+    ranked = candidates.merge(
+        cs_tp_str[["_pid_str", "compatibility_score", "financial_score", "transfer_probability"]],
+        on="_pid_str", how="left",
+    ).sort_values(
+        ["transfer_probability", "Player Impact", "compatibility_score"],  # TP primary; RMM/CS visible tiebreak/breakdown
+        ascending=False, na_position="last",
+    ).head(top_n)
+
+    results = []
+    for _, r in ranked.iterrows():
+        results.append({
+            "player_id": str(r["_pid_str"]),
+            "name": r.get("Player") if "Player" in ranked.columns else None,
+            "current_club": r.get("Team"),
+            "position": r.get("Position"),
+            "transfer_probability": _none_if_nan(r.get("transfer_probability")),
+            "player_impact": _none_if_nan(r.get("Player Impact")),  # RMM breakdown
+            "compatibility_score": _none_if_nan(r.get("compatibility_score")),  # CS breakdown
+            "financial_score": _none_if_nan(r.get("financial_score")),  # cheap CS-formula term (NOT real TFM)
+        })
+    return {"club": club_name, "club_id": str(club_id), "position": position, "results": results}
 
 
 def rank_clubs_for_player(player_id, top_n: int = DEFAULT_TOP_N) -> dict:
