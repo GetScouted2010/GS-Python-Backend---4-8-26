@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 10-04-PLAN.md
-last_updated: "2026-07-26T05:18:31.488Z"
+stopped_at: Completed 10-05-PLAN.md
+last_updated: "2026-07-26T05:26:49.580Z"
 progress:
   total_phases: 12
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 54
-  completed_plans: 53
+  completed_plans: 54
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 10 (ai-grounded-report-generation) — EXECUTING
+Phase: 10 (ai-grounded-report-generation) — COMPLETE (pending goal-backward verification)
 Plan: 5 of 5
 
 ## Performance Metrics
@@ -94,6 +94,7 @@ Plan: 5 of 5
 | Phase 10 P02 | 12min | 2 tasks | 4 files |
 | Phase 10-ai-grounded-report-generation P03 | 12min | 2 tasks | 4 files |
 | Phase 10-ai-grounded-report-generation P04 | 12min | 3 tasks | 7 files |
+| Phase 10-ai-grounded-report-generation P05 | 8min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -169,11 +170,14 @@ Recent decisions affecting current work:
 - [Phase 10]: [10-02]: AnthropicReportGenerator uses plain (non-tool-use) client.messages.create(), section-parses narrative via re.split on exact ## <Header> anchors, and validates every number against grounding.validate_grounding with a bounded retry-once (never unbounded) before raising ReportGeneratorError; get_report_generator() mirrors Phase 9's get_nl_query_parser() factory exactly
 - [Phase 10-ai-grounded-report-generation]: [Phase 10]: [10-03]: AI-03 complete end-to-end -- generate_scouting_report never catches ReportGeneratorError (propagates to the view, which alone maps it to a clean 503, making a fabricated report structurally impossible); club_id resolution (body club_id or player.club_id) happens in the view before calling get_summary to avoid its misleading Http404 for a genuinely club-less player, surfaced instead as a clean 400; an unresolvable-but-present club_id is left to surface as get_summary's natural Http404, matching PlayerDetailView's posture. Full backend suite verified green: 204 passed, 315 skipped, 0 failed.
 - [Phase 10-ai-grounded-report-generation]: [10-04]: AI-04 complete end-to-end -- clubs/tests/conftest.py gained its own ported autouse _block_real_anthropic_calls guard (closing the confirmed cross-app safety-net gap, sequenced/committed first); clubs/services.py::position_needs_aggregate(club) is a single bounded ORM .values("position").annotate() group-by scoped to club.players (never pandas, matching Phase 6 SCORE-07 precedent); generate_club_insights(club_id) combines it with ClubDetailSerializer().get_transfer_aggregates(club) (called on a bare instance to skip the heavy get_squad path) and generates narrative via the cross-app players.ai.report_factory.get_report_generator(), propagating ReportGeneratorError unswallowed; ClubInsightsView (POST /api/clubs/{id}/insights/) is the single catch point mapping it to a clean 503 (locked decision #6), with unknown-club Http404 left to surface naturally. Full clubs suite green (17 passed, 6 skipped, no regression). Note: a concurrent 10-03 executor's completion commit (651758c) incidentally captured this plan's already-staged Task 3 files (clubs/views.py, clubs/urls.py, clubs/tests/test_ai_club_insights.py) due to a parallel-execution git race -- content verified correct and fully authored by this plan, zero functional impact, documented in 10-04-SUMMARY.md.
+- [Phase 10-ai-grounded-report-generation]: [10-05]: Phase gate complete -- independently re-derived full-suite result (214 passed, 315 skipped, 0 failed), confirmed all 8 Phase-10 test files collect their 40 tests, confirmed zero regression in players+clubs (89 passed, 22 skipped, 0 failed), confirmed both new AI routes resolve; live real-LLM narrative check recorded as an explicit deferred manual follow-up since no ANTHROPIC_API_KEY is available in this environment, mirroring Phase 9's 09-01 same-constraint handling. Phase 10 (AI-03, AI-04) is functionally complete.
 
 ### Pending Todos
 
 - Fix accounts/tests/test_permissions.py::test_director_read_only_visibility (paginated response.data["results"] indexing) -- pre-existing regression from 07-01's pagination wiring, tracked in .planning/phases/07-core-crud-players-clubs/deferred-items.md
 - Phase 07 goal-backward verification (all 3 plans executed; CRUD-02/04/05 completion in REQUIREMENTS.md is the verifier's call)
+- Live real-LLM narrative spot-check for Phase 10 (scouting report + club insights) deferred -- requires a real ANTHROPIC_API_KEY not available in this environment; manual verification steps recorded in 10-05-SUMMARY.md
+- Phase 10 goal-backward verification (all 5 plans executed; AI-03/AI-04 completion in REQUIREMENTS.md is the verifier's call)
 
 ### Blockers/Concerns
 
@@ -184,6 +188,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-26T05:18:31.488Z
-Stopped at: Completed 10-04-PLAN.md
+Last session: 2026-07-26T05:26:49.576Z
+Stopped at: Completed 10-05-PLAN.md
 Resume file: None

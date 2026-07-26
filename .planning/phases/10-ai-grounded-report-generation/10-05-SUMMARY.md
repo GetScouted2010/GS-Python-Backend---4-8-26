@@ -154,3 +154,7 @@ None.
 ---
 *Phase: 10-ai-grounded-report-generation*
 *Completed: 2026-07-26*
+
+## Self-Check: PASSED
+
+SUMMARY.md confirmed present on disk; task commit hash 24f9d32 confirmed present in git history.
