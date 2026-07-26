@@ -23,6 +23,7 @@ from players.models import Player
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
 from scoring.exceptions import null_with_reason
 from scoring.services import rmm, summary
+from scoring.services.matching import rank_clubs_for_player
 from workspace.models import RecentActivity
 
 
@@ -104,6 +105,27 @@ class PlayerScoutingReportView(APIView):
             )
 
         return Response(report)
+
+
+class ClubMatchesView(APIView):
+    """GET /api/players/{id}/club-matches/ -- PLAN-04.
+
+    Deterministic ranked list of clubs that fit this player (Player -> Club
+    matching), scored by CS + real TFM, sorted by transfer_probability, own
+    current club excluded, bounded to top-N. GET, no LLM/503 path. No
+    explicit permission_classes -- global IsAuthenticated default (matching
+    PositionNeedsView; this data is not user-owned).
+
+    Runs the Pattern 2 per-club loop live (see 12-03-SUMMARY.md /
+    12-04-SUMMARY.md for measured latency: ~78.3-78.7s cold against the real
+    41,708-player/1,060-club dev DB -- no caching added per 12-CONTEXT.md's
+    explicit deferred-caching decision for this phase). Unknown player ->
+    404 (Http404 raised inside rank_clubs_for_player).
+    """
+
+    def get(self, request, pk):
+        get_object_or_404(Player, id=pk)  # fast 404 on unknown player
+        return Response(rank_clubs_for_player(pk))
 
 
 class PlayerSearchView(APIView):

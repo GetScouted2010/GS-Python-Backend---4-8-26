@@ -21,6 +21,22 @@ from players.models import Player
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _clear_scoring_caches():
+    """`reconstruct_population`/`get_scored_population` are process-level
+    `lru_cache`d (Phase 6 SCORE-07, by design for the real dev DB where data
+    doesn't change per-request). This test file creates a NEW isolated
+    Player fixture per test against pytest-django's per-test-rolled-back
+    empty DB, so a population cached by an earlier test in this same
+    process would go stale and silently miss the current test's player.
+    Clear before/after each test so every test reconstructs fresh."""
+    from scoring.services.population import clear_scoring_caches
+
+    clear_scoring_caches()
+    yield
+    clear_scoring_caches()
+
+
 @pytest.fixture
 def auth_client():
     from accounts.models import User

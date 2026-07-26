@@ -216,6 +216,11 @@ def rank_clubs_for_player(player_id, top_n: int = DEFAULT_TOP_N) -> dict:
             "player_impact": _none_if_nan(player_impact_val),  # RMM breakdown (club-independent)
         })
 
+    if not rows:
+        # No candidate clubs at all (e.g. an isolated/empty Club table) --
+        # mirrors rank_replacement_players' own `if candidates.empty` guard.
+        return {"player_id": str(player_id), "results": []}
+
     ranked = pd.DataFrame(rows).sort_values(
         ["transfer_probability", "compatibility_score"], ascending=False, na_position="last"
     ).head(top_n)

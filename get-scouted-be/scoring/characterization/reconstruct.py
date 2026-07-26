@@ -375,7 +375,19 @@ def build_team_styles_df() -> pd.DataFrame:
         k for k in _CLUB_STYLE_RENAME if k != "name"
     ]
     qs = Club.objects.values(*fields)
-    df = pd.DataFrame.from_records(list(qs))
+    records = list(qs)
+
+    if not records:
+        # A legitimately empty Club table (e.g. an isolated test DB with no
+        # club fixtures loaded) must not crash reconstruction --
+        # `pd.DataFrame.from_records([])` has zero columns, so the rename
+        # above would never populate the required literals and
+        # `assert_columns_present` would always raise. Mirrors
+        # `build_role_scores_wide`/`build_transfers_df`'s empty-table guard.
+        logger.warning("build_team_styles_df: Club table is empty")
+        return pd.DataFrame(columns=_TEAM_STYLES_REQUIRED_COLUMNS)
+
+    df = pd.DataFrame.from_records(records)
     df = df.rename(columns=_CLUB_STYLE_RENAME)
 
     assert_columns_present(df, _TEAM_STYLES_REQUIRED_COLUMNS, "build_team_styles_df")
