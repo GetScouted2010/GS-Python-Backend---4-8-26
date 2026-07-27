@@ -139,13 +139,36 @@ REST_FRAMEWORK = {
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.OrderingFilter",
     ],
-    # No DEFAULT_PAGINATION_CLASS here deliberately: setting one project-wide
-    # retroactively paginates every existing ListAPIView, including Phase 2's
-    # /api/v1/auth/admin/users/ (which returns a plain list and isn't written to
-    # expect a paginated {count,next,previous,results} envelope). The Phase 7
-    # read layer's list views (players/clubs) explicitly set their own
-    # `pagination_class = core.pagination.IdsBypassPagination` instead, so no
-    # global default is needed for them either.
+    # Every response is wrapped in a {data, meta} envelope (core/envelope.py),
+    # mirroring the sibling giri-cart project's response contract. This is a
+    # rendering-layer change only (JSONRenderer subclass) -- it does NOT alter
+    # `response.data` in tests using DRF's APIClient (that attribute reflects
+    # the view's pre-render return value, not the rendered bytes), so it's
+    # safe alongside the exception-handler/pagination changes below without
+    # touching most existing test assertions.
+    "DEFAULT_RENDERER_CLASSES": ["core.envelope.EnvelopeRenderer"],
+    # Every error response is normalised to {error: {code, detail, fields?}}
+    # via core/exceptions.py, replacing this project's previously-inconsistent
+    # mix of bare {"error": "..."} / {"detail": "..."} manual Response(...)
+    # bodies with one typed shape everywhere (see API_ERROR_MAP for the code
+    # list). Unlike the renderer above, this DOES change `response.data` for
+    # any response that goes through DRF's exception handling (raised
+    # exceptions, serializer validation, Http404) -- views that previously
+    # built such Response(...) bodies manually were converted to raise the
+    # matching exception instead (ValidationError / ServiceUnavailableError)
+    # so they flow through this same handler.
+    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
+    # Wired project-wide (previously deliberately NOT set, since it would have
+    # retroactively paginated /api/v1/auth/admin/users/ into DRF's default
+    # {count,next,previous,results} shape, which callers weren't written to
+    # expect). Now that every response is envelope-wrapped either way, a
+    # paginated response is just {data, meta, pagination} and a non-paginated
+    # one is {data, meta} -- applying real, bounded pagination everywhere is a
+    # pure improvement over an unbounded plain list, not a breaking change in
+    # kind. See core/pagination.py for the {items, pagination} -> envelope
+    # promotion. players/clubs list views keep their own `pagination_class =
+    # core.pagination.IdsBypassPagination` override for the ?ids= bypass.
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsPagination",
     # API versioning: every route lives under the literal /api/v1/ URL prefix
     # (config/urls.py). URLPathVersioning is enabled so `request.version` is
     # populated ("v1") without requiring every urlpattern to declare a captured
@@ -167,7 +190,53 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "GetScouted API",
     "DESCRIPTION": (
         "AI-powered football recruitment and scouting platform backend "
-        "(World In Motion Ltd).\n\n"
+        "(World In Motion Ltd). All responses are wrapped in `{data, meta}`.\n\n"
+        "## Response envelope\n\n"
+        "Every successful response:\n"
+        "```json\n"
+        '{ "data": <payload>, "meta": { "request_id": "<uuid>" } }\n'
+        "```\n"
+        "Paginated list responses include a `pagination` key alongside "
+        "`data` and `meta`:\n"
+        "```json\n"
+        "{\n"
+        '  "data": [ "...items..." ],\n'
+        '  "meta": { "request_id": "<uuid>" },\n'
+        '  "pagination": {\n'
+        '    "page": 1, "page_size": 25, "total_items": 143,\n'
+        '    "has_next_page": true, "next_page": 2\n'
+        "  }\n"
+        "}\n"
+        "```\n\n"
+        "## Error handling\n\n"
+        "Every error response uses this envelope — `error.detail` is "
+        "**always a string**:\n"
+        "```json\n"
+        "{\n"
+        '  "error": {\n'
+        '    "code": "VALIDATION_ERROR",\n'
+        '    "detail": "Validation failed.",\n'
+        '    "fields": [ { "field": "email", "message": "Enter a valid email address." } ]\n'
+        "  },\n"
+        '  "meta": { "request_id": "<uuid>" }\n'
+        "}\n"
+        "```\n"
+        "`error.fields` is present **only on `VALIDATION_ERROR`** when "
+        "field-level attribution is available. All other error types "
+        "return `{code, detail}` with no `fields` key.\n\n"
+        "| Code | HTTP | When |\n"
+        "|---|---|---|\n"
+        "| `VALIDATION_ERROR` | 400 | Invalid request body or query params |\n"
+        "| `NOT_AUTHENTICATED` | 401 | Missing or expired `Authorization` header |\n"
+        "| `AUTHENTICATION_FAILED` | 401 | Invalid credentials or token |\n"
+        "| `PERMISSION_DENIED` | 403 | Authenticated but not authorised for this resource |\n"
+        "| `NOT_FOUND` | 404 | Resource does not exist |\n"
+        "| `RATE_LIMITED` | 429 | Too many requests |\n"
+        "| `METHOD_NOT_ALLOWED` | 405 | HTTP method not supported on this endpoint |\n"
+        "| `SERVICE_UNAVAILABLE` | 503 | AI generation failed (report/insights) — never a fabricated response |\n"
+        "| `INTERNAL_ERROR` | 500 | Unexpected server error |\n\n"
+        "See the **`ErrorEnvelope`**, **`ApiError`**, and **`FieldError`** "
+        "schemas in the Schemas section for full type definitions.\n\n"
         "## Typical flow\n\n"
         "1. **Auth** — `POST /auth/register/` (role: scout/analyst/director — "
         "admin is granted separately, never self-service), then "
@@ -213,6 +282,10 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/v1",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+        "core.spectacular.add_error_schemas",
+    ],
     "TAGS": [
         {
             "name": "auth",

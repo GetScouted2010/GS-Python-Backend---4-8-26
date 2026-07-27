@@ -75,8 +75,8 @@ def test_search_success_returns_filters_and_results(real_data_available, auth_cl
     assert response.status_code == 200
     assert response.data["fallback_used"] is False
     assert response.data["parsed_filters"] == {"position": "CB"}
-    assert {"results", "count"}.issubset(response.data["results"])
-    results = response.data["results"]["results"]
+    assert {"items", "pagination"}.issubset(response.data["results"])
+    results = response.data["results"]["items"]
     assert results
     assert all(row["position"] == "CB" for row in results)
 
@@ -112,7 +112,7 @@ def test_search_tier3_fallback_unfiltered_when_nothing_extractable(real_data_ava
     assert response.status_code == 200
     assert response.data["parsed_filters"] == {}
     assert response.data["fallback_used"] is True
-    assert response.data["results"]["count"] == Player.objects.count()
+    assert response.data["results"]["pagination"]["total_items"] == Player.objects.count()
 
 
 # ---------------------------------------------------------------------------

@@ -66,7 +66,7 @@ def test_list_is_lightweight_no_current_squad(authenticated_client, club_factory
     response = client.get(SQUAD_PLANS_URL)
 
     assert response.status_code == 200
-    for row in response.data:
+    for row in response.data["items"]:
         assert "current_squad" not in row
 
 
@@ -124,7 +124,7 @@ def test_scoping_list_excludes_other_users(authenticated_client, club_factory):
     response = client_a.get(SQUAD_PLANS_URL)
 
     assert response.status_code == 200
-    result_ids = {row["id"] for row in response.data}
+    result_ids = {row["id"] for row in response.data["items"]}
     assert result_ids == {str(plan_a.id)}
     assert str(plan_b.id) not in result_ids
 

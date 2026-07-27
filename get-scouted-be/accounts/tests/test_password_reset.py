@@ -74,7 +74,7 @@ def test_password_reset_confirm_invalid_token_rejected(api_client, user_factory)
     )
 
     assert response.status_code == 400
-    assert response.data["detail"] == "Invalid or expired reset link."
+    assert response.data["error"]["detail"] == "Invalid or expired reset link."
     user.refresh_from_db()
     assert user.check_password("oldpass123") is True
 

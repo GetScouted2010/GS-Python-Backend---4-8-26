@@ -37,7 +37,7 @@ def test_login_wrong_password_generic_401(api_client, user_factory):
         format="json",
     )
     assert response.status_code == 401
-    wrong_password_detail = str(response.data["detail"])
+    wrong_password_detail = str(response.data["error"]["detail"])
 
     response2 = api_client.post(
         "/api/v1/auth/login/",
@@ -45,7 +45,7 @@ def test_login_wrong_password_generic_401(api_client, user_factory):
         format="json",
     )
     assert response2.status_code == 401
-    unknown_email_detail = str(response2.data["detail"])
+    unknown_email_detail = str(response2.data["error"]["detail"])
 
     assert wrong_password_detail == unknown_email_detail
 

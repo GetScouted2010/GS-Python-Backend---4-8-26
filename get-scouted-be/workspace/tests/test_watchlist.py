@@ -64,10 +64,10 @@ def test_scoping_list_excludes_other_users(authenticated_client, player_factory)
     response = client_a.get(WATCHLIST_URL)
 
     assert response.status_code == 200
-    result_ids = {row["id"] for row in response.data}
+    result_ids = {row["id"] for row in response.data["items"]}
     assert result_ids == {str(row_a.id)}
     assert str(row_b.id) not in result_ids
-    assert len(response.data) == Watchlist.objects.filter(user=user_a).count()
+    assert len(response.data["items"]) == Watchlist.objects.filter(user=user_a).count()
 
 
 def test_ownership_delete_other_users_row_denied(authenticated_client, player_factory):

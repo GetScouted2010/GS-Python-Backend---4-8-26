@@ -12,7 +12,8 @@ import csv
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
-from rest_framework import generics, status
+from rest_framework import generics
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -20,6 +21,7 @@ from clubs import services
 from clubs.filters import ClubFilter
 from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer, ClubListSerializer
+from core.exceptions import ServiceUnavailableError
 from core.pagination import IdsBypassPagination
 from players.ai.report_generator import ReportGeneratorError
 from scoring.services.matching import rank_replacement_players
@@ -177,10 +179,7 @@ class ClubInsightsView(APIView):
         try:
             insights = services.generate_club_insights(pk)
         except ReportGeneratorError:
-            return Response(
-                {"error": "insights generation failed"},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+            raise ServiceUnavailableError("Insights generation failed.") from None
         return Response(insights)
 
 
@@ -253,8 +252,5 @@ class ReplacementsView(APIView):
         get_object_or_404(Club, pk=pk)  # 404 fast on unknown club before the ~44s pass
         position = request.query_params.get("position")
         if not position:
-            return Response(
-                {"error": "position query parameter is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise ValidationError({"position": "This query parameter is required."})
         return Response(rank_replacement_players(pk, position))

@@ -59,7 +59,7 @@ def test_list_filters_by_league(real_data_available, auth_client):
     response = auth_client.get(f"/api/v1/clubs/?league={league}&page_size=10")
 
     assert response.status_code == 200
-    results = response.data["results"]
+    results = response.data["items"]
     assert results
     assert all(row["league"] == league for row in results)
 
@@ -71,7 +71,7 @@ def test_list_filters_by_country(real_data_available, auth_client):
     response = auth_client.get(f"/api/v1/clubs/?country={country}&page_size=10")
 
     assert response.status_code == 200
-    results = response.data["results"]
+    results = response.data["items"]
     assert results
     assert all(row["country"] == country for row in results)
 
@@ -80,8 +80,11 @@ def test_list_pagination_shape(real_data_available, auth_client):
     response = auth_client.get("/api/v1/clubs/?page_size=5")
 
     assert response.status_code == 200
-    assert {"results", "count"}.issubset(response.data)
-    assert len(response.data["results"]) <= 5
+    assert {"items", "pagination"}.issubset(response.data)
+    assert {"page", "page_size", "total_items", "has_next_page", "next_page"}.issubset(
+        response.data["pagination"]
+    )
+    assert len(response.data["items"]) <= 5
 
 
 # ---------------------------------------------------------------------------

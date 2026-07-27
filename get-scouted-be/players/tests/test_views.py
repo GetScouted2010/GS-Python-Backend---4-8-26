@@ -78,7 +78,7 @@ def test_list_filters_by_position(real_data_available, auth_client):
     response = auth_client.get(f"/api/v1/players/?position={position}&page_size=10")
 
     assert response.status_code == 200
-    results = response.data["results"]
+    results = response.data["items"]
     assert results
     assert all(row["position"] == position for row in results)
 
@@ -87,7 +87,7 @@ def test_list_ordering_by_impact_score(real_data_available, auth_client):
     response = auth_client.get("/api/v1/players/?ordering=-impact_score&page_size=10")
 
     assert response.status_code == 200
-    scores = [row["impact_score"] for row in response.data["results"] if row["impact_score"] is not None]
+    scores = [row["impact_score"] for row in response.data["items"] if row["impact_score"] is not None]
     assert scores == sorted(scores, reverse=True)
 
 
@@ -95,15 +95,18 @@ def test_list_pagination_shape(real_data_available, auth_client):
     response = auth_client.get("/api/v1/players/?page_size=5")
 
     assert response.status_code == 200
-    assert {"results", "count"}.issubset(response.data)
-    assert len(response.data["results"]) <= 5
+    assert {"items", "pagination"}.issubset(response.data)
+    assert {"page", "page_size", "total_items", "has_next_page", "next_page"}.issubset(
+        response.data["pagination"]
+    )
+    assert len(response.data["items"]) <= 5
 
 
 def test_list_age_range_filter(real_data_available, auth_client):
     response = auth_client.get("/api/v1/players/?age_min=18&age_max=23&page_size=20")
 
     assert response.status_code == 200
-    results = response.data["results"]
+    results = response.data["items"]
     assert results
     assert all(18 <= row["age"] <= 23 for row in results)
 

@@ -10,6 +10,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import generics, mixins, serializers, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -235,7 +236,7 @@ class SquadPlanViewSet(viewsets.ModelViewSet):
                 squad_plan, proposed_changes=override
             )
         except workspace_services.InvalidPlayerReference as exc:
-            return Response({"error": str(exc)}, status=400)
+            raise ValidationError(str(exc)) from None
         return Response(result)
 
 

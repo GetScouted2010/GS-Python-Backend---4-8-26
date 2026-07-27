@@ -116,7 +116,7 @@ def test_director_read_only_visibility(authenticated_client, user_factory):
 
     response = client.get("/api/v1/auth/admin/users/")
     assert response.status_code == 200
-    emails = [row["email"] for row in response.data]
+    emails = [row["email"] for row in response.data["items"]]
     assert other.email in emails
 
     response = client.get(f"/api/v1/auth/admin/users/{other.pk}/")

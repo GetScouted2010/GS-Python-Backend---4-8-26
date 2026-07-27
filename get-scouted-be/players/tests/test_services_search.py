@@ -40,7 +40,7 @@ def test_style_filter_field_name_transform(real_data_available):
     # while silently ignoring the filter (the exact bug this test guards
     # against). ~77% of clubs have no Playstyles coverage (null style
     # fields), so a real gte filter is guaranteed to exclude some players.
-    assert filtered["count"] < baseline["count"]
+    assert filtered["pagination"]["total_items"] < baseline["pagination"]["total_items"]
 
 
 # ---------------------------------------------------------------------------
@@ -49,9 +49,9 @@ def test_style_filter_field_name_transform(real_data_available):
 def test_player_filter_path_position_and_age(real_data_available):
     response = search_players({"position": "CB", "age_max": 21}, _request())
 
-    assert response["results"]
-    assert all(row["position"] == "CB" for row in response["results"])
-    assert all(row["age"] is None or row["age"] <= 21 for row in response["results"])
+    assert response["items"]
+    assert all(row["position"] == "CB" for row in response["items"])
+    assert all(row["age"] is None or row["age"] <= 21 for row in response["items"])
 
 
 # ---------------------------------------------------------------------------
@@ -73,9 +73,9 @@ def test_style_key_alone_not_applied_by_player_filter(real_data_available):
 def test_paginated_envelope_shape(real_data_available):
     response = search_players({}, _request())
 
-    assert {"results", "count"}.issubset(response)
-    assert response["results"]
-    assert set(response["results"][0].keys()) >= {"id", "player", "position"}
+    assert {"items", "pagination"}.issubset(response)
+    assert response["items"]
+    assert set(response["items"][0].keys()) >= {"id", "player", "position"}
 
 
 # ---------------------------------------------------------------------------
@@ -84,5 +84,5 @@ def test_paginated_envelope_shape(real_data_available):
 def test_empty_filters_returns_full_list(real_data_available):
     response = search_players({}, _request())
 
-    assert response["count"] > 0
-    assert response["count"] == Player.objects.count()
+    assert response["pagination"]["total_items"] > 0
+    assert response["pagination"]["total_items"] == Player.objects.count()

@@ -10,8 +10,9 @@ from drf_spectacular.utils import (
     extend_schema_view,
     inline_serializer,
 )
-from rest_framework import generics, mixins, serializers, status, viewsets
+from rest_framework import generics, mixins, serializers, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -145,18 +146,15 @@ class PasswordResetConfirmView(APIView):
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError, TypeError, OverflowError):
-            return Response({"detail": "Invalid reset link."}, status=status.HTTP_400_BAD_REQUEST)
+            raise DRFValidationError("Invalid reset link.") from None
 
         if not default_token_generator.check_token(user, token):
-            return Response(
-                {"detail": "Invalid or expired reset link."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise DRFValidationError("Invalid or expired reset link.")
 
         try:
             validate_password(new_password, user=user)
         except ValidationError as e:
-            return Response({"detail": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+            raise DRFValidationError(e.messages) from None
 
         user.set_password(new_password)
         user.save(update_fields=["password"])

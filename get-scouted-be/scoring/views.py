@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -155,5 +156,5 @@ class PlayerScoreSummaryView(APIView):
     def get(self, request, player_id):
         club_id = request.query_params.get("club_id")
         if not club_id:
-            return Response({"detail": "club_id query parameter is required"}, status=400)
+            raise ValidationError({"club_id": "This query parameter is required."})
         return Response(summary.get_summary(player_id, club_id))

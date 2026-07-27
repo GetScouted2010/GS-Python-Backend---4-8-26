@@ -16,10 +16,12 @@ from drf_spectacular.utils import (
     extend_schema_view,
     inline_serializer,
 )
-from rest_framework import generics, serializers, status
+from rest_framework import generics, serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.exceptions import ServiceUnavailableError
 from core.pagination import IdsBypassPagination
 from players import services
 from players.ai import fallback
@@ -170,17 +172,12 @@ class PlayerScoutingReportView(APIView):
 
         club_id = request.data.get("club_id") or player.club_id
         if club_id is None:
-            return Response(
-                {"error": "club_id required for a club-relative scouting report"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise ValidationError({"club_id": "Required for a club-relative scouting report."})
 
         try:
             report = services.generate_scouting_report(pk, club_id)
         except ReportGeneratorError:
-            return Response(
-                {"error": "report generation failed"}, status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
+            raise ServiceUnavailableError("Report generation failed.") from None
 
         return Response(report)
 

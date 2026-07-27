@@ -70,7 +70,7 @@ def test_activity_list_newest_first(authenticated_client, player_factory):
     response = client.get(ACTIVITY_URL)
 
     assert response.status_code == 200
-    target_ids = [row["target_id"] for row in response.data]
+    target_ids = [row["target_id"] for row in response.data["items"]]
     assert target_ids == [str(player_b.id), str(player_a.id)]
 
 
@@ -84,7 +84,7 @@ def test_scoping_activity_excludes_other_users(authenticated_client, player_fact
     response = client_a.get(ACTIVITY_URL)
 
     assert response.status_code == 200
-    assert response.data == []
+    assert response.data["items"] == []
 
 
 def test_player_detail_response_shape_unchanged(authenticated_client, player_factory):
