@@ -1,0 +1,52 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: getscouted
+      POSTGRES_USER: getscouted
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U getscouted -d getscouted"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: get-scouted-be:latest
+    command: >
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 2
+      --timeout 180
+      --access-logfile -
+    env_file:
+      - .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    volumes:
+      - static_files:/app/staticfiles
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/getscouted.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - static_files:/app/staticfiles:ro
+    restart: unless-stopped
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static_files:

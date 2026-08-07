@@ -1,9 +1,12 @@
 *.pyc
 __pycache__/
 .env
+.env.docker
+.env.prod
 db.sqlite3
 .venv/
 venv/
+staticfiles/
 
 # Trained ML artifacts (regenerable via `manage.py train_tfm_model`) --
 # keep the directory tracked via ml_artifacts/.gitkeep, but not the
