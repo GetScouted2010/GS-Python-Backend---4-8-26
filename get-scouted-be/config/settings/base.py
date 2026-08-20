@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "drf_spectacular",
+    "corsheaders",
     "clubs",
     "players",
     "transfers",
@@ -47,6 +48,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -123,6 +125,13 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+# CORS: JWT auth reads the token from the Authorization header (not cookies), so
+# credentials are not needed cross-origin. Comma-separated list of exact scheme+host
+# (+port) origins allowed to call this API, e.g. "http://localhost:3000,https://app.example.com".
+# Empty by default here; local.py/production.py set an environment-appropriate value.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+CORS_ALLOW_CREDENTIALS = False
 
 # DRF: deny-by-default posture (AUTH-02/AUTH-03) — JWTAuthentication is the only
 # configured auth class, IsAuthenticated is the only default permission. Views that
