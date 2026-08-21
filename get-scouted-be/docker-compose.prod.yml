@@ -19,9 +19,10 @@ services:
     image: get-scouted-be:latest
     command: >
       gunicorn config.wsgi:application
+      --config config/gunicorn.conf.py
       --bind 0.0.0.0:8000
       --workers 2
-      --timeout 180
+      --timeout 600
       --access-logfile -
     env_file:
       - .env.prod
