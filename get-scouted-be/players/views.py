@@ -45,15 +45,21 @@ from workspace.models import RecentActivity
             "Browse the full player dataset with filtering, sorting, and "
             "pagination — position, age, market value, league, score "
             "thresholds, and playing style (resolved through the player's "
-            "current club). Pass `?ids=<uuid>,<uuid>,...` instead of the "
-            "normal filters to fetch a specific set of players by id in "
-            "one call (used for side-by-side comparison) — this bypasses "
-            "pagination entirely and returns a plain list. For plain-English "
+            "current club). Player rows are player-SEASON records: results "
+            "are always scoped to ONE season, defaulting to the latest "
+            "(`Last Calendar Year`) when `?season=` is omitted — pass "
+            "`?season=2023-2024` etc. to view a different one. Pass "
+            "`?ids=<uuid>,<uuid>,...` instead of the normal filters to "
+            "fetch a specific set of players by id in one call (used for "
+            "side-by-side comparison) — this bypasses pagination AND the "
+            "season default entirely (an explicit id already pins one exact "
+            "season-row) and returns a plain list. For plain-English "
             "queries instead of structured filters, use **Search players** "
             "below."
         ),
         parameters=[
-            OpenApiParameter("ids", type=str, location=OpenApiParameter.QUERY, required=False, description="Comma-separated player UUIDs — bypasses filtering/pagination, returns exactly these players."),
+            OpenApiParameter("ids", type=str, location=OpenApiParameter.QUERY, required=False, description="Comma-separated player UUIDs — bypasses filtering/pagination/season-default, returns exactly these players."),
+            OpenApiParameter("season", type=str, location=OpenApiParameter.QUERY, required=False, description="One of `Last Calendar Year`, `2024-2025`, `2023-2024`, `2022-2023`. Defaults to `Last Calendar Year` (the latest) when omitted."),
             OpenApiParameter("ordering", type=str, location=OpenApiParameter.QUERY, required=False, description="Sort field, e.g. `-impact_score` (default) or `age`."),
             OpenApiParameter("page_size", type=int, location=OpenApiParameter.QUERY, required=False, description="Results per page (only applies when not using ?ids=)."),
         ],

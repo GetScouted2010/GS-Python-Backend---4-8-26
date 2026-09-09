@@ -96,3 +96,50 @@ def test_club_idempotent(fixture_dir, tmp_path):
     count_after_second_run = Club.objects.count()
 
     assert count_after_second_run == count_after_first_run
+
+
+# --- A3 fix: whitespace-variant club names must not become two Club rows ---
+
+
+def test_derive_club_league_strips_whitespace_variants():
+    import pandas as pd
+
+    from clubs.management.commands.import_clubs_playstyles import derive_club_league
+
+    players_df = pd.DataFrame(
+        {
+            "Team_within_selected_timeframe": ["LASK", "LASK ", " LASK"],
+            "League": ["Bundesliga (Austria)", "Bundesliga (Austria)", "Bundesliga (Austria)"],
+        }
+    )
+
+    league_map, _, _ = derive_club_league(players_df)
+
+    # All three whitespace variants must collapse to ONE key.
+    assert league_map == {"LASK": "Bundesliga (Austria)"}
+
+
+def test_load_playstyles_strips_whitespace_variants():
+    import pandas as pd
+
+    from clubs.management.commands.import_clubs_playstyles import load_playstyles
+
+    playstyles_df = pd.DataFrame(
+        {
+            "Team": ["LASK "],
+            "UniqueID": [1],
+            "Control_Possession": [10.0],
+            "Gegenpressing": [10.0],
+            "Direct_Play": [10.0],
+            "Defensive_Counter_Attack": [10.0],
+            "Tiki_Taka": [10.0],
+            "Counter_Attack": [10.0],
+            "Wing_Play": [10.0],
+            "Low_Block": [10.0],
+        }
+    )
+
+    styles = load_playstyles(playstyles_df)
+
+    assert "LASK" in styles
+    assert "LASK " not in styles

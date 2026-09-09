@@ -15,3 +15,7 @@ def test_position_filter_binds_to_position_field():
 
 def test_score_threshold_filters_use_gte():
     assert PlayerFilter.base_filters["impact_score_min"].lookup_expr == "gte"
+
+
+def test_season_filter_binds_to_season_field():
+    assert PlayerFilter.base_filters["season"].field_name == "season"

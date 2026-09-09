@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from players.season import request_season, scope_to_season
 from players.serializers import PlayerListSerializer
 from workspace.models import RecentActivity, Shortlist, ShortlistEntry, SquadPlan, Watchlist
 
@@ -53,8 +54,10 @@ class SquadPlanDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def get_current_squad(self, obj):
-        # Live, never frozen -- exact ClubDetailSerializer.get_squad pattern.
-        return PlayerListSerializer(obj.club.players.all(), many=True).data
+        # Live, never frozen -- exact ClubDetailSerializer.get_squad pattern,
+        # including the A1 season-scoping fix (players/season.py).
+        season = request_season(self.context.get("request"))
+        return PlayerListSerializer(scope_to_season(obj.club.players.all(), season), many=True).data
 
     def validate_proposed_changes(self, value):
         allowed = {"add", "remove", "swap"}

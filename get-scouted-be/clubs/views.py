@@ -118,7 +118,7 @@ class ClubExportView(APIView):
     )
     def get(self, request, pk):
         club = get_object_or_404(Club, pk=pk)
-        detail = ClubDetailSerializer(club).data
+        detail = ClubDetailSerializer(club, context={"request": request}).data
         aggregates = detail["transfer_aggregates"]
         profile_fields = [
             "id", "name", "league", "country", "manager", "formation",

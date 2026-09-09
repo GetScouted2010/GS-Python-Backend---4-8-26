@@ -1,8 +1,10 @@
 """Dependency-ordered orchestrator for the full Phase 1 data-import pipeline.
 
-Runs, IN ORDER, the five import commands built across Plans 04-08:
+Runs, IN ORDER, the six import/cleanup commands built across Plans 04-08
+plus the A1 fix (2026-09-09):
   1. import_clubs_playstyles      (Club)                    -- Players.csv + Playstyles.csv
   2. import_players                (Player)                  -- Players.csv, needs Club rows
+  2.5. dedupe_players              (Player cleanup)          -- removes exact-duplicate rows (see dedupe_players.py)
   3. import_position_roles         (PlayerRoleScore)         -- Positions/*.csv, needs Player rows
   4. import_compatibility_scores   (PlayerClubCompatibility) -- Compatability Scores/*, needs Player+Club
   5. import_transfers              (Transfer)                -- transferdata final.csv, needs Player+Club
@@ -14,6 +16,16 @@ Club/Player table -- none of those four commands create Club or Player rows
 themselves (see each command's module docstring). Running them out of order
 silently produces zero rows (the commands print an error and no-op if the
 table they depend on is empty) rather than a partial/incorrect import.
+
+`dedupe_players` runs immediately after `import_players` and BEFORE
+`import_position_roles`/`import_compatibility_scores` -- deliberately, so a
+duplicate row's PlayerRoleScore/PlayerClubCompatibility children are never
+created just to be cascade-deleted a step later (wasted work at ~8.1M-row
+scale). It does not violate import_players' own locked "never skip a row"
+policy: that policy governs the CSV->DB step itself; this is a separate,
+explicit, re-runnable cleanup pass layered on top (same shape as
+recompute_scores/train_tfm_model), and it never runs silently -- see its
+own module docstring and JSON report.
 
 After all five steps run, this command builds ONE combined report:
   - each sub-command's own report is located (by locating the newest report
@@ -169,7 +181,7 @@ class Command(BaseCommand):
 
         json_path, data = self._run_step(
             report_dir,
-            "1/5 import_clubs_playstyles (Club)",
+            "1/6 import_clubs_playstyles (Club)",
             "import_clubs_playstyles",
             players_csv=str(players_csv),
             playstyles_csv=str(playstyles_csv),
@@ -180,7 +192,7 @@ class Command(BaseCommand):
 
         json_path, data = self._run_step(
             report_dir,
-            "2/5 import_players (Player)",
+            "2/6 import_players (Player)",
             "import_players",
             players_csv=str(players_csv),
             report_dir=str(report_dir),
@@ -188,12 +200,25 @@ class Command(BaseCommand):
         step_reports["players"] = data
         step_report_paths["players"] = str(json_path) if json_path else None
 
+        # A1 fix: cleanup pass, not a source import -- see dedupe_players.py
+        # module docstring for why this runs HERE (right after import_players,
+        # before position-roles/compatibility) rather than as a change to
+        # import_players itself.
+        json_path, data = self._run_step(
+            report_dir,
+            "2.5/6 dedupe_players (Player cleanup)",
+            "dedupe_players",
+            report_dir=str(report_dir),
+        )
+        step_reports["dedupe_players"] = data
+        step_report_paths["dedupe_players"] = str(json_path) if json_path else None
+
         position_kwargs = {"report_dir": str(report_dir)}
         if options["positions_dir"]:
             position_kwargs["positions_dir"] = options["positions_dir"]
         json_path, data = self._run_step(
             report_dir,
-            "3/5 import_position_roles (PlayerRoleScore)",
+            "3/6 import_position_roles (PlayerRoleScore)",
             "import_position_roles",
             **position_kwargs,
         )
@@ -202,7 +227,7 @@ class Command(BaseCommand):
 
         if options["skip_compatibility"]:
             self._banner(
-                "4/5 import_compatibility_scores -- SKIPPED (--skip-compatibility)"
+                "4/6 import_compatibility_scores -- SKIPPED (--skip-compatibility)"
             )
             step_reports["compatibility"] = {"skipped": True}
             step_report_paths["compatibility"] = None
@@ -212,7 +237,7 @@ class Command(BaseCommand):
                 cs_kwargs["cs_dir"] = options["cs_dir"]
             json_path, data = self._run_step(
                 report_dir,
-                "4/5 import_compatibility_scores (PlayerClubCompatibility)",
+                "4/6 import_compatibility_scores (PlayerClubCompatibility)",
                 "import_compatibility_scores",
                 **cs_kwargs,
             )
@@ -221,7 +246,7 @@ class Command(BaseCommand):
 
         json_path, data = self._run_step(
             report_dir,
-            "5/5 import_transfers (Transfer)",
+            "5/6 import_transfers (Transfer)",
             "import_transfers",
             transfers_csv=str(transfers_csv),
             report_dir=str(report_dir),
@@ -248,6 +273,17 @@ class Command(BaseCommand):
 
         players_source_rows = _count_csv_data_rows(players_csv)
         transfers_source_rows = _count_csv_data_rows(transfers_csv)
+
+        # dedupe_players (step 2.5) removes exact-duplicate rows RIGHT after
+        # import_players loads the raw CSV 1:1 -- so a healthy Player count
+        # is `players_source_rows - rows_removed`, not the raw source row
+        # count. Same pattern as the Transfer duplicate-collapse adjustment
+        # below.
+        dedupe_report = step_reports.get("dedupe_players") or {}
+        players_rows_removed = dedupe_report.get("rows_removed")
+        players_expected_rows = players_source_rows
+        if players_source_rows is not None and players_rows_removed:
+            players_expected_rows = players_source_rows - players_rows_removed
 
         # import_transfers collapses any source rows sharing the exact same
         # composite event key within one chunk (Postgres cannot apply
@@ -278,7 +314,7 @@ class Command(BaseCommand):
         }
         source_counts = {
             "Club": distinct_clubs,
-            "Player": players_source_rows,
+            "Player": players_expected_rows,
             "PlayerRoleScore": None,
             "PlayerClubCompatibility": None,
             "Transfer": transfers_expected_rows,
@@ -316,6 +352,14 @@ class Command(BaseCommand):
                     f"{transfers_source_rows}) -- see "
                     "sub_reports.transfers.transfer_import."
                 )
+            if table == "Player" and players_rows_removed:
+                note = (
+                    (note + " " if note else "")
+                    + f"source_rows adjusted down by {players_rows_removed} "
+                    "exact-duplicate row(s) removed by dedupe_players (raw "
+                    f"CSV row count was {players_source_rows}) -- see "
+                    "sub_reports.dedupe_players."
+                )
             reconciliation_rows.append(
                 {
                     "table": table,
@@ -340,6 +384,7 @@ class Command(BaseCommand):
                 "order": [
                     "import_clubs_playstyles",
                     "import_players",
+                    "dedupe_players",
                     "import_position_roles",
                     "import_compatibility_scores"
                     + (" (SKIPPED)" if options["skip_compatibility"] else ""),
