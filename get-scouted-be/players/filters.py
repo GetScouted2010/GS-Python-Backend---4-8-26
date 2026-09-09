@@ -5,6 +5,14 @@ DM/FWD/GK/LB/LW/RB/RW), NEVER `Player.main_position` (22 fine-grained
 values + a garbage '0' row) -- verified against `PlayerRoleScore
 .position_group` and `Player.Meta.indexes` during planning. This is one of
 the two highest-risk correctness pivots this plan protects.
+
+A2 fix (min/max range filters): age, market_value, the 4 scores, and
+minutes are all covered as `_min`/`_max` pairs below. "Position metrics"
+(the ~99 raw per-position stat columns -- goals, xG, duels won %, etc.) is
+NOT covered -- none of them are exposed as filters at all today, and which
+specific ones matter is a product call, not something to guess at broadly.
+Flag which stats you actually want range-filterable and they can be added
+the same way.
 """
 
 import django_filters as filters
@@ -43,9 +51,18 @@ class PlayerFilter(filters.FilterSet):
     market_value_min = filters.NumberFilter(field_name="market_value", lookup_expr="gte")
     market_value_max = filters.NumberFilter(field_name="market_value", lookup_expr="lte")
     impact_score_min = filters.NumberFilter(field_name="impact_score", lookup_expr="gte")
+    impact_score_max = filters.NumberFilter(field_name="impact_score", lookup_expr="lte")
     compatibility_score_min = filters.NumberFilter(field_name="compatibility_score", lookup_expr="gte")
+    compatibility_score_max = filters.NumberFilter(field_name="compatibility_score", lookup_expr="lte")
     financial_fit_score_min = filters.NumberFilter(field_name="financial_fit_score", lookup_expr="gte")
+    financial_fit_score_max = filters.NumberFilter(field_name="financial_fit_score", lookup_expr="lte")
     transfer_probability_score_min = filters.NumberFilter(field_name="transfer_probability_score", lookup_expr="gte")
+    transfer_probability_score_max = filters.NumberFilter(field_name="transfer_probability_score", lookup_expr="lte")
+    # A2 fix: minutes range, the one other dimension the requirement named
+    # explicitly alongside age/market_value ("position metrics" beyond this
+    # is NOT covered here -- see players/filters.py's module note below).
+    minutes_min = filters.NumberFilter(field_name="Minutes_played", lookup_expr="gte")
+    minutes_max = filters.NumberFilter(field_name="Minutes_played", lookup_expr="lte")
 
     class Meta:
         model = Player
@@ -53,8 +70,11 @@ class PlayerFilter(filters.FilterSet):
             "ids", "position", "league", "season",
             "age_min", "age_max",
             "market_value_min", "market_value_max",
-            "impact_score_min", "compatibility_score_min",
-            "financial_fit_score_min", "transfer_probability_score_min",
+            "impact_score_min", "impact_score_max",
+            "compatibility_score_min", "compatibility_score_max",
+            "financial_fit_score_min", "financial_fit_score_max",
+            "transfer_probability_score_min", "transfer_probability_score_max",
+            "minutes_min", "minutes_max",
         ]
 
     def filter_queryset(self, queryset):
