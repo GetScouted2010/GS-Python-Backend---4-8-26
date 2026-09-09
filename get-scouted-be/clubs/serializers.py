@@ -21,6 +21,7 @@ from django.db.models import Avg, Count, Sum
 from rest_framework import serializers
 
 from clubs.models import Club
+from players.season import request_season, scope_to_season
 from players.serializers import PlayerListSerializer
 from transfers.models import Transfer
 
@@ -63,7 +64,11 @@ class ClubDetailSerializer(serializers.ModelSerializer):
 
     def get_squad(self, club):
         # related_name="players" (verified); reuse 07-02's lightweight shape.
-        return PlayerListSerializer(club.players.all(), many=True).data
+        # A1 fix (players/season.py): scope to one resolved season -- a
+        # club's roster otherwise shows each real player once per season
+        # pull (up to 4x). ?season= on the request overrides the default.
+        season = request_season(self.context.get("request"))
+        return PlayerListSerializer(scope_to_season(club.players.all(), season), many=True).data
 
     def get_transfer_aggregates(self, club):
         qs = Transfer.objects.filter(club=club)  # related_name="transfers"

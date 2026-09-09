@@ -11,6 +11,7 @@ Follows the clubs/services.py / players/services.py per-app convention.
 from __future__ import annotations
 
 from players.models import Player
+from players.season import scope_to_season
 from players.serializers import PlayerListSerializer
 
 
@@ -52,7 +53,9 @@ def simulate_squad_change(squad_plan, proposed_changes=None) -> dict:
     if missing:
         raise InvalidPlayerReference(f"unknown player id(s): {sorted(missing)}")
 
-    current_squad = list(squad_plan.club.players.all())
+    # A1 fix (players/season.py): scope to the default season -- no request
+    # is available here to honor an explicit ?season= override.
+    current_squad = list(scope_to_season(squad_plan.club.players.all()))
     simulated_squad = list(current_squad)  # shallow copy, in-memory only
 
     for entry in changes:

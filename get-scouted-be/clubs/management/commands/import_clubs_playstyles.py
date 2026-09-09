@@ -22,6 +22,7 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 
 from clubs.models import Club
+from clubs.name_normalization import normalize_club_name
 from core.import_utils import (
     DEFAULT_REPORT_DIR,
     ImportReport,
@@ -92,6 +93,10 @@ def derive_club_league(players_df):
     ):
         if pd.isna(team):
             continue
+        # A3 fix: normalize before using the name as the club-identity key --
+        # see clubs/name_normalization.py (whitespace variants + the one
+        # confirmed Borussia M_gladbach/M'gladbach encoding alias).
+        team = normalize_club_name(team)
         club_leagues[team][league] += 1
 
     league_map = {}
@@ -129,6 +134,7 @@ def load_playstyles(playstyles_df):
         team = getattr(row, "Team")
         if pd.isna(team):
             continue
+        team = normalize_club_name(team)  # A3 fix -- see clubs/name_normalization.py
         entry = {"source_unique_id": _clean(getattr(row, "UniqueID"))}
         for model_field, csv_column in STYLE_COLUMN_MAP.items():
             entry[model_field] = _clean(getattr(row, csv_column))

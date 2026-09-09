@@ -11,6 +11,18 @@ Two shapes, split by depth:
   Score BREAKDOWNS (rmm/compatibility/financial_fit/transfer_probability)
   are attached by the view via `scoring.services.summary.get_summary` /
   `rmm.get_rmm`, not by this serializer.
+
+A3 fix (2026-09-09): `league` on BOTH serializers resolves through
+`Player.club.league` (the clean, mode-derived canonical value -- always one
+of clubs.leagues.REAL_LEAGUES), NEVER the raw `Player.league` DB column.
+That raw column is per-STAT-ROW source data (which competition file this
+row's minutes/stats came from) and is confirmed contaminated for ~8.7% of
+rows -- e.g. a West Bromwich Albion player's row can carry
+`league="Serie A (Italy)"` from a spell at a prior club, while
+`club.league` correctly says "EFL Championship". Exposing the raw column
+directly is exactly the "random leagues leaking in" bug. The raw column
+itself is left untouched in the DB (still real per-row source history, not
+deleted) -- only what the API serves/filters on changed.
 """
 
 from rest_framework import serializers
@@ -23,6 +35,7 @@ class PlayerListSerializer(serializers.ModelSerializer):
     + market value + the 4 Phase-6 denormalized own-club scores. No stat block."""
 
     club_name = serializers.SerializerMethodField()
+    league = serializers.SerializerMethodField()
 
     class Meta:
         model = Player
@@ -36,6 +49,13 @@ class PlayerListSerializer(serializers.ModelSerializer):
     def get_club_name(self, obj):
         return obj.club.name if obj.club_id else None
 
+    def get_league(self, obj):
+        # A3 fix: canonical club league, not the noisy per-row raw column
+        # (see module docstring). Falls back to the raw value only for the
+        # (currently nonexistent, but not guaranteed forever) case of a
+        # player with no resolved club.
+        return obj.club.league if obj.club_id else obj.league
+
 
 class PlayerDetailSerializer(serializers.ModelSerializer):
     """Full profile: every model field (all ~99 stats + profile + season +
@@ -43,6 +63,7 @@ class PlayerDetailSerializer(serializers.ModelSerializer):
     the view via get_summary, not by this serializer."""
 
     club_name = serializers.SerializerMethodField()
+    league = serializers.SerializerMethodField()
 
     class Meta:
         model = Player
@@ -50,3 +71,7 @@ class PlayerDetailSerializer(serializers.ModelSerializer):
 
     def get_club_name(self, obj):
         return obj.club.name if obj.club_id else None
+
+    def get_league(self, obj):
+        # A3 fix -- see PlayerListSerializer.get_league / module docstring.
+        return obj.club.league if obj.club_id else obj.league

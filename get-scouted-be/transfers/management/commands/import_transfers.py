@@ -28,6 +28,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from clubs.models import Club
+from clubs.name_normalization import normalize_club_name
 from core.import_utils import (
     DEFAULT_REPORT_DIR,
     ImportReport,
@@ -153,7 +154,11 @@ def _build_transfer_kwargs(row: dict, club_id_map: dict, player_name_to_id: dict
 
     club_id = None
     if club_name is not None:
-        club_id = club_id_map.get(club_name)
+        # A3 fix: club_id_map's keys are normalized Club.name values
+        # (clubs/name_normalization.py) -- e.g. "transferdata final.csv"
+        # spells Borussia Mönchengladbach "Borussia M_gladbach" (confirmed
+        # alias), which would otherwise miss the map entirely.
+        club_id = club_id_map.get(normalize_club_name(club_name))
         if club_id is None:
             report.add_field_issue("Club", "unresolved_club_name", sample_id=club_name)
     else:

@@ -11,39 +11,14 @@ enum value before it can reach the ORM.
 import anthropic
 from django.conf import settings
 
+from clubs.leagues import REAL_LEAGUES
 from players.ai.base import NLQueryParser, NLQueryParserError, ParsedQuery
 
 # The CLEAN 10-value Player.position group (never main_position's 22 values).
 REAL_POSITIONS = {"AM", "CB", "CM", "DM", "FWD", "GK", "LB", "LW", "RB", "RW"}
 
-# The 25 real League values, verified live against the dev DB (09-RESEARCH.md).
-REAL_LEAGUES = {
-    "Allsvenskan (Sweden)",
-    "Bundesliga (Austria)",
-    "Bundesliga (Germany)",
-    "Bundesliga 2",
-    "Challenger Pro League",
-    "EFL Championship",
-    "EFL League One",
-    "Eerste Divisie",
-    "Eliteserien",
-    "Eredivisie (Netherlands)",
-    "La Liga (Spain)",
-    "La Liga 2",
-    "Liga Portugal 2",
-    "Ligue 1 (France)",
-    "Ligue 2 (France)",
-    "MLS (USA)",
-    "Premier League (England)",
-    "Primeira Liga (Portugal)",
-    "Pro League (Belgium)",
-    "SPL",
-    "Serie A (Brazil)",
-    "Serie A (Italy)",
-    "Serie B",
-    "Super Lig (Turkey)",
-    "Superliga (Denmark)",
-}
+# REAL_LEAGUES moved to clubs/leagues.py (A3 fix) -- it's now the shared
+# whitelist of in-scope leagues, not a private copy of this parser's.
 
 # The 8 ClubFilter style fields, emitted by the LLM as club__<field>_min keys.
 STYLE_FIELD_KEYS = {

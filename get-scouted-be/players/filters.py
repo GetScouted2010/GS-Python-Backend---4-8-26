@@ -11,6 +11,7 @@ import django_filters as filters
 from rest_framework.exceptions import ValidationError
 
 from players.models import Player
+from players.season import resolve_season
 
 
 class IdsInFilter(filters.BaseInFilter, filters.UUIDFilter):
@@ -25,7 +26,17 @@ class PlayerFilter(filters.FilterSet):
     # values + a '0' garbage row). Verified against PlayerRoleScore.position_group
     # and Player.Meta.indexes.
     position = filters.CharFilter(field_name="position")
-    league = filters.CharFilter(field_name="league")
+    # A3 fix: filter by the player's CLUB's canonical league, never the raw
+    # per-row Player.league column -- that column is contaminated for ~8.7%
+    # of rows (a player's row can carry a PRIOR club's league; see
+    # players/serializers.py's PlayerListSerializer.get_league docstring),
+    # which would silently include/exclude players from the wrong league.
+    league = filters.CharFilter(field_name="club__league")
+    # A1 fix (players/season.py): explicit season pass-through, for docs/
+    # discoverability. The actual DEFAULT enforcement (when this param is
+    # absent) happens in filter_queryset below, not here -- django-filter
+    # fields simply no-op when their query param is missing.
+    season = filters.CharFilter(field_name="season")
     # CRUD-01 range/threshold dimensions
     age_min = filters.NumberFilter(field_name="age", lookup_expr="gte")
     age_max = filters.NumberFilter(field_name="age", lookup_expr="lte")
@@ -39,7 +50,7 @@ class PlayerFilter(filters.FilterSet):
     class Meta:
         model = Player
         fields = [
-            "ids", "position", "league",
+            "ids", "position", "league", "season",
             "age_min", "age_max",
             "market_value_min", "market_value_max",
             "impact_score_min", "compatibility_score_min",
@@ -52,4 +63,16 @@ class PlayerFilter(filters.FilterSet):
         raw_ids = self.data.get("ids")
         if raw_ids and len([x for x in raw_ids.split(",") if x]) > 100:
             raise ValidationError({"ids": "A maximum of 100 ids may be requested at once."})
+
+        # A1 fix: Player rows are player-SEASON records (players/season.py)
+        # -- without this, an unfiltered list returns up to 4 rows for the
+        # same real person (plus genuine cross-season name collisions).
+        # Skipped for ?ids= multi-fetch: that endpoint is documented as
+        # fetching an EXACT set of rows by primary key (e.g. side-by-side
+        # comparison across specific season-rows) -- forcing the default
+        # season on top would silently drop requested ids that aren't in
+        # that season.
+        if not raw_ids:
+            queryset = queryset.filter(season=resolve_season(self.data.get("season")))
+
         return super().filter_queryset(queryset)

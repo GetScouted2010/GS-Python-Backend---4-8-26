@@ -24,6 +24,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from clubs.models import Club
+from clubs.name_normalization import normalize_club_name
 from core.import_utils import (
     DEFAULT_REPORT_DIR,
     ImportReport,
@@ -160,7 +161,12 @@ def _build_player_kwargs(row: dict, club_id_map: dict, report: ImportReport) -> 
     club_name = _clean(row.get("Team_within_selected_timeframe"))
     club_id = None
     if club_name is not None:
-        club_id = club_id_map.get(club_name)
+        # A3 fix: club_id_map's keys are normalized Club.name values
+        # (clubs/name_normalization.py, applied in import_clubs_playstyles.py)
+        # -- normalize here too, or a row with trailing/leading whitespace
+        # (e.g. "LASK ") would miss the map and get wrongly flagged
+        # unresolved_club_name.
+        club_id = club_id_map.get(normalize_club_name(club_name))
         if club_id is None:
             _flag("club", "unresolved_club_name")
     else:
