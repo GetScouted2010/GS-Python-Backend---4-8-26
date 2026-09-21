@@ -28,6 +28,11 @@ encoding variants -- the risk of false-positive merges (e.g. a reserve/B
 team wrongly merged into its first team) outweighs catching more variants,
 and a full re-derivation diff (`derived_names - db_names` /
 `db_names - derived_names`) after the strip fix found nothing further.
+Where a pair's clean-named row does NOT exist at all (production, before the
+2025-2026 import: import_all had never been re-run after the strip fix, so
+"AEK Larnaca " / "AVS " / "Rodez " / "St. Louis City " were still the only,
+LIVE rows), the padded row is renamed in place rather than skipped.
+
 This command is safe to re-run any time (no-op once clean) and costs
 nothing to run again after a future data pull, as a cheap audit.
 
@@ -108,10 +113,29 @@ class Command(BaseCommand):
         for canonical_name, loser_names in MERGES:
             canonical = Club.objects.filter(name=canonical_name).first()
             if canonical is None:
-                self.stdout.write(
-                    self.style.WARNING(f"Skip: canonical club {canonical_name!r} not found.")
+                # No clean-named row exists (e.g. an environment where
+                # import_all hasn't re-run since the strip fix, so the padded
+                # row is still the ONLY, live row for this club). Skipping
+                # would leave it padded, and the next import would then
+                # create a second clean row beside it -- the exact duplicate
+                # this command exists to prevent. The padded row IS the club:
+                # promote it by renaming in place (keeps every player,
+                # transfer, shortlist and squad plan attached), then merge
+                # any further variants into it below.
+                promoted = next(
+                    (c for n in loser_names if (c := Club.objects.filter(name=n).first())), None
                 )
-                continue
+                if promoted is None:
+                    self.stdout.write(
+                        self.style.WARNING(f"Skip: neither {canonical_name!r} nor its variants found.")
+                    )
+                    continue
+                self.stdout.write(f"Renaming {promoted.name!r} -> {canonical_name!r} (no clean row exists).")
+                loser_names = [n for n in loser_names if n != promoted.name]
+                if not dry_run:
+                    promoted.name = canonical_name
+                    promoted.save(update_fields=["name"])
+                canonical = promoted
 
             for loser_name in loser_names:
                 loser = Club.objects.filter(name=loser_name).first()

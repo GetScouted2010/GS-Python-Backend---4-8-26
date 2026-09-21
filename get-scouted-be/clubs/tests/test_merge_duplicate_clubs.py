@@ -146,3 +146,66 @@ def test_merges_list_only_covers_confirmed_pairs():
         ("Rodez", ["Rodez "]),
         ("St. Louis City", ["St. Louis City "]),
     ]
+
+
+# ---------------------------------------------------------------------------
+# No clean-named row exists (production before the 2025-2026 import): the
+# padded row is the ONLY, live row for the club and must be renamed in place.
+# ---------------------------------------------------------------------------
+
+
+def test_renames_padded_club_in_place_when_no_clean_row_exists(db):
+    padded = Club.objects.create(name="AEK Larnaca ", league="Superliga (Denmark)")
+    player = Player.objects.create(unique_id=next(_unique_id_seq), player="Live Player", club=padded)
+    transfer = _make_transfer(padded)
+
+    call_command("merge_duplicate_clubs")
+
+    padded.refresh_from_db()
+    assert padded.name == "AEK Larnaca"
+    assert Club.objects.filter(name__startswith="AEK Larnaca").count() == 1
+    # Everything stays attached to the SAME row (id unchanged).
+    player.refresh_from_db()
+    transfer.refresh_from_db()
+    assert player.club_id == padded.id
+    assert transfer.club_id == padded.id
+
+
+def test_rename_preserves_user_shortlists_and_squad_plans(db):
+    from accounts.models import User
+
+    padded = Club.objects.create(name="Rodez ")
+    user = User.objects.create_user(email="rename-test@example.com", password="testpass123")
+    shortlist = Shortlist.objects.create(user=user, name="My List", club=padded)
+    plan = SquadPlan.objects.create(user=user, name="My Plan", club=padded)
+
+    call_command("merge_duplicate_clubs")
+
+    shortlist.refresh_from_db()
+    plan.refresh_from_db()
+    assert shortlist.club.name == "Rodez"
+    assert plan.club.name == "Rodez"
+
+
+def test_rename_dry_run_changes_nothing(db):
+    padded = Club.objects.create(name="AVS ")
+
+    call_command("merge_duplicate_clubs", dry_run=True)
+
+    padded.refresh_from_db()
+    assert padded.name == "AVS "
+
+
+def test_rename_then_second_run_is_a_no_op(db):
+    Club.objects.create(name="St. Louis City ")
+    call_command("merge_duplicate_clubs")
+    call_command("merge_duplicate_clubs")
+    assert list(Club.objects.filter(name__startswith="St. Louis").values_list("name", flat=True)) == ["St. Louis City"]
+
+
+def test_variant_is_still_merged_when_the_clean_row_does_exist(lask_pair):
+    # Regression guard: the original merge path is unchanged.
+    canonical, loser = lask_pair
+    call_command("merge_duplicate_clubs")
+    assert Club.objects.filter(id=canonical.id, name="LASK").exists()
+    assert not Club.objects.filter(id=loser.id).exists()
