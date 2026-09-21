@@ -30,6 +30,8 @@ that has the 2025-2026 season loaded.
 
 from __future__ import annotations
 
+import re
+
 REAL_LEAGUES: frozenset[str] = frozenset(
     {
         "Allsvenskan (Sweden)",
@@ -100,8 +102,15 @@ LEAGUE_ALIASES: dict[str, str] = {
     "Segunda Divisio´n (Spain)": "La Liga 2",
     "Serie B (Italy)": "Serie B",
     "Turkish Super Lig (Turkey)": "Super Lig (Turkey)",
-    # Not an alias of an existing league -- a corrupt-accent fix for a NEW one.
+    # Not aliases of an existing league -- label fixes for NEW leagues, so the
+    # league list reads consistently next to the existing labels
+    # ("EFL League One" / "Serie A (Brazil)"):
+    #   - corrupt accent in the source file
+    #   - "EFL League Two (England)" -> like "EFL League One" / "EFL Championship"
+    #   - "Brazil Serie B (Brazil)"  -> like the existing "Serie A (Brazil)"
     "Primera Divisio´n (Uruguay)": "Primera Division (Uruguay)",
+    "EFL League Two (England)": "EFL League Two",
+    "Brazil Serie B (Brazil)": "Serie B (Brazil)",
 }
 
 
@@ -109,3 +118,35 @@ def normalize_league_name(raw: str) -> str:
     """Strip whitespace, then map a known alias onto the canonical label."""
     name = raw.strip()
     return LEAGUE_ALIASES.get(name, name)
+
+
+# Country for the labels that don't carry one in parentheses. Every other
+# label ends "... (Country)" and is parsed instead.
+_COUNTRY_OF_UNPARENTHESISED_LABEL: dict[str, str] = {
+    "Bundesliga 2": "Germany",
+    "Challenger Pro League": "Belgium",
+    "EFL Championship": "England",
+    "EFL League One": "England",
+    "EFL League Two": "England",
+    "Eerste Divisie": "Netherlands",
+    "Eliteserien": "Norway",
+    "La Liga 2": "Spain",
+    "Liga Portugal 2": "Portugal",
+    "SPL": "Scotland",
+    "Serie B": "Italy",
+}
+
+
+def league_country(label: str | None) -> str | None:
+    """The country a league label belongs to, or None if it can't be told.
+
+    Used to tell a club that was promoted/relegated (same country -- leave
+    its stored league alone) from one whose stored league is plainly wrong
+    (a different country entirely, e.g. Panathinaikos stored as "La Liga").
+    """
+    if not label:
+        return None
+    match = re.search(r"\(([^)]+)\)\s*$", label.strip())
+    if match:
+        return match.group(1)
+    return _COUNTRY_OF_UNPARENTHESISED_LABEL.get(label.strip())

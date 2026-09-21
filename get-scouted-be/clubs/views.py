@@ -9,6 +9,7 @@ _CLASSES (JWTAuthentication) already deny-by-default (config/settings/base.py).
 
 import csv
 
+from django.db.models import Count
 from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
@@ -19,6 +20,7 @@ from rest_framework.views import APIView
 
 from clubs import services
 from clubs.filters import ClubFilter
+from clubs.leagues import league_country
 from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer, ClubListSerializer
 from core.exceptions import ServiceUnavailableError
@@ -259,3 +261,39 @@ class ReplacementsView(APIView):
         if not position:
             raise ValidationError({"position": "This query parameter is required."})
         return Response(rank_replacement_players(pk, position))
+
+
+class LeagueListView(APIView):
+    """GET /api/v1/clubs/leagues/ -- the leagues a league -> club dropdown
+    can offer, each with how many clubs it holds. Feeds
+    `GET /api/v1/clubs/?league=<league>` (the second step of the cascade)."""
+
+    @extend_schema(
+        tags=["clubs"],
+        summary="List available leagues",
+        description=(
+            "Every league that has at least one club, with a club count and "
+            "the league's country. Use the `league` value verbatim as the "
+            "`league` filter on `GET /clubs/` (to list that league's clubs) "
+            "or on `GET /players/`. Sorted by league name."
+        ),
+        responses={200: OpenApiResponse(description="List of {league, country, club_count}.")},
+    )
+    def get(self, request):
+        rows = (
+            Club.objects.exclude(league__isnull=True)
+            .exclude(league="")
+            .values("league")
+            .annotate(club_count=Count("id"))
+            .order_by("league")
+        )
+        return Response(
+            [
+                {
+                    "league": row["league"],
+                    "country": league_country(row["league"]),
+                    "club_count": row["club_count"],
+                }
+                for row in rows
+            ]
+        )
