@@ -54,6 +54,7 @@ from django.core.management.base import BaseCommand
 from clubs.models import Club
 from core.import_utils import DEFAULT_REPORT_DIR, ImportReport, resolve_dataset_path
 from players.models import Player, PlayerClubCompatibility, PlayerRoleScore
+from players.wyscout_season import DEFAULT_ID_OFFSET as WYSCOUT_ID_OFFSET
 from transfers.models import Transfer
 
 # Row-count reconciliation only makes a fixed-expectation comparison for
@@ -305,9 +306,29 @@ class Command(BaseCommand):
         if transfers_source_rows is not None and duplicates_collapsed:
             transfers_expected_rows = transfers_source_rows - duplicates_collapsed
 
+        # `import_wyscout_season` (a separate, deliberately-run command) adds
+        # Player rows under unique_ids >= WYSCOUT_ID_OFFSET plus Clubs that
+        # exist only for those rows. This pipeline's source files know
+        # nothing about either, so reconcile only what it owns -- otherwise
+        # every run after a Wyscout-season import would report a permanent,
+        # meaningless REVIEW that teaches operators to ignore the check.
+        wyscout_player_rows = Player.objects.filter(unique_id__gte=WYSCOUT_ID_OFFSET).count()
+        # A Wyscout-only club: no Playstyles source row, no base-pipeline
+        # players, at least one Wyscout player. (Every club derived from
+        # Players.csv has a base player; a Playstyles-only club has a
+        # source_unique_id -- so neither is miscounted here.)
+        wyscout_only_clubs = (
+            Club.objects.filter(
+                source_unique_id__isnull=True, players__unique_id__gte=WYSCOUT_ID_OFFSET
+            )
+            .exclude(players__unique_id__lt=WYSCOUT_ID_OFFSET)
+            .distinct()
+            .count()
+        )
+
         db_counts = {
-            "Club": Club.objects.count(),
-            "Player": Player.objects.count(),
+            "Club": Club.objects.count() - wyscout_only_clubs,
+            "Player": Player.objects.filter(unique_id__lt=WYSCOUT_ID_OFFSET).count(),
             "PlayerRoleScore": PlayerRoleScore.objects.count(),
             "PlayerClubCompatibility": PlayerClubCompatibility.objects.count(),
             "Transfer": Transfer.objects.count(),
@@ -351,6 +372,18 @@ class Command(BaseCommand):
                     "by import_transfers (raw CSV row count was "
                     f"{transfers_source_rows}) -- see "
                     "sub_reports.transfers.transfer_import."
+                )
+            if table == "Club" and wyscout_only_clubs:
+                note = (
+                    (note + " " if note else "")
+                    + f"excludes {wyscout_only_clubs} club(s) that exist only for "
+                    "Wyscout-season players (import_wyscout_season)."
+                )
+            if table == "Player" and wyscout_player_rows:
+                note = (
+                    (note + " " if note else "")
+                    + f"excludes {wyscout_player_rows} Wyscout-season row(s) "
+                    f"(unique_id >= {WYSCOUT_ID_OFFSET:,}, import_wyscout_season)."
                 )
             if table == "Player" and players_rows_removed:
                 note = (

@@ -16,10 +16,11 @@ the same way.
 """
 
 import django_filters as filters
+from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
 from players.models import Player
-from players.season import resolve_season
+from players.season import ROW_LEAGUE_SEASONS, resolve_season
 
 
 class IdsInFilter(filters.BaseInFilter, filters.UUIDFilter):
@@ -39,7 +40,11 @@ class PlayerFilter(filters.FilterSet):
     # of rows (a player's row can carry a PRIOR club's league; see
     # players/serializers.py's PlayerListSerializer.get_league docstring),
     # which would silently include/exclude players from the wrong league.
-    league = filters.CharFilter(field_name="club__league")
+    # Exception (players/season.py::ROW_LEAGUE_SEASONS): for seasons whose
+    # per-row league is clean, match the row's own league instead -- the same
+    # rule `effective_league` applies for display. `~Q(season__in=...)` also
+    # keeps NULL-season rows on the club-league path.
+    league = filters.CharFilter(method="filter_league")
     # A1 fix (players/season.py): explicit season pass-through, for docs/
     # discoverability. The actual DEFAULT enforcement (when this param is
     # absent) happens in filter_queryset below, not here -- django-filter
@@ -76,6 +81,12 @@ class PlayerFilter(filters.FilterSet):
             "transfer_probability_score_min", "transfer_probability_score_max",
             "minutes_min", "minutes_max",
         ]
+
+    def filter_league(self, queryset, name, value):
+        return queryset.filter(
+            Q(season__in=ROW_LEAGUE_SEASONS, league=value)
+            | (~Q(season__in=ROW_LEAGUE_SEASONS) & Q(club__league=value))
+        )
 
     def filter_queryset(self, queryset):
         # Discretionary cap (07-CONTEXT.md open item): reject an accidentally

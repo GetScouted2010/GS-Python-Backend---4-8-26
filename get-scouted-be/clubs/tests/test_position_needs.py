@@ -21,6 +21,7 @@ import pytest
 from clubs import services
 from clubs.models import Club
 from players.models import Player
+from players.season import DEFAULT_SEASON
 
 pytestmark = pytest.mark.django_db
 
@@ -37,6 +38,7 @@ def _make_player(club, unique_id, position, age, contract_expires=None):
         position=position,
         age=age,
         contract_expires=contract_expires,
+        season=DEFAULT_SEASON,
     )
 
 
@@ -113,3 +115,48 @@ def test_classify_strong():
     assert lb["squad_depth"] == 3
     assert lb["avg_age"] == 25.0
     assert lb["contracts_expiring_within_12mo"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Season scoping: club.players holds one row per player PER SEASON. Counting
+# them all pooled a club's four seasons into one (Arsenal: 12 centre-backs).
+# ---------------------------------------------------------------------------
+
+
+def test_position_needs_count_one_season_not_every_season_pooled():
+    club = _make_club()
+    # The same two real centre-backs, present in three season-rows each.
+    for uid_base, season in ((100, DEFAULT_SEASON), (200, "2024-2025"), (300, "2023-2024")):
+        for offset in (1, 2):
+            Player.objects.create(
+                unique_id=uid_base + offset, player=f"CB {offset}", club=club,
+                position="CB", age=25, season=season,
+            )
+
+    result = services.classify_position_needs(club)
+
+    assert result["CB"]["squad_depth"] == 2  # not 6
+
+
+def test_position_needs_honour_an_explicit_season():
+    club = _make_club()
+    Player.objects.create(unique_id=1, player="A", club=club, position="CB", age=25, season=DEFAULT_SEASON)
+    for uid in (2, 3, 4):
+        Player.objects.create(unique_id=uid, player=f"B{uid}", club=club, position="CB", age=25, season="2025-2026")
+
+    assert services.classify_position_needs(club)["CB"]["squad_depth"] == 1
+    assert services.classify_position_needs(club, "2025-2026")["CB"]["squad_depth"] == 3
+
+
+def test_adding_a_new_season_does_not_change_the_default_seasons_numbers():
+    # The point of scoping: importing 2025-2026 must not move existing
+    # clubs' position-needs.
+    club = _make_club()
+    Player.objects.create(unique_id=1, player="A", club=club, position="CB", age=25, season=DEFAULT_SEASON)
+    Player.objects.create(unique_id=2, player="B", club=club, position="CB", age=25, season=DEFAULT_SEASON)
+    before = services.classify_position_needs(club)
+
+    for uid in (3, 4, 5, 6):
+        Player.objects.create(unique_id=uid, player=f"N{uid}", club=club, position="CB", age=25, season="2025-2026")
+
+    assert services.classify_position_needs(club) == before

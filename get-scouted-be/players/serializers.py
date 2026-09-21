@@ -23,11 +23,16 @@ rows -- e.g. a West Bromwich Albion player's row can carry
 directly is exactly the "random leagues leaking in" bug. The raw column
 itself is left untouched in the DB (still real per-row source history, not
 deleted) -- only what the API serves/filters on changed.
+
+Exception: seasons in `players.season.ROW_LEAGUE_SEASONS` (2025-2026), whose
+per-row league is clean (99.24% self-consistent) and, unlike the single
+per-club value, correct for clubs that changed division. See `effective_league`.
 """
 
 from rest_framework import serializers
 
 from players.models import Player
+from players.season import effective_league
 
 
 class PlayerListSerializer(serializers.ModelSerializer):
@@ -51,10 +56,10 @@ class PlayerListSerializer(serializers.ModelSerializer):
 
     def get_league(self, obj):
         # A3 fix: canonical club league, not the noisy per-row raw column
-        # (see module docstring). Falls back to the raw value only for the
-        # (currently nonexistent, but not guaranteed forever) case of a
-        # player with no resolved club.
-        return obj.club.league if obj.club_id else obj.league
+        # (see module docstring) -- except for seasons whose per-row league
+        # is known-clean (players.season.ROW_LEAGUE_SEASONS). Falls back to
+        # the raw value only for a player with no resolved club.
+        return effective_league(obj)
 
 
 class PlayerDetailSerializer(serializers.ModelSerializer):
@@ -74,4 +79,4 @@ class PlayerDetailSerializer(serializers.ModelSerializer):
 
     def get_league(self, obj):
         # A3 fix -- see PlayerListSerializer.get_league / module docstring.
-        return obj.club.league if obj.club_id else obj.league
+        return effective_league(obj)

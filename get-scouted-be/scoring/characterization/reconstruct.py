@@ -34,6 +34,7 @@ import pandas as pd
 
 from clubs.models import Club
 from players.models import Player, PlayerRoleScore
+from players.season import UNSCORED_SEASONS
 from transfers.models import Transfer
 
 logger = logging.getLogger(__name__)
@@ -209,7 +210,15 @@ def build_players_df() -> pd.DataFrame:
         for f in Player._meta.fields
         if f.name not in _DENORMALIZED_SCORE_FIELDS
     ]
-    qs = Player.objects.select_related("club").values(*field_names, "club__name")
+    # UNSCORED_SEASONS (players/season.py) are held out of the scoring
+    # population: impact is a pooled percentile rank over every row here, so
+    # admitting a whole new season would silently shift every existing
+    # player's score. `.exclude()` keeps rows whose season is NULL.
+    qs = (
+        Player.objects.exclude(season__in=UNSCORED_SEASONS)
+        .select_related("club")
+        .values(*field_names, "club__name")
+    )
     df = pd.DataFrame.from_records(list(qs))
 
     rename_map = {"id": "player_id", "club__name": "Team"}

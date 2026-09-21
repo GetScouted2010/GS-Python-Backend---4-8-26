@@ -24,6 +24,7 @@ from clubs.serializers import ClubDetailSerializer, ClubListSerializer
 from core.exceptions import ServiceUnavailableError
 from core.pagination import IdsBypassPagination
 from players.ai.report_generator import ReportGeneratorError
+from players.season import request_season
 from scoring.services.matching import rank_replacement_players
 from workspace.models import RecentActivity
 
@@ -201,13 +202,17 @@ class PositionNeedsView(APIView):
             "contracts expiring within 12 months). **Call this first** to "
             "find out which position is weak, then pass that position to "
             "**Rank replacement players** below. Deterministic — no LLM, "
-            "always fast."
+            "always fast. Computed over one season's squad "
+            "(`season`, default the latest)."
         ),
+        parameters=[
+            OpenApiParameter("season", type=str, location=OpenApiParameter.QUERY, required=False, description="Season whose squad to classify (e.g. 2025-2026). Defaults to the latest season."),
+        ],
         responses={200: OpenApiResponse(description="Per-position classification + depth/age/contract detail."), 404: OpenApiResponse(description="Unknown club.")},
     )
     def get(self, request, pk):
         club = get_object_or_404(Club, pk=pk)
-        return Response(services.classify_position_needs(club))
+        return Response(services.classify_position_needs(club, request_season(request)))
 
 
 class ReplacementsView(APIView):
