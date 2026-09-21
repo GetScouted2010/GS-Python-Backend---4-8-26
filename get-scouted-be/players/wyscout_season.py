@@ -23,15 +23,26 @@ comparing the two files against real data, not assumed:
    (DEFAULT_ID_OFFSET) so they can never collide, and stay stable across
    re-imports (idempotent upsert).
 
-4. POSITION -- in Players.csv, `Position` (the clean 10-value group) is a
-   pure function of `Main_Position` (verified over ~41k rows: every
-   Main_Position maps to exactly one Position). The 2025-2026 file's own
-   `Position` column is NOT consistent with its `Main_Position` (e.g. CBs and
-   goalkeepers sitting in a "CF" bucket) and uses different codes
-   (CF/AMF/DMF). To keep one meaning of "position" across every season,
-   `Position` is re-derived from `Main_Position` with the old data's own rule
-   (MAIN_POSITION_TO_GROUP); the source column is only used to report how
-   often it disagrees.
+4. POSITION -- the file's `Main_Position` column is NOT trustworthy: for 3,180
+   rows (17%) it was overwritten by the provider's pipeline and contradicts
+   the player's own recorded positions (a goalkeeper stored as "LB", a
+   striker as "RB"). Two facts, both measured on the real file, identify the
+   right source:
+     - `Main_Position_Original` agrees with the file's `Position` column on
+       100% of rows (18,349 of 18,349), and
+     - across every one of the 3,180 disputed rows, `Position` is among the
+       positions the player is recorded playing (`WYS Position`) 100% of the
+       time, while `Main_Position` is only 39.5% of the time (and never right
+       when `Position` is wrong).
+   `Main_Position_Original` also uses exactly the old data's vocabulary
+   (LCB, RCMF, LWB, ...), with none of the coarse AM/CM/DM/FWD labels. So
+   `Main_Position` is taken from `Main_Position_Original` and `Position` is
+   derived from it with Players.csv's own rule (MAIN_POSITION_TO_GROUP: every
+   Main_Position maps to exactly one Position across ~41k rows) -- which
+   reproduces the file's own `Position` column exactly.
+   (An earlier version of this adapter trusted `Main_Position` and got ~17%
+   of positions wrong; scoring the season against the provider's own numbers
+   is what exposed it.)
 
 5. DATES -- `Contract expires` is ISO (2026-06-30); the shared row builder
    parses dd/mm/YYYY. Converted here.
@@ -39,6 +50,22 @@ comparing the two files against real data, not assumed:
 6. LEAGUE / CLUB NAMES -- several competitions and clubs are spelled
    differently from the existing rows. Normalized through the shared alias
    maps (clubs/leagues.py, clubs/name_normalization.py).
+
+8. COARSE `Main_Position` LABELS -- the overwritten `Main_Position` column
+   also carries AM/CM/DM/FWD, values the older data never had and that the
+   scoring model's position table does not all know ("AM" is missing from it,
+   which would silently mis-score those players). Reading
+   `Main_Position_Original` (item 4) avoids them entirely;
+   MAIN_POSITION_CANONICAL only backstops a file that lacks that column.
+
+9. MARKET VALUE -- 25.5% of rows have no Wyscout market value. Where the
+   Transfermarkt column has one, it fills the gap (1,863 of 4,686 rows).
+   Wyscout stays primary, for continuity with the older seasons.
+
+10. EXACT DUPLICATES -- 11 groups are the same real player recorded twice
+   (same name, club, age, position; split minutes). They are dropped with the
+   same rule as `dedupe_players` (keep the most minutes) so they are never
+   inserted and `import_all`'s dedupe step never fights this import.
 
 7. SAME NAME, DIFFERENT CLUB -- the Club table is keyed by name alone, but
    6 names in this file are two real clubs in two countries ("Liverpool" =
@@ -89,6 +116,11 @@ _REQUIRED_COLUMNS = {
     "UniqueID", "Season", "League", "Player", "Team_within_selected_timeframe",
     "Main_Position", "Position", "Contract_expires",
 }
+
+# Coarse labels -> the equivalent label the older data already uses. Only a
+# backstop: `Main_Position_Original` (the source actually used) never contains
+# them. "CM" has no twin (the old data only has LCMF/RCMF) and is left as is.
+MAIN_POSITION_CANONICAL: dict[str, str] = {"AM": "AMF", "DM": "DMF", "FWD": "CF"}
 
 # Columns whose Players.csv name is not derivable from the raw name by rule.
 _RENAME_OVERRIDES: dict[str, str] = {
@@ -213,6 +245,76 @@ def resolve_club_identities(
     return decisions
 
 
+def parse_tm_market_value(value) -> float | None:
+    """Transfermarkt's "€ 3.00 m" / "€ 75 k" / "€ 1.2 bn" -> a number."""
+    if not isinstance(value, str):
+        return None
+    text = value.lower().replace("€", "").replace("£", "").replace(",", "").strip()
+    try:
+        if text.endswith("bn"):
+            return float(text[:-2]) * 1e9
+        if text.endswith("m"):
+            return float(text[:-1]) * 1e6
+        if text.endswith("k"):
+            return float(text[:-1]) * 1e3
+        return float(text)
+    except ValueError:
+        return None
+
+
+def drop_exact_duplicates(df: pd.DataFrame) -> int:
+    """Drop rows that are the same observation as another (mutates `df`).
+
+    Same rule as `players/management/commands/dedupe_players.py`: identical
+    (player, club, age, position) -- season is constant within one file --
+    keeps the row with the most minutes, then most matches, then the lowest
+    UniqueID. Rows with any part of the key missing are never grouped.
+    Returns how many rows were dropped.
+    """
+    key = ["Player", "Team_within_selected_timeframe", "Age", "Position"]
+    if not set(key) <= set(df.columns):
+        return 0
+    complete = df[key].notna().all(axis=1)
+    nan = pd.Series(float("nan"), index=df.index)
+    minutes = pd.to_numeric(df.get("Minutes_played", nan), errors="coerce").fillna(-1)
+    matches = pd.to_numeric(df.get("Matches_played", nan), errors="coerce").fillna(-1)
+    ranked = (
+        df[complete]
+        .assign(_minutes=minutes, _matches=matches)
+        .sort_values(["_minutes", "_matches", "UniqueID"], ascending=[False, False, True])
+    )
+    losers = ranked[ranked.duplicated(key, keep="first")].index
+    df.drop(index=losers, inplace=True)
+    return len(losers)
+
+
+def extract_role_scores(raw: pd.DataFrame, frame: pd.DataFrame) -> pd.DataFrame:
+    """Long-form role scores (UniqueID, Position, role_name_raw, score) for the
+    rows that survived into `frame`, straight from the RAW file.
+
+    The role columns are read from `raw` because `adapt_wyscout_frame`
+    renames columns for the Players.csv schema, and the model matches role
+    names by their exact original spelling ("Box-To-Box Midfielder"). Only
+    non-null scores are returned; a role a player has no score for is simply
+    absent (never a fabricated zero). Every role name the model knows is
+    present in the file, and the file's spelling matches the model's exactly.
+    """
+    from scoring.characterization.reconstruct import ROLE_COLUMNS_BY_POSITION
+
+    wanted = {r for roles in ROLE_COLUMNS_BY_POSITION.values() for r in roles}
+    role_columns = sorted(wanted & set(raw.columns))
+    scores = raw.loc[frame.index, role_columns].apply(pd.to_numeric, errors="coerce")
+    scores["UniqueID"] = frame["UniqueID"]
+    scores["Position"] = frame["Position"]
+    long = scores.melt(
+        id_vars=["UniqueID", "Position"],
+        value_vars=role_columns,
+        var_name="role_name_raw",
+        value_name="score",
+    )
+    return long.dropna(subset=["score", "Position"]).reset_index(drop=True)
+
+
 def adapt_wyscout_frame(
     raw: pd.DataFrame,
     *,
@@ -266,10 +368,17 @@ def adapt_wyscout_frame(
 
     club_identity_decisions = resolve_club_identities(df, existing_club_league or {})
 
+    # See module docstring item 4: `Main_Position` is overwritten for ~17% of
+    # rows; `Main_Position_Original` is the trustworthy one.
     source_position = df["Position"]
+    if "Main_Position_Original" in df.columns:
+        df["Main_Position"] = df["Main_Position_Original"].where(
+            df["Main_Position_Original"].notna(), df["Main_Position"]
+        )
     df["Position"] = df["Main_Position"].map(MAIN_POSITION_TO_GROUP)
     # NaN on either side (junk "0" Main_Position rows, or an unmapped value)
-    # means "no derivable group" -- never disagreement.
+    # means "no derivable group" -- never disagreement. Expected to be 0: a
+    # nonzero count means the source's columns have drifted apart again.
     comparable = df["Position"].notna() & source_position.notna()
     source_as_group = source_position.map(
         {"CF": "FWD", "AMF": "AM", "DMF": "DM"}
@@ -277,6 +386,20 @@ def adapt_wyscout_frame(
     position_disagreements = int(
         (comparable & (df["Position"] != source_as_group)).sum()
     )
+
+    main_position_rewritten = int(df["Main_Position"].isin(MAIN_POSITION_CANONICAL).sum())
+    df["Main_Position"] = df["Main_Position"].replace(MAIN_POSITION_CANONICAL)
+
+    market_value_filled_from_tm = 0
+    if "TM_Market_value" in df.columns:
+        wyscout_mv = pd.to_numeric(df["Market_value"], errors="coerce")
+        # to_numeric: a column with no parseable value at all is all-None
+        # (object dtype), which `.round()` below would reject.
+        tm_mv = pd.to_numeric(df["TM_Market_value"].map(parse_tm_market_value), errors="coerce")
+        fill = wyscout_mv.isna() & tm_mv.notna()
+        market_value_filled_from_tm = int(fill.sum())
+        if market_value_filled_from_tm:
+            df["Market_value"] = df["Market_value"].where(~fill, tm_mv.round().astype("Int64").astype(str))
 
     raw_contract = df["Contract_expires"]
     parsed_contract = pd.to_datetime(raw_contract, format="%Y-%m-%d", errors="coerce")
@@ -289,6 +412,7 @@ def adapt_wyscout_frame(
     df["Contract_expires"] = parsed_contract.dt.strftime("%d/%m/%Y")
 
     df = _coerce_types(df)
+    exact_duplicates_dropped = drop_exact_duplicates(df)
 
     # The four denormalized scores are computed by `recompute_scores`, never
     # sourced from a CSV -- their absence is expected, not a gap.
@@ -299,12 +423,16 @@ def adapt_wyscout_frame(
     expected = set(DTYPES) - {"UniqueID"} - computed_not_sourced
     stats = {
         "rows": len(df),
+        "rows_in_source": len(raw),
         "id_offset": id_offset,
         "position_underivable": int(df["Position"].isna().sum()),
-        "position_disagrees_with_source_column": position_disagreements,
+        "position_disagrees_with_file_position_column": position_disagreements,
         "contract_expires_placeholder_zero": contract_placeholder_zero,
         "contract_expires_unparseable": contract_unparseable,
         "expected_columns_absent_from_source": sorted(expected - set(df.columns)),
+        "main_position_rewritten_to_old_vocabulary": main_position_rewritten,
+        "market_value_filled_from_transfermarkt": market_value_filled_from_tm,
+        "exact_duplicates_dropped": exact_duplicates_dropped,
         "club_identity_decisions": club_identity_decisions,
     }
     return df, stats

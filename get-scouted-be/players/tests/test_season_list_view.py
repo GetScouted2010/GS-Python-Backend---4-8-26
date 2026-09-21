@@ -40,21 +40,31 @@ def test_exactly_one_season_is_the_default(auth_client):
     assert defaults == [DEFAULT_SEASON]
 
 
-def test_unscored_season_is_flagged_so_the_frontend_can_disable_score_controls(auth_client):
+def test_every_listed_season_is_scored_now(auth_client):
+    assert all(r["scored"] for r in _rows(auth_client))
+
+
+def test_a_held_out_season_is_flagged_so_the_frontend_can_disable_score_controls(
+    auth_client, monkeypatch
+):
+    # The mechanism stays for the next season imported before it is scored.
+    monkeypatch.setattr("players.views.UNSCORED_SEASONS", frozenset({"2023-2024"}))
+
     by_season = {r["season"]: r for r in _rows(auth_client)}
-    assert by_season["2025-2026"]["scored"] is False
+
+    assert by_season["2023-2024"]["scored"] is False
     assert by_season[DEFAULT_SEASON]["scored"] is True
 
 
 def test_player_counts_are_per_season(auth_client):
-    for season, n in ((DEFAULT_SEASON, 2), ("2025-2026", 3)):
+    for season, n in ((DEFAULT_SEASON, 2), ("Last Calendar Year", 3)):
         for _ in range(n):
             Player.objects.create(unique_id=next(_seq), player="P", season=season)
 
     by_season = {r["season"]: r["player_count"] for r in _rows(auth_client)}
 
     assert by_season[DEFAULT_SEASON] == 2
-    assert by_season["2025-2026"] == 3
+    assert by_season["Last Calendar Year"] == 3
     assert by_season["2023-2024"] == 0  # a listed season with no rows is 0, not missing
 
 

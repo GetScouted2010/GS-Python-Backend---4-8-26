@@ -81,8 +81,11 @@ def _raw(**overrides) -> pd.DataFrame:
         "League": "Scottish Premiership (Scotland)",
         "Player": "Test Player",
         "Team within selected timeframe": "Besiktas",
-        "Main_Position": "LCB",
-        "Position": "CF",  # the source column disagrees with Main_Position
+        # The real file's pattern: `Main_Position` was overwritten (here a CF),
+        # while `Main_Position_Original` and `Position` agree (a left CB).
+        "Main_Position": "CF",
+        "Main_Position_Original": "LCB",
+        "Position": "CB",
         "Contract expires": "2029-06-30",
         "Age": "24",
         "Market value": "700000.0",
@@ -120,32 +123,55 @@ def test_club_alias_is_normalized():
     assert frame["Team_within_selected_timeframe"].iloc[0] == "Beşiktaş"
 
 
-def test_position_is_derived_from_main_position_not_the_source_column():
-    # Source says "CF" (-> FWD) but Main_Position is LCB -> CB, the meaning
-    # every other season uses. The disagreement is counted, not applied.
+def test_main_position_comes_from_the_original_column_not_the_overwritten_one():
+    # The overwritten `Main_Position` says CF; the trustworthy
+    # `Main_Position_Original` says LCB, and the file's own `Position` (CB)
+    # agrees with it. The player is a centre-back.
     frame, stats = adapt_wyscout_frame(_raw(), season="2025-2026")
 
+    assert frame["Main_Position"].iloc[0] == "LCB"
     assert frame["Position"].iloc[0] == "CB"
-    assert stats["position_disagrees_with_source_column"] == 1
+    assert stats["position_disagrees_with_file_position_column"] == 0
 
 
-def test_position_agreeing_with_source_is_not_counted_as_disagreement():
-    frame, stats = adapt_wyscout_frame(
-        _raw(Main_Position="CF", Position="CF"), season="2025-2026"
-    )
-    assert frame["Position"].iloc[0] == "FWD"
-    assert stats["position_disagrees_with_source_column"] == 0
+def test_a_file_whose_position_contradicts_the_original_is_counted():
+    # Guard: if the source's columns ever drift apart again, the import
+    # report says so instead of silently picking a side.
+    frame, stats = adapt_wyscout_frame(_raw(Position="CF"), season="2025-2026")
+
+    assert frame["Position"].iloc[0] == "CB"  # still derived from the Original
+    assert stats["position_disagrees_with_file_position_column"] == 1
 
 
-@pytest.mark.parametrize("coarse", ["AM", "CM", "DM", "FWD"])
-def test_coarse_main_position_values_are_already_group_names(coarse):
-    frame, _ = adapt_wyscout_frame(_raw(Main_Position=coarse, Position=coarse), season="2025-2026")
-    assert frame["Position"].iloc[0] == coarse
+def test_the_original_column_never_produces_coarse_labels():
+    for label, group in (("CF", "FWD"), ("LAMF", "AM"), ("RDMF", "DM"), ("RCMF", "CM"), ("LWB", "LB")):
+        frame, _ = adapt_wyscout_frame(
+            _raw(Main_Position_Original=label, Position=group), season="2025-2026"
+        )
+        assert frame["Main_Position"].iloc[0] == label
+        assert frame["Position"].iloc[0] == group
+
+
+@pytest.mark.parametrize(
+    "coarse, rewritten, group", [("AM", "AMF", "AM"), ("DM", "DMF", "DM"), ("FWD", "CF", "FWD"), ("CM", "CM", "CM")]
+)
+def test_without_the_original_column_coarse_labels_fall_back_to_the_old_vocabulary(
+    coarse, rewritten, group
+):
+    # Backstop for a file lacking `Main_Position_Original`: "AM" is not in the
+    # scoring model's position table (it would silently mis-score), so the
+    # coarse labels are rewritten to their old-vocabulary twins ("CM" has none).
+    raw = _raw(Main_Position=coarse, Position=group).drop(columns=["Main_Position_Original"])
+
+    frame, _ = adapt_wyscout_frame(raw, season="2025-2026")
+
+    assert frame["Main_Position"].iloc[0] == rewritten
+    assert frame["Position"].iloc[0] == group
 
 
 def test_junk_zero_main_position_yields_no_position_and_is_counted():
     frame, stats = adapt_wyscout_frame(
-        _raw(Main_Position="0", Position="0"), season="2025-2026"
+        _raw(Main_Position="0", Main_Position_Original="0", Position="0"), season="2025-2026"
     )
     assert pd.isna(frame["Position"].iloc[0])
     assert stats["position_underivable"] == 1
@@ -275,3 +301,142 @@ def test_missing_required_column_is_a_clear_error_not_a_keyerror():
     raw = _raw().drop(columns=["Contract expires"])
     with pytest.raises(ValueError, match="missing required column"):
         adapt_wyscout_frame(raw, season="2025-2026")
+
+
+# ---------------------------------------------------------------------------
+# Market value: Transfermarkt fills the gaps Wyscout leaves
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [("€ 3.00 m", 3_000_000), ("€ 75 k", 75_000), ("€ 1.20 bn", 1_200_000_000), ("€ 500 k", 500_000)],
+)
+def test_transfermarkt_value_parsing(raw, expected):
+    from players.wyscout_season import parse_tm_market_value
+
+    assert parse_tm_market_value(raw) == expected
+
+
+def test_transfermarkt_value_parsing_rejects_junk():
+    from players.wyscout_season import parse_tm_market_value
+
+    assert parse_tm_market_value(None) is None
+    assert parse_tm_market_value(float("nan")) is None
+    assert parse_tm_market_value("unknown") is None
+
+
+def test_missing_wyscout_market_value_is_filled_from_transfermarkt():
+    frame, stats = adapt_wyscout_frame(
+        _raw(**{"Market value": None, "TM_Market value": "€ 3.00 m"}), season="2025-2026"
+    )
+    assert frame["Market_value"].iloc[0] == 3_000_000
+    assert stats["market_value_filled_from_transfermarkt"] == 1
+
+
+def test_wyscout_market_value_wins_when_both_exist():
+    frame, stats = adapt_wyscout_frame(
+        _raw(**{"Market value": "700000.0", "TM_Market value": "€ 3.00 m"}), season="2025-2026"
+    )
+    assert frame["Market_value"].iloc[0] == 700_000
+    assert stats["market_value_filled_from_transfermarkt"] == 0
+
+
+def test_no_value_anywhere_stays_missing_never_zero():
+    frame, _ = adapt_wyscout_frame(
+        _raw(**{"Market value": None, "TM_Market value": None}), season="2025-2026"
+    )
+    assert pd.isna(frame["Market_value"].iloc[0])
+
+
+# ---------------------------------------------------------------------------
+# Exact duplicates: same rule as dedupe_players (keep the most minutes)
+# ---------------------------------------------------------------------------
+
+
+def test_exact_duplicate_rows_are_dropped_keeping_the_most_minutes():
+    raw = pd.concat(
+        [
+            _raw(UniqueID="1", **{"Minutes played": "500"}),
+            _raw(UniqueID="2", **{"Minutes played": "2500"}),
+        ],
+        ignore_index=True,
+    )
+
+    frame, stats = adapt_wyscout_frame(raw, season="2025-2026")
+
+    assert len(frame) == 1
+    assert frame["UniqueID"].iloc[0] == 2 + DEFAULT_ID_OFFSET
+    assert stats["exact_duplicates_dropped"] == 1
+
+
+def test_minutes_tie_keeps_the_lowest_unique_id():
+    raw = pd.concat(
+        [_raw(UniqueID="9"), _raw(UniqueID="3")], ignore_index=True
+    )
+    frame, _ = adapt_wyscout_frame(raw, season="2025-2026")
+    assert frame["UniqueID"].tolist() == [3 + DEFAULT_ID_OFFSET]
+
+
+def test_different_people_with_the_same_name_are_not_duplicates():
+    # Same name, but a different club / age / position -- a name collision,
+    # never an exact duplicate.
+    raw = pd.concat(
+        [
+            _raw(UniqueID="1"),
+            _raw(UniqueID="2", **{"Team within selected timeframe": "Other FC"}),
+            _raw(UniqueID="3", Age="31"),
+        ],
+        ignore_index=True,
+    )
+    frame, stats = adapt_wyscout_frame(raw, season="2025-2026")
+    assert len(frame) == 3
+    assert stats["exact_duplicates_dropped"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Role scores
+# ---------------------------------------------------------------------------
+
+
+def test_role_scores_use_the_models_exact_role_names_and_skip_missing_ones():
+    from players.wyscout_season import extract_role_scores
+
+    raw = _raw(**{"Ball Playing Defender": "14.2", "Libero": "23.5", "Poacher": None,
+                  "Box-To-Box Midfielder": None})
+    frame, _ = adapt_wyscout_frame(raw, season="2025-2026")
+
+    roles = extract_role_scores(raw, frame)
+
+    assert set(roles["role_name_raw"]) == {"Ball Playing Defender", "Libero"}
+    assert roles["score"].tolist() == [14.2, 23.5] or set(roles["score"]) == {14.2, 23.5}
+    assert set(roles["Position"]) == {"CB"}
+    assert set(roles["UniqueID"]) == {35583 + DEFAULT_ID_OFFSET}
+
+
+def test_role_scores_keep_original_spelling_even_though_columns_are_renamed():
+    # "Box-To-Box Midfielder" becomes "Box_To_Box_Midfielder" in the adapted
+    # frame, but the scoring model matches roles by the ORIGINAL spelling.
+    from players.wyscout_season import extract_role_scores
+
+    raw = _raw(**{"Box-To-Box Midfielder": "50.0"})
+    frame, _ = adapt_wyscout_frame(raw, season="2025-2026")
+
+    assert extract_role_scores(raw, frame)["role_name_raw"].tolist() == ["Box-To-Box Midfielder"]
+
+
+def test_role_scores_only_cover_rows_that_survived_deduplication():
+    from players.wyscout_season import extract_role_scores
+
+    raw = pd.concat(
+        [
+            _raw(UniqueID="1", **{"Minutes played": "100", "Libero": "10.0"}),
+            _raw(UniqueID="2", **{"Minutes played": "900", "Libero": "20.0"}),
+        ],
+        ignore_index=True,
+    )
+    frame, _ = adapt_wyscout_frame(raw, season="2025-2026")
+
+    roles = extract_role_scores(raw, frame)
+
+    assert roles["score"].tolist() == [20.0]  # the dropped duplicate's score is not carried over

@@ -97,6 +97,7 @@ def test_get_summary_composes_four_helpers_from_single_reconstruction_synthetic(
         }
 
     with (
+        patch("scoring.services.summary.group_for_player", return_value="legacy"),
         patch("scoring.services.summary.reconstruct_population", return_value=pop) as mock_reconstruct,
         patch("scoring.services.summary.score_population", return_value=(scored, cs_tp)) as mock_score,
         patch("scoring.services.summary.resolve_club_name", return_value="OwnClubP1"),

@@ -248,6 +248,7 @@ class ReplacementsView(APIView):
         ),
         parameters=[
             OpenApiParameter("position", type=str, location=OpenApiParameter.QUERY, required=True, description="Position code to search for replacements in (e.g. CB, LB, ST). Required — 400 if omitted."),
+            OpenApiParameter("season", type=str, location=OpenApiParameter.QUERY, required=False, description="Season whose players are the candidates, each ranked against that season's own population (e.g. 2025-2026). Defaults to the latest season."),
         ],
         responses={
             200: OpenApiResponse(description="Top-N ranked replacement list with RMM/CS/TFM breakdown per entry."),
@@ -260,7 +261,7 @@ class ReplacementsView(APIView):
         position = request.query_params.get("position")
         if not position:
             raise ValidationError({"position": "This query parameter is required."})
-        return Response(rank_replacement_players(pk, position))
+        return Response(rank_replacement_players(pk, position, season=request_season(request)))
 
 
 class LeagueListView(APIView):

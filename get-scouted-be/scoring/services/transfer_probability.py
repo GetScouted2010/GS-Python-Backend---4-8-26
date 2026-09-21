@@ -24,6 +24,7 @@ from django.http import Http404
 from scoring.exceptions import null_with_reason
 from scoring.services.population import (
     get_scored_population,
+    group_for_player,
     is_own_club,
     reconstruct_population,
     resolve_club_name,
@@ -81,9 +82,10 @@ def get_transfer_probability(player_id, club_id) -> dict:
     """
     club_name = resolve_club_name(club_id)  # Http404 on unknown club
 
-    pop = reconstruct_population()
+    group = group_for_player(player_id)  # ranked in the player's season's population
+    pop = reconstruct_population(group)
     if is_own_club(player_id, club_id):
-        _, cs_tp = get_scored_population()
+        _, cs_tp = get_scored_population(group)
     else:
         _, cs_tp = score_population(pop, club_name)
 

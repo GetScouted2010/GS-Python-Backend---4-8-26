@@ -2,6 +2,15 @@
 service (compatibility, financial, performance, transfer-probability,
 summary) stands on.
 
+SCORING POPULATIONS. Impact is a percentile rank within position over a
+population, so which players share one decides every number. Players are
+therefore ranked in the population of THEIR season (players/season.py): the
+legacy pool of the four older seasons (exactly as it always was), and
+2025-2026 on its own -- how the data provider computes that season, and what
+reproduces its exported impact almost exactly. Every entry point below takes a
+`group`; services derive it from the player (`group_for_player`). Adding a
+season as its own population never moves another population's scores.
+
 Centralizes:
 
     - `reconstruct_population()`: the single ORM -> script-shaped-DataFrame
@@ -31,6 +40,7 @@ from typing import NamedTuple
 
 import pandas as pd
 
+from players.season import LEGACY_SCORING_GROUP, scoring_group, scoring_groups
 from scoring.characterization.deterministic_scores import compute_cs_tp_for_pairs
 from scoring.characterization.impact import add_player_impact
 from scoring.characterization.reconstruct import (
@@ -51,10 +61,25 @@ class Population(NamedTuple):
     transfers_df: pd.DataFrame
 
 
-@lru_cache(maxsize=1)
-def reconstruct_population() -> Population:
-    """Build the four script-shaped DataFrames from the ORM, once per
-    process (memoized -- see `clear_scoring_caches()`).
+@lru_cache(maxsize=None)
+def _reconstruct_population(group: str) -> Population:
+    return Population(
+        players_df=build_players_df(group),
+        role_scores_wide=build_role_scores_wide(group),
+        team_styles_df=build_team_styles_df(),
+        transfers_df=build_transfers_df(),
+    )
+
+
+def reconstruct_population(group: str = LEGACY_SCORING_GROUP) -> Population:
+    """Build the four script-shaped DataFrames for one scoring population from
+    the ORM, once per process per group (memoized -- see
+    `clear_scoring_caches()`).
+
+    `group` (players/season.py) is the population players are ranked in: the
+    default is the legacy pool of older seasons; a season in
+    OWN_POPULATION_SEASONS is ranked only against itself. Team styles and
+    transfers are club-level and shared by every group.
 
     The single reconstruction point every downstream score service reuses
     instead of independently calling `characterization.reconstruct`'s
@@ -63,12 +88,11 @@ def reconstruct_population() -> Population:
     Postgres; call `clear_scoring_caches()` after a data refresh to force a
     fresh rebuild.
     """
-    return Population(
-        players_df=build_players_df(),
-        role_scores_wide=build_role_scores_wide(),
-        team_styles_df=build_team_styles_df(),
-        transfers_df=build_transfers_df(),
-    )
+    return _reconstruct_population(group)
+
+
+reconstruct_population.cache_clear = _reconstruct_population.cache_clear
+reconstruct_population.cache_info = _reconstruct_population.cache_info
 
 
 def score_population(pop: Population, club_name: str | None) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -119,22 +143,68 @@ def score_population(pop: Population, club_name: str | None) -> tuple[pd.DataFra
     return scored, cs_tp
 
 
-@lru_cache(maxsize=1)
-def get_scored_population() -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Memoized own-club (club_context=None) whole-population scoring.
+@lru_cache(maxsize=None)
+def _get_scored_population(group: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    return score_population(_reconstruct_population(group), None)
 
-    Runs score_population(reconstruct_population(), None) at most once per
-    process -- the ~74-115s full-population pass -- and hands back the cached
-    (scored, cs_tp) every subsequent call. This is the precomputed
-    aggregate SCORE-07 Success Criterion 2 requires: the recompute_scores
-    command (writes the denormalized Player fields) and any own-club live
-    path both read this instead of re-scoring 41,708 players per request.
+
+def get_scored_population(group: str = LEGACY_SCORING_GROUP) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Memoized own-club (club_context=None) whole-population scoring of one
+    scoring population.
+
+    Runs score_population(reconstruct_population(group), None) at most once per
+    process per group -- the ~74-115s legacy pass, or the shorter pass for a
+    smaller season population -- and hands back the cached (scored, cs_tp)
+    every subsequent call. This is the precomputed aggregate SCORE-07 Success
+    Criterion 2 requires: the recompute_scores command (writes the denormalized
+    Player fields) and any own-club live path both read this instead of
+    re-scoring the whole population per request.
 
     Invalidated by clear_scoring_caches() after a data refresh. Callers
     MUST treat the returned DataFrames as read-only (copy/merge before
     mutating), exactly as reconstruct_population's callers already do.
     """
-    return score_population(reconstruct_population(), None)
+    return _get_scored_population(group)
+
+
+get_scored_population.cache_clear = _get_scored_population.cache_clear
+get_scored_population.cache_info = _get_scored_population.cache_info
+
+
+def group_for_player(player_id) -> str:
+    """The scoring population a player is ranked in, from their season.
+
+    A cheap indexed single-row lookup. An unknown player resolves to the
+    legacy group, where the service's own population lookup then raises the
+    real Http404 -- same as before groups existed.
+    """
+    from players.models import Player
+
+    season = Player.objects.filter(id=player_id).values_list("season", flat=True).first()
+    return scoring_group(season)
+
+
+def group_has_players(group: str) -> bool:
+    """Whether a scoring population has any players at all. A group can be
+    empty (a fresh environment before a season is imported); scoring one
+    would raise, so callers that loop over every group skip it."""
+    from players.models import Player
+    from players.season import filter_to_scoring_group
+
+    return filter_to_scoring_group(Player.objects.all(), group).exists()
+
+
+def warm_scoring_caches() -> None:
+    """Build and score every scoring population, then load the TFM pipeline.
+
+    What each gunicorn worker does at boot (config/gunicorn.conf.py) so no
+    request pays the cold cost. Legacy first: it is the largest. A group with no
+    players yet is skipped rather than crashing the worker at boot.
+    """
+    for group in scoring_groups():
+        if group_has_players(group):
+            get_scored_population(group)
+    get_tfm_pipeline()
 
 
 def resolve_club_name(club_id) -> str:

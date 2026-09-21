@@ -17,7 +17,7 @@ import pandas as pd
 from django.http import Http404
 
 from scoring.exceptions import null_with_reason
-from scoring.services.population import get_scored_population
+from scoring.services.population import get_scored_population, group_for_player
 
 
 def rmm_breakdown_from_scored(row: pd.Series) -> dict:
@@ -62,7 +62,7 @@ def get_rmm(player_id) -> dict:
 
     Raises `Http404` if `player_id` is absent from the population.
     """
-    scored, _cs_tp = get_scored_population()
+    scored, _cs_tp = get_scored_population(group_for_player(player_id))
 
     # players_df's "player_id" holds Player UUID objects; the URL id arrives
     # as a string -- coerce both to str before matching.

@@ -42,6 +42,7 @@ from scoring.services.compatibility import cs_breakdown_from_row
 from scoring.services.financial_fit import _financial_fit_own_club, financial_fit_from_population
 from scoring.services.population import (
     get_scored_population,
+    group_for_player,
     is_own_club,
     reconstruct_population,
     resolve_club_name,
@@ -64,10 +65,11 @@ def get_summary(player_id, club_id) -> dict:
     """
     club_name = resolve_club_name(club_id)  # Http404 on unknown club
 
-    pop = reconstruct_population()
+    group = group_for_player(player_id)  # ranked in the player's season's population
+    pop = reconstruct_population(group)
     own = is_own_club(player_id, club_id)
     if own:
-        scored, cs_tp = get_scored_population()
+        scored, cs_tp = get_scored_population(group)
     else:
         scored, cs_tp = score_population(pop, club_name)
 

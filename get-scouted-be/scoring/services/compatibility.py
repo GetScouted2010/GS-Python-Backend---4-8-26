@@ -40,6 +40,7 @@ from scoring.characterization.role_fit import (
 from scoring.exceptions import null_with_reason
 from scoring.services.population import (
     get_scored_population,
+    group_for_player,
     is_own_club,
     reconstruct_population,
     resolve_club_name,
@@ -99,9 +100,11 @@ def get_compatibility(player_id, club_id) -> dict:
     """
     club_name = resolve_club_name(club_id)  # Http404 on unknown club
 
-    pop = reconstruct_population()
+    # The player is ranked in THEIR season's population (players/season.py).
+    group = group_for_player(player_id)
+    pop = reconstruct_population(group)
     if is_own_club(player_id, club_id):
-        _, cs_tp = get_scored_population()
+        _, cs_tp = get_scored_population(group)
     else:
         _, cs_tp = score_population(pop, club_name)
 
