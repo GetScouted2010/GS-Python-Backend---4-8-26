@@ -14,7 +14,6 @@ from django.core.management import call_command
 
 from clubs.models import Club
 from players.models import Player
-from players.season import DEFAULT_SEASON
 
 pytestmark = pytest.mark.django_db
 
@@ -49,7 +48,7 @@ def _league(name):
 
 def _squad(club, names):
     for n in names:
-        Player.objects.create(unique_id=next(_old_uid), player=n, club=club, season=DEFAULT_SEASON)
+        Player.objects.create(unique_id=next(_old_uid), player=n, club=club, season="2024-2025")
 
 
 def test_wrong_country_league_is_corrected(tmp_path):

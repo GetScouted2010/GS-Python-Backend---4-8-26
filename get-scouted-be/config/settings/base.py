@@ -146,7 +146,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.OrderingFilter",
+        "core.ordering.NullsLastOrderingFilter",  # DRF's, but NULLs sort last both ways
     ],
     # Every response is wrapped in a {data, meta} envelope (core/envelope.py),
     # mirroring the sibling giri-cart project's response contract. This is a

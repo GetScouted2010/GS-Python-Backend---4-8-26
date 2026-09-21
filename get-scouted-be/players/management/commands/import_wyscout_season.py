@@ -16,13 +16,18 @@ What it does, in one transaction:
   4. Upsert the players through `import_players._build_player_kwargs` -- the
      same row builder, validation and flag-don't-skip policy as every other
      season.
+  5. Replace the season's role scores (PlayerRoleScore) from the file's 45
+     inline role columns -- what compatibility / role-fit scoring reads.
+  6. Remove rows of this season left over from an EARLIER run that this run no
+     longer produces (e.g. exact duplicates now dropped). A row a user has
+     watchlisted or shortlisted is never removed -- it is kept and reported.
 
 Deliberately NOT part of `import_all`: its source lives in
 `dataset/missing_data/` and it is meant to be run on purpose.
 
-The four denormalized scores are left NULL: the season is listed in
-`players.season.UNSCORED_SEASONS`, so `recompute_scores` neither scores these
-rows nor lets them shift existing players' percentile ranks.
+Scores: this command does not compute any. Run `recompute_scores` afterwards
+(unless the season is listed in `players.season.UNSCORED_SEASONS`, in which
+case its rows are held out of scoring and stay NULL).
 
 Usage:
     python manage.py import_wyscout_season --dry-run
@@ -33,6 +38,7 @@ from collections import Counter
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
 
 from clubs.leagues import REAL_LEAGUES
 from clubs.management.commands.import_clubs_playstyles import derive_club_league
@@ -43,11 +49,13 @@ from players.management.commands.import_players import (
     _build_player_kwargs,
     _clean,
 )
-from players.models import Player
+from players.management.commands.import_position_roles import sanitize_role_name
+from players.models import Player, PlayerRoleScore
 from players.season import SEASON_ORDER
 from players.wyscout_season import (
     DEFAULT_ID_OFFSET,
     adapt_wyscout_frame,
+    extract_role_scores,
     read_wyscout_csv,
 )
 
@@ -106,15 +114,18 @@ class Command(BaseCommand):
         club_league_db = dict(Club.objects.values_list("name", "league"))
 
         self.stdout.write(f"Reading {csv_path} ...")
+        raw = read_wyscout_csv(csv_path)
         try:
             frame, adapt_stats = adapt_wyscout_frame(
-                read_wyscout_csv(csv_path),
+                raw,
                 season=season,
                 id_offset=id_offset,
                 existing_club_league=club_league_db,
             )
         except ValueError as exc:
             raise CommandError(str(exc)) from exc
+        role_scores = extract_role_scores(raw, frame)
+        keep_ids = set(frame["UniqueID"].tolist())
 
         # (2) ID-collision guard.
         colliding = (
@@ -151,10 +162,16 @@ class Command(BaseCommand):
                 disagreements[(team, club_league_db[team], league)] += 1
 
         before_season_rows = Player.objects.filter(season=season).count()
+        stale_qs = Player.objects.filter(season=season).exclude(unique_id__in=keep_ids)
+        protected_qs = stale_qs.filter(
+            Q(watchlisted_by__isnull=False) | Q(shortlist_entries__isnull=False)
+        ).distinct()
+        stale_count, protected_count = stale_qs.count(), protected_qs.count()
         summary = (
             f"{len(frame)} rows | {len(new_club_names)} new clubs "
-            f"({len(new_leagues)} new leagues) | "
-            f"{before_season_rows} {season} rows already in DB"
+            f"({len(new_leagues)} new leagues) | {len(role_scores)} role scores | "
+            f"{before_season_rows} {season} rows already in DB | "
+            f"{stale_count} stale rows to remove ({protected_count} protected by user data)"
         )
         if dry_run:
             self.stdout.write(self.style.WARNING(f"DRY RUN -- nothing written. {summary}"))
@@ -209,8 +226,32 @@ class Command(BaseCommand):
                     update_fields=UPDATE_FIELDS,
                 )
 
+            # (5)/(6) inside the same transaction: stale rows first (their role
+            # scores cascade away with them), then replace the season's roles.
+            removable = stale_qs.exclude(pk__in=protected_qs.values("pk"))
+            stale_removed = removable.count()
+            removable.delete()
+            player_ids = dict(
+                Player.objects.filter(season=season).values_list("unique_id", "id")
+            )
+            PlayerRoleScore.objects.filter(player__season=season).delete()
+            PlayerRoleScore.objects.bulk_create(
+                [
+                    PlayerRoleScore(
+                        player_id=player_ids[int(row.UniqueID)],
+                        position_group=row.Position,
+                        role_name=sanitize_role_name(row.role_name_raw),
+                        role_name_raw=row.role_name_raw,
+                        score=float(row.score),
+                    )
+                    for row in role_scores.itertuples(index=False)
+                    if int(row.UniqueID) in player_ids
+                ],
+                batch_size=5000,
+            )
+
         after_season_rows = Player.objects.filter(season=season).count()
-        created = max(after_season_rows - before_season_rows, 0)
+        created = max(after_season_rows - before_season_rows + stale_removed, 0)
         report.source_row_count = total_rows
         report.set_counts(
             created=created, updated=max(total_rows - created, 0), flagged=len(flagged_uids)
@@ -222,6 +263,9 @@ class Command(BaseCommand):
                 "id_offset": id_offset,
                 "adapter": adapt_stats,
                 "clubs_created": len(new_club_names),
+                "role_scores_written": len(role_scores),
+                "stale_rows_removed": stale_removed,
+                "stale_rows_kept_because_user_data_points_at_them": protected_count,
                 "new_club_names_sample": new_club_names[:50],
                 "new_leagues_not_in_REAL_LEAGUES": new_leagues,
                 "unresolved_club_names": sorted(unresolved_club_names),

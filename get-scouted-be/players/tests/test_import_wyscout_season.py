@@ -15,10 +15,11 @@ from django.core.management.base import CommandError
 
 from clubs.models import Club
 from players.models import Player
-from players.season import DEFAULT_SEASON
 from players.wyscout_season import DEFAULT_ID_OFFSET
 
 pytestmark = pytest.mark.django_db
+
+OTHER_SEASON = "2024-2025"  # any season other than the one being imported
 
 HEADER = [
     "UniqueID", "Season", "League", "Player", "Team within selected timeframe",
@@ -100,7 +101,7 @@ def test_existing_clubs_are_never_modified(tmp_path, arsenal):
 
 def test_existing_seasons_are_untouched(tmp_path, arsenal):
     old = Player.objects.create(
-        unique_id=10, player="Old Player", season=DEFAULT_SEASON, club=arsenal, age=30
+        unique_id=10, player="Old Player", season=OTHER_SEASON, club=arsenal, age=30
     )
 
     # Source UniqueID 10 == the existing player's unique_id. Without the
@@ -108,7 +109,7 @@ def test_existing_seasons_are_untouched(tmp_path, arsenal):
     _run(tmp_path, [_row(10, "Arsenal")])
 
     old.refresh_from_db()
-    assert (old.player, old.season, old.age) == ("Old Player", DEFAULT_SEASON, 30)
+    assert (old.player, old.season, old.age) == ("Old Player", OTHER_SEASON, 30)
     assert Player.objects.count() == 2
 
 
@@ -143,7 +144,7 @@ def test_same_name_clubs_in_two_countries_are_kept_apart(tmp_path):
 def test_refuses_to_overwrite_another_seasons_rows(tmp_path, arsenal):
     # A mistyped --id-offset (here 0) would make the source IDs land on an
     # existing row of a different season. The command must refuse, not upsert.
-    Player.objects.create(unique_id=10, player="Old Player", season=DEFAULT_SEASON, club=arsenal)
+    Player.objects.create(unique_id=10, player="Old Player", season=OTHER_SEASON, club=arsenal)
 
     with pytest.raises(CommandError, match="DIFFERENT season"):
         _run(tmp_path, [_row(10, "Arsenal")], id_offset=0)

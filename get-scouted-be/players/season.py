@@ -16,22 +16,21 @@ tracks/overlaps the most recent fixed season most closely (confirmed:
 its stat lines are near-identical to "2024-2025" for the same players) --
 treated as the freshest/default season per product decision (2026-09-09).
 
-"2025-2026" (added via `import_wyscout_season`) is listed second, i.e. it is
-SELECTABLE but not the default. The default deliberately stays "Last
-Calendar Year" until 2025-2026 players have scores -- see UNSCORED_SEASONS.
+"2025-2026" (added via `import_wyscout_season`) is the DEFAULT season: it is the
+newest data, is scored, and its per-row leagues are clean (ROW_LEAGUE_SEASONS).
+"Last Calendar Year" is listed second and remains selectable.
 
 The scoring engine (`scoring.characterization.reconstruct`,
-`scoring.services.population`) intentionally reconstructs the FULL
-cross-season population for RMM/CS/TP computation. Whether the scoring
-pipeline should also be season-scoped is a separate, larger question; the
-only season-awareness it has is UNSCORED_SEASONS below.
+`scoring.services.population`) ranks players against a POPULATION: impact is a
+percentile rank within position over every Player row in that population. Two
+kinds exist -- see OWN_POPULATION_SEASONS below.
 """
 
 from __future__ import annotations
 
 SEASON_ORDER: list[str] = [
-    "Last Calendar Year",
     "2025-2026",
+    "Last Calendar Year",
     "2024-2025",
     "2023-2024",
     "2022-2023",
@@ -40,13 +39,56 @@ SEASON_ORDER: list[str] = [
 DEFAULT_SEASON: str = SEASON_ORDER[0]
 
 # Seasons whose Player rows exist but are held OUT of the scoring population
-# (`build_players_df`). Impact is a pooled percentile rank (`rank(pct=True)`
-# over every Player row), so letting ~18k new rows in would silently shift
-# EVERY existing player's score, and 2025-2026 rows have no role-score /
-# compatibility source data yet. Their four denormalized scores therefore
-# stay NULL. Remove a season from this set only as a deliberate, reviewed
-# change -- it changes existing players' numbers.
-UNSCORED_SEASONS: frozenset[str] = frozenset({"2025-2026"})
+# (`build_players_df`) and therefore have NULL scores. Empty now that
+# 2025-2026 is scored; the mechanism (this set, `players.views._is_unscored`,
+# the "season_not_scored" reason) stays for the next season that is imported
+# before it is scored. Impact is a pooled percentile rank (`rank(pct=True)`
+# over every Player row), so ADDING a season to scoring shifts every existing
+# player's score -- do it only as a deliberate, reviewed change.
+UNSCORED_SEASONS: frozenset[str] = frozenset()
+
+# Scoring populations. Impact is a percentile rank (`rank(pct=True)`) within
+# position over a POPULATION, so which players share a population decides every
+# number. Two kinds:
+#
+#   * LEGACY_SCORING_GROUP -- the four older seasons (+ rows with no season),
+#     ranked together exactly as they always were. Keeping this pool untouched
+#     is what keeps every existing player's score byte-identical (verified
+#     against the pre-2025-2026 scores: 0 of 41,010 changed).
+#   * a season in OWN_POPULATION_SEASONS -- ranked ONLY against itself. This is
+#     how the data provider computes 2025-2026: scoring those players against
+#     the 2025-2026 pool alone reproduces the provider's exported impact almost
+#     exactly (mean difference 0.00, correlation 0.99), while pools that
+#     include older seasons drift away from it by 1.4-3.1 points.
+#
+# Adding a season here does not move any other population's scores.
+LEGACY_SCORING_GROUP: str = "legacy"
+OWN_POPULATION_SEASONS: frozenset[str] = frozenset({"2025-2026"})
+
+
+def scoring_group(season: str | None) -> str:
+    """The scoring population a season's players are ranked in."""
+    return season if season in OWN_POPULATION_SEASONS else LEGACY_SCORING_GROUP
+
+
+def scoring_groups() -> list[str]:
+    """Every scoring population, legacy first (the order caches are warmed)."""
+    return [LEGACY_SCORING_GROUP, *sorted(OWN_POPULATION_SEASONS)]
+
+
+def filter_to_scoring_group(queryset, group: str, season_field: str = "season"):
+    """Restrict a Player (or Player-related) queryset to one scoring group.
+
+    Seasons in UNSCORED_SEASONS belong to no group. `.exclude()` keeps rows
+    whose season is NULL, so they stay in the legacy group.
+    """
+    if group == LEGACY_SCORING_GROUP:
+        held_out = OWN_POPULATION_SEASONS | UNSCORED_SEASONS
+        return queryset.exclude(**{f"{season_field}__in": held_out})
+    if group in OWN_POPULATION_SEASONS and group not in UNSCORED_SEASONS:
+        return queryset.filter(**{season_field: group})
+    return queryset.none()
+
 
 # Seasons whose per-row `Player.league` is CLEAN and authoritative, so the API
 # serves and filters on it directly instead of on `club.league`. Two reasons

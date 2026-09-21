@@ -38,6 +38,7 @@ from scoring.exceptions import null_with_reason
 from scoring.services.population import (
     Population,
     get_scored_population,
+    group_for_player,
     get_tfm_pipeline,
     is_own_club,
     reconstruct_population,
@@ -213,6 +214,7 @@ def get_financial_fit(player_id, club_id) -> dict:
     if is_own_club(player_id, club_id):
         return _financial_fit_own_club(player_id, club_name)
 
-    pop = reconstruct_population()
-    scored, cs_tp = get_scored_population()
+    group = group_for_player(player_id)  # ranked in the player's season's population
+    pop = reconstruct_population(group)
+    scored, cs_tp = get_scored_population(group)
     return financial_fit_from_population(player_id, club_name, pop, scored, cs_tp)

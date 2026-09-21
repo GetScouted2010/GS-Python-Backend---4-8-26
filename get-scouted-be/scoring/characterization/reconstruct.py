@@ -34,7 +34,7 @@ import pandas as pd
 
 from clubs.models import Club
 from players.models import Player, PlayerRoleScore
-from players.season import UNSCORED_SEASONS
+from players.season import LEGACY_SCORING_GROUP, filter_to_scoring_group
 from transfers.models import Transfer
 
 logger = logging.getLogger(__name__)
@@ -198,8 +198,14 @@ _DENORMALIZED_SCORE_FIELDS = frozenset(
 )
 
 
-def build_players_df() -> pd.DataFrame:
-    """One row per Player, columns renamed to impact_model_v4.1.py's literals.
+def build_players_df(group: str = LEGACY_SCORING_GROUP) -> pd.DataFrame:
+    """One row per Player of one scoring population, columns renamed to
+    impact_model_v4.1.py's literals.
+
+    `group` selects the population (players/season.py): the default is the
+    legacy pool, which is what the oracle and the TFM training were built on, so
+    calling this with no argument is unchanged. A season scored on its own
+    (OWN_POPULATION_SEASONS) is ranked ONLY against itself.
 
     `player_id` (the Player UUID) is carried as a stable join key back to
     Postgres -- the script itself has no stable id, only the non-unique
@@ -210,12 +216,8 @@ def build_players_df() -> pd.DataFrame:
         for f in Player._meta.fields
         if f.name not in _DENORMALIZED_SCORE_FIELDS
     ]
-    # UNSCORED_SEASONS (players/season.py) are held out of the scoring
-    # population: impact is a pooled percentile rank over every row here, so
-    # admitting a whole new season would silently shift every existing
-    # player's score. `.exclude()` keeps rows whose season is NULL.
     qs = (
-        Player.objects.exclude(season__in=UNSCORED_SEASONS)
+        filter_to_scoring_group(Player.objects.all(), group)
         .select_related("club")
         .values(*field_names, "club__name")
     )
@@ -309,7 +311,7 @@ def _normalize_role_label(raw: str) -> str:
     return _ROLE_LABEL_WHITESPACE_RE.sub(" ", raw.replace("_", " ")).strip()
 
 
-def build_role_scores_wide() -> pd.DataFrame:
+def build_role_scores_wide(group: str = LEGACY_SCORING_GROUP) -> pd.DataFrame:
     """Pivot PlayerRoleScore long (player x role) -> wide (one row per player).
 
     Columns are the normalized role labels (see `_normalize_role_label`).
@@ -317,7 +319,9 @@ def build_role_scores_wide() -> pd.DataFrame:
     fabricated -- a role a player has no score for should be an absent
     column/NaN, not a manufactured zero (CONCERNS.md silent-default class).
     """
-    qs = PlayerRoleScore.objects.values("player_id", "role_name_raw", "score")
+    qs = filter_to_scoring_group(
+        PlayerRoleScore.objects.all(), group, season_field="player__season"
+    ).values("player_id", "role_name_raw", "score")
     long_df = pd.DataFrame.from_records(list(qs))
 
     if long_df.empty:

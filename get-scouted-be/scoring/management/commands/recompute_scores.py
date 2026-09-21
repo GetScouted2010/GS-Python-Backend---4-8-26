@@ -40,6 +40,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from players.models import Player
+from players.season import scoring_groups
 from scoring.characterization.deterministic_scores import compute_cs_tp_for_pairs
 from scoring.characterization.impact import compute_rmm_column
 from scoring.characterization.reconstruct import (
@@ -49,7 +50,7 @@ from scoring.characterization.reconstruct import (
     build_transfers_df,
 )
 from scoring.characterization.tfm_model import build_oracle_player_features
-from scoring.services.population import clear_scoring_caches, get_tfm_pipeline
+from scoring.services.population import clear_scoring_caches, get_tfm_pipeline, group_has_players
 
 
 class Command(BaseCommand):
@@ -75,16 +76,72 @@ class Command(BaseCommand):
         # from a prior request in the same process.
         clear_scoring_caches()
 
+        # One population at a time: each is percentile-ranked ONLY against
+        # itself (players/season.py -- the legacy pool of older seasons, and
+        # 2025-2026 on its own). Scoring one never moves another's numbers.
+        pipeline, feature_cols = get_tfm_pipeline()
+        objs = []
+        for group in scoring_groups():
+            if not group_has_players(group):
+                self.stdout.write(f"[{group}] no players in this population yet -- skipped.")
+                continue
+            objs.extend(self._score_group(group, pipeline, feature_cols))
+
+        # =====================================================
+        # 6. Write via bulk_update inside a transaction -- atomic so a
+        #    live request never observes a half-written intermediate
+        #    state; it keeps reading the OLD denormalized values until the
+        #    whole update commits.
+        # =====================================================
+        self.stdout.write(f"Writing {len(objs)} players via bulk_update (batch_size={batch_size})...")
+        with transaction.atomic():
+            Player.objects.bulk_update(
+                objs,
+                [
+                    "impact_score",
+                    "compatibility_score",
+                    "financial_fit_score",
+                    "transfer_probability_score",
+                ],
+                batch_size=batch_size,
+            )
+
+        # Clear the caches again so the next live request rebuilds the
+        # in-process aggregate against the just-refreshed data.
+        clear_scoring_caches()
+
+        # =====================================================
+        # 7. Report per-field non-null counts so the operator can eyeball
+        #    that null-propagation happened, not silent zero-fill.
+        # =====================================================
+        impact_non_null = sum(o.impact_score is not None for o in objs)
+        cs_non_null = sum(o.compatibility_score is not None for o in objs)
+        fin_non_null = sum(o.financial_fit_score is not None for o in objs)
+        tp_non_null = sum(o.transfer_probability_score is not None for o in objs)
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Updated {len(objs)} players.\n"
+                f"  impact_score: {impact_non_null} non-null\n"
+                f"  compatibility_score: {cs_non_null} non-null (GK/LB/RB null by design)\n"
+                f"  financial_fit_score: {fin_non_null} non-null\n"
+                f"  transfer_probability_score: {tp_non_null} non-null (GK/LB/RB null by design)"
+            )
+        )
+
+    def _score_group(self, group, pipeline, feature_cols):
+        """Score ONE population and return the unsaved Player objects
+        carrying its four denormalized scores."""
         # =====================================================
         # 1. Reconstruct the full real population once.
         # =====================================================
-        self.stdout.write("Reconstructing real migrated data...")
-        players_df = build_players_df()
-        role_scores_wide = build_role_scores_wide()
+        self.stdout.write(f"[{group}] Reconstructing real migrated data...")
+        players_df = build_players_df(group)
+        role_scores_wide = build_role_scores_wide(group)
         team_styles_df = build_team_styles_df()
         transfers_df = build_transfers_df()
         total_players = len(players_df)
-        self.stdout.write(f"players_df: {total_players} rows")
+        self.stdout.write(f"[{group}] players_df: {total_players} rows")
 
         # =====================================================
         # 2. RMM -- computed FIRST, merged onto players_df as
@@ -122,8 +179,7 @@ class Command(BaseCommand):
         # 4. TFM (Financial Fit) -- players_df now carries player_impact/
         #    compatibility_score/performance_score/role_pct.
         # =====================================================
-        self.stdout.write("Building per-player TFM features (current club as buying context)...")
-        pipeline, feature_cols = get_tfm_pipeline()
+        self.stdout.write(f"[{group}] Building per-player TFM features (current club as buying context)...")
         oracle_features = build_oracle_player_features(players_df, transfers_df)
 
         missing_feature_cols = [c for c in feature_cols if c not in oracle_features.columns]
@@ -177,44 +233,4 @@ class Command(BaseCommand):
                 )
             )
 
-        # =====================================================
-        # 6. Write via bulk_update inside a transaction -- atomic so a
-        #    live request never observes a half-written intermediate
-        #    state; it keeps reading the OLD denormalized values until the
-        #    whole update commits.
-        # =====================================================
-        self.stdout.write(f"Writing {len(objs)} players via bulk_update (batch_size={batch_size})...")
-        with transaction.atomic():
-            Player.objects.bulk_update(
-                objs,
-                [
-                    "impact_score",
-                    "compatibility_score",
-                    "financial_fit_score",
-                    "transfer_probability_score",
-                ],
-                batch_size=batch_size,
-            )
-
-        # Clear the caches again so the next live request rebuilds the
-        # in-process aggregate against the just-refreshed data.
-        clear_scoring_caches()
-
-        # =====================================================
-        # 7. Report per-field non-null counts so the operator can eyeball
-        #    that null-propagation happened, not silent zero-fill.
-        # =====================================================
-        impact_non_null = sum(o.impact_score is not None for o in objs)
-        cs_non_null = sum(o.compatibility_score is not None for o in objs)
-        fin_non_null = sum(o.financial_fit_score is not None for o in objs)
-        tp_non_null = sum(o.transfer_probability_score is not None for o in objs)
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Updated {len(objs)} players.\n"
-                f"  impact_score: {impact_non_null} non-null\n"
-                f"  compatibility_score: {cs_non_null} non-null (GK/LB/RB null by design)\n"
-                f"  financial_fit_score: {fin_non_null} non-null\n"
-                f"  transfer_probability_score: {tp_non_null} non-null (GK/LB/RB null by design)"
-            )
-        )
+        return objs

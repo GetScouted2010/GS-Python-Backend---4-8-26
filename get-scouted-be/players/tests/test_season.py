@@ -60,11 +60,11 @@ def test_resolve_season_passes_through_known_value():
     assert resolve_season("2023-2024") == "2023-2024"
 
 
-def test_default_season_is_last_calendar_year():
-    # Locked product decision (2026-09-09): "Last Calendar Year" is the
-    # rolling window treated as freshest, so it's what an omitted ?season=
-    # resolves to -- not the newest fixed-year label.
-    assert DEFAULT_SEASON == "Last Calendar Year"
+def test_default_season_is_the_first_in_season_order():
+    # Product decision (2026-09-21): the newest scored season, 2025-2026, is
+    # what an omitted ?season= resolves to. (Previously "Last Calendar Year",
+    # the freshest data available until 2025-2026 was imported and scored.)
+    assert DEFAULT_SEASON == "2025-2026"
     assert SEASON_ORDER[0] == DEFAULT_SEASON
 
 
@@ -120,25 +120,27 @@ def test_ids_multi_fetch_bypasses_season_default(auth_client):
 # ---------------------------------------------------------------------------
 
 
-def test_2025_2026_is_selectable_but_not_the_default():
-    assert "2025-2026" in SEASON_ORDER
-    assert resolve_season("2025-2026") == "2025-2026"
-    assert DEFAULT_SEASON == "Last Calendar Year"
-    assert resolve_season(None) == "Last Calendar Year"
+def test_2025_2026_is_the_default_season():
+    assert DEFAULT_SEASON == "2025-2026"
+    assert resolve_season(None) == "2025-2026"
+    assert resolve_season("") == "2025-2026"
+    assert resolve_season("not-a-season") == "2025-2026"
 
 
-def test_2025_2026_is_listed_second_right_after_the_default():
-    assert SEASON_ORDER[:2] == ["Last Calendar Year", "2025-2026"]
+def test_2025_2026_is_listed_first_and_last_calendar_year_stays_selectable():
+    assert SEASON_ORDER[:2] == ["2025-2026", "Last Calendar Year"]
+    assert resolve_season("Last Calendar Year") == "Last Calendar Year"
 
 
-def test_list_can_be_scoped_to_2025_2026(auth_client):
+def test_list_defaults_to_2025_2026_and_an_older_season_can_be_requested(auth_client):
     default_row = _make_player(season=DEFAULT_SEASON)
-    new_row = _make_player(season="2025-2026")
+    older_row = _make_player(season="Last Calendar Year")
 
     default_ids = {r["id"] for r in auth_client.get("/api/v1/players/?page_size=100").data["items"]}
-    new_ids = {
-        r["id"] for r in auth_client.get("/api/v1/players/?season=2025-2026&page_size=100").data["items"]
+    older_ids = {
+        r["id"]
+        for r in auth_client.get("/api/v1/players/?season=Last Calendar Year&page_size=100").data["items"]
     }
 
-    assert str(default_row.id) in default_ids and str(new_row.id) not in default_ids
-    assert str(new_row.id) in new_ids and str(default_row.id) not in new_ids
+    assert str(default_row.id) in default_ids and str(older_row.id) not in default_ids
+    assert str(older_row.id) in older_ids and str(default_row.id) not in older_ids

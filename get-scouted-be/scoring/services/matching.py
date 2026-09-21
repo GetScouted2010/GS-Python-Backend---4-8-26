@@ -49,8 +49,10 @@ from scoring.characterization.role_fit import (
     normalise_position,
 )
 from scoring.services.financial_fit import get_financial_fit
+from players.season import resolve_season, scoring_group
 from scoring.services.population import (
     get_scored_population,
+    group_for_player,
     reconstruct_population,
     resolve_club_name,
     score_population,
@@ -68,7 +70,9 @@ def _none_if_nan(v):
     return float(v)
 
 
-def rank_replacement_players(club_id, position: str, top_n: int = DEFAULT_TOP_N) -> dict:
+def rank_replacement_players(
+    club_id, position: str, top_n: int = DEFAULT_TOP_N, season: str | None = None
+) -> dict:
     """PLAN-02 (Pattern 1): rank replacement players for a club's weak position.
 
     Reuses `score_population(pop, club_name)` wholesale -- the arbitrary-
@@ -79,9 +83,13 @@ def rank_replacement_players(club_id, position: str, top_n: int = DEFAULT_TOP_N)
     and bounds to `top_n`. The REAL TFM (predicted_fee/value_verdict) is
     attached only to that bounded top-N via the shared `_attach_real_tfm`
     helper -- never to the full candidate set.
+
+    Candidates come from ONE scoring population -- the one `season` belongs to
+    (default: the default season, i.e. the current one) -- so a candidate is
+    ranked against the players of his own season, never a mix.
     """
     club_name = resolve_club_name(club_id)  # Http404 on unknown club
-    pop = reconstruct_population()
+    pop = reconstruct_population(scoring_group(resolve_season(season)))
     scored, cs_tp = score_population(pop, club_name)  # ~44.6s live, accepted, single pass
 
     scored = scored.copy()
@@ -142,8 +150,9 @@ def rank_clubs_for_player(player_id, top_n: int = DEFAULT_TOP_N) -> dict:
     is attached only to the bounded top-N via the shared `_attach_real_tfm`
     helper.
     """
-    pop = reconstruct_population()
-    scored, _ = get_scored_population()  # memoized; "Player Impact" (RMM) is club-independent
+    group = group_for_player(player_id)  # ranked in the player's season's population
+    pop = reconstruct_population(group)
+    scored, _ = get_scored_population(group)  # memoized; "Player Impact" (RMM) is club-independent
 
     players_with_roles = pop.players_df.merge(
         pop.role_scores_wide, on="player_id", how="left", suffixes=("", "_role")

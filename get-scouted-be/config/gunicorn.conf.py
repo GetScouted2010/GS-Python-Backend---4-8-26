@@ -1,9 +1,10 @@
 """Gunicorn server hooks -- warms the in-process scoring caches at worker
 startup instead of on the first user request.
 
-`scoring.services.population.get_scored_population()` / `get_tfm_pipeline()`
-are `functools.lru_cache(maxsize=1)` -- memoized once PER WORKER PROCESS.
-Without this hook, the ~41.7k-player pandas + sklearn reconstruction they do
+`scoring.services.population.get_scored_population(group)` / `get_tfm_pipeline()`
+are `functools.lru_cache`d -- memoized once PER WORKER PROCESS (one entry per
+scoring group: the legacy pool of older seasons, and 2025-2026 on its own).
+Without this hook, the ~60k-player (two populations) pandas + sklearn reconstruction they do
 runs on whichever request happens to hit a cold worker first (always true
 right after every deploy, since `docker compose ... up -d --force-recreate
 web` starts fresh worker processes). That reconstruction has been observed
@@ -23,9 +24,8 @@ from __future__ import annotations
 
 
 def post_worker_init(worker):
-    from scoring.services.population import get_scored_population, get_tfm_pipeline
+    from scoring.services.population import warm_scoring_caches
 
-    worker.log.info("Warming scoring population cache (RMM/CS/TP + TFM pipeline)...")
-    get_scored_population()
-    get_tfm_pipeline()
-    worker.log.info("Scoring population cache warmed -- worker ready.")
+    worker.log.info("Warming scoring population caches (every group: RMM/CS/TP + TFM pipeline)...")
+    warm_scoring_caches()
+    worker.log.info("Scoring population caches warmed -- worker ready.")

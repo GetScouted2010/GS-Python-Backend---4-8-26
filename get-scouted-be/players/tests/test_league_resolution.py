@@ -18,7 +18,6 @@ from rest_framework.test import APIClient
 from clubs.models import Club
 from players.filters import PlayerFilter
 from players.models import Player
-from players.season import DEFAULT_SEASON
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
 
 pytestmark = pytest.mark.django_db
@@ -26,10 +25,15 @@ pytestmark = pytest.mark.django_db
 _unique_id_seq = itertools.count(999_600_001)
 
 
+# An OLD season: the A3 rule (league comes from the club, never the noisy raw
+# column) applies to seasons NOT in players.season.ROW_LEAGUE_SEASONS.
+OLD_SEASON = "2024-2025"
+
+
 def _make_player(club, **kwargs):
     kwargs.setdefault("unique_id", next(_unique_id_seq))
     kwargs.setdefault("player", "League Test Player")
-    kwargs.setdefault("season", DEFAULT_SEASON)
+    kwargs.setdefault("season", OLD_SEASON)
     return Player.objects.create(club=club, **kwargs)
 
 
@@ -70,7 +74,7 @@ def test_serializer_falls_back_to_raw_league_when_no_club():
         player="Clubless Player",
         club=None,
         league="Some Raw League",
-        season=DEFAULT_SEASON,
+        season=OLD_SEASON,
     )
 
     data = PlayerListSerializer(player).data
@@ -83,7 +87,7 @@ def test_filter_binds_to_club_league():
     contaminated = _make_player(club, league="Premier League (England)")
 
     result = PlayerFilter(
-        data={"league": "Premier League (England)", "season": DEFAULT_SEASON},
+        data={"league": "Premier League (England)", "season": OLD_SEASON},
         queryset=Player.objects.all(),
     ).qs
 
@@ -97,7 +101,7 @@ def test_filter_matches_players_by_actual_club_league():
     genuine = _make_player(club, league="Premier League (England)")
 
     result = PlayerFilter(
-        data={"league": "Premier League (England)", "season": DEFAULT_SEASON},
+        data={"league": "Premier League (England)", "season": OLD_SEASON},
         queryset=Player.objects.all(),
     ).qs
 
@@ -108,7 +112,7 @@ def test_player_list_endpoint_serves_canonical_league(auth_client):
     club = Club.objects.create(name="West Bromwich Albion", league="EFL Championship")
     player = _make_player(club, league="Premier League (England)")
 
-    response = auth_client.get("/api/v1/players/")
+    response = auth_client.get("/api/v1/players/", {"season": OLD_SEASON})
 
     assert response.status_code == 200
     row = next(r for r in response.data["items"] if r["id"] == str(player.id))

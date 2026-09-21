@@ -24,6 +24,17 @@ from players.season import DEFAULT_SEASON
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _fresh_scoring_caches():
+    """The scoring populations are memoized per process; without this, each
+    test would rank against whichever population an earlier test cached."""
+    from scoring.services.population import clear_scoring_caches
+
+    clear_scoring_caches()
+    yield
+    clear_scoring_caches()
+
+
 @pytest.fixture
 def auth_client():
     from accounts.models import User
