@@ -27,20 +27,27 @@ from django.shortcuts import get_object_or_404
 from clubs.models import Club
 from clubs.serializers import ClubDetailSerializer
 from players.ai.report_factory import get_report_generator
+from players.season import scope_to_season
 
 
-def position_needs_aggregate(club) -> dict:
+def position_needs_aggregate(club, season: str | None = None) -> dict:
     """Internal-only grounding aggregation for AI-04. Deliberately NARROWER
     than Phase 11's PLAN-01 (no strong/weak/at-risk labels, no public
     endpoint): a single bounded ORM query, never pandas, bounded to one
     club's ~few-dozen-row squad via `related_name="players"`.
 
+    Scoped to ONE season (players/season.py) -- `club.players` holds a row per
+    player PER SEASON, so an unscoped count pools every season and reports a
+    squad several times its real size (Arsenal showed 12 centre-backs; one
+    season has 3). `season=None` means the default season.
+
     Returns a dict keyed by position, each value:
     {squad_depth, avg_age, contracts_expiring_within_12mo}.
     """
     cutoff = date.today() + timedelta(days=365)
+    squad = scope_to_season(club.players.exclude(position__isnull=True), season)
     rows = (
-        club.players.exclude(position__isnull=True).values("position").annotate(
+        squad.values("position").annotate(
             squad_depth=Count("id"),
             avg_age=Avg("age"),
             expiring_within_12mo=Count(
@@ -59,12 +66,12 @@ def position_needs_aggregate(club) -> dict:
     }
 
 
-def classify_position_needs(club) -> dict:
+def classify_position_needs(club, season: str | None = None) -> dict:
     """PLAN-01 (11-01-PLAN.md): layers strong/weak/at-risk classification
     onto position_needs_aggregate's existing numbers. Never recomputes the
     underlying aggregation -- reuses it as-is (see module docstring / the
     Phase-10-vs-Phase-11 scoping decision)."""
-    needs = position_needs_aggregate(club)
+    needs = position_needs_aggregate(club, season)
     result = {}
     for position, stats in needs.items():
         depth = stats["squad_depth"]

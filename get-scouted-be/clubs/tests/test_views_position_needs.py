@@ -17,6 +17,7 @@ from rest_framework.test import APIClient
 
 from clubs.models import Club
 from players.models import Player
+from players.season import DEFAULT_SEASON
 
 pytestmark = pytest.mark.django_db
 
@@ -37,9 +38,9 @@ def auth_client():
 def _make_club_with_squad(name="Position Needs United"):
     club = Club.objects.create(name=name, league="Test League")
     base = hash(name) % 1_000_000
-    Player.objects.create(unique_id=base + 1, player="P1", club=club, position="CB", age=24)
-    Player.objects.create(unique_id=base + 2, player="P2", club=club, position="CB", age=26)
-    Player.objects.create(unique_id=base + 3, player="P3", club=club, position="ST", age=22)
+    Player.objects.create(unique_id=base + 1, player="P1", club=club, position="CB", age=24, season=DEFAULT_SEASON)
+    Player.objects.create(unique_id=base + 2, player="P2", club=club, position="CB", age=26, season=DEFAULT_SEASON)
+    Player.objects.create(unique_id=base + 3, player="P3", club=club, position="ST", age=22, season=DEFAULT_SEASON)
     return club
 
 

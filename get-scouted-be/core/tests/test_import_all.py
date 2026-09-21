@@ -138,3 +138,44 @@ def test_import_all_idempotent(fixture_dir, tmp_path):
 
     reconciled_tables = {entry["table"] for entry in combined_data["reconciliation"]}
     assert reconciled_tables == {name for _, name in ALL_TABLES}
+
+
+def _reconciliation_by_table(report_dir):
+    combined = json.loads(
+        sorted(report_dir.glob("import_all_*.json"), key=lambda p: p.stat().st_mtime)[-1].read_text()
+    )
+    return {row["table"]: row for row in combined["reconciliation"]}
+
+
+@pytest.mark.django_db
+@pytest.mark.integration
+def test_import_all_reconciliation_ignores_wyscout_season_rows(fixture_dir, tmp_path):
+    """After `import_wyscout_season` has added its rows (and the clubs that
+    exist only for them), re-running `import_all` must reconcile EXACTLY as it
+    did before -- those rows aren't in this pipeline's source files, so
+    counting them would raise a permanent false REVIEW.
+
+    (The fixture's own baseline is not all-zero -- `_seed_transfer_clubs`
+    adds clubs the source CSV doesn't list -- so this asserts the deltas are
+    UNCHANGED by the Wyscout rows rather than equal to zero.)"""
+    from players.wyscout_season import DEFAULT_ID_OFFSET
+
+    _seed_transfer_clubs(fixture_dir)
+    _run_import_all(fixture_dir, tmp_path / "run1", tmp_path / "reports_run1")
+    before = _reconciliation_by_table(tmp_path / "reports_run1")
+
+    wyscout_club = Club.objects.create(name="Wyscout Only FC", league="Liga MX (Mexico)")
+    Player.objects.create(
+        unique_id=DEFAULT_ID_OFFSET + 1, player="W. Season", season="2025-2026", club=wyscout_club
+    )
+    _run_import_all(fixture_dir, tmp_path / "run2", tmp_path / "reports_run2")
+    after = _reconciliation_by_table(tmp_path / "reports_run2")
+
+    for table in ("Player", "Club"):
+        assert after[table]["db_rows"] == before[table]["db_rows"], (table, before[table], after[table])
+        assert after[table]["delta"] == before[table]["delta"], (table, before[table], after[table])
+    assert "excludes 1 Wyscout-season row" in after["Player"]["note"]
+    assert "excludes 1 club" in after["Club"]["note"]
+    # ...and the rows themselves were left alone by the re-run.
+    assert Player.objects.filter(unique_id=DEFAULT_ID_OFFSET + 1).exists()
+    assert Club.objects.filter(name="Wyscout Only FC").exists()

@@ -113,3 +113,32 @@ def test_ids_multi_fetch_bypasses_season_default(auth_client):
     assert response.status_code == 200
     ids = {row["id"] for row in response.data}
     assert ids == {str(older.id)}
+
+
+# ---------------------------------------------------------------------------
+# 2025-2026: selectable, but NOT the default, NOT scored, per-row league.
+# ---------------------------------------------------------------------------
+
+
+def test_2025_2026_is_selectable_but_not_the_default():
+    assert "2025-2026" in SEASON_ORDER
+    assert resolve_season("2025-2026") == "2025-2026"
+    assert DEFAULT_SEASON == "Last Calendar Year"
+    assert resolve_season(None) == "Last Calendar Year"
+
+
+def test_2025_2026_is_listed_second_right_after_the_default():
+    assert SEASON_ORDER[:2] == ["Last Calendar Year", "2025-2026"]
+
+
+def test_list_can_be_scoped_to_2025_2026(auth_client):
+    default_row = _make_player(season=DEFAULT_SEASON)
+    new_row = _make_player(season="2025-2026")
+
+    default_ids = {r["id"] for r in auth_client.get("/api/v1/players/?page_size=100").data["items"]}
+    new_ids = {
+        r["id"] for r in auth_client.get("/api/v1/players/?season=2025-2026&page_size=100").data["items"]
+    }
+
+    assert str(default_row.id) in default_ids and str(new_row.id) not in default_ids
+    assert str(new_row.id) in new_ids and str(default_row.id) not in new_ids

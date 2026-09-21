@@ -22,6 +22,7 @@ from clubs import services
 from clubs.models import Club
 from players.ai.report_generator import GeneratedReport, ReportGeneratorError
 from players.models import Player
+from players.season import DEFAULT_SEASON
 
 pytestmark = pytest.mark.django_db
 
@@ -53,6 +54,7 @@ def _make_player(club, unique_id, position, age, contract_expires=None):
         position=position,
         age=age,
         contract_expires=contract_expires,
+        season=DEFAULT_SEASON,
     )
 
 

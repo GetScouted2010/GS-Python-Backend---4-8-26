@@ -30,6 +30,7 @@ from players.ai.factory import get_nl_query_parser
 from players.ai.report_generator import ReportGeneratorError
 from players.filters import PlayerFilter
 from players.models import Player
+from players.season import UNSCORED_SEASONS
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
 from scoring.exceptions import null_with_reason
 from scoring.services import rmm, summary
@@ -80,6 +81,18 @@ class PlayerListView(generics.ListAPIView):
     ordering = ["-impact_score"]  # deterministic default, not Postgres insertion order
 
 
+SEASON_NOT_SCORED = "season_not_scored"
+
+
+def _is_unscored(player) -> bool:
+    """True for a player whose season is held out of the scoring population
+    (players.season.UNSCORED_SEASONS). Every scoring service raises Http404
+    for a player it can't find in that population -- a misleading "player not
+    found" for a player that plainly exists (and only after a slow cold
+    scoring pass) -- so these players must never reach them."""
+    return player.season in UNSCORED_SEASONS
+
+
 class PlayerDetailView(APIView):
     """GET /api/v1/players/{id}/?club_id=<uuid> -- CRUD-03.
 
@@ -116,6 +129,19 @@ class PlayerDetailView(APIView):
             user=request.user, activity_type="viewed_player", target_id=player.id
         )
         profile = PlayerDetailSerializer(player).data
+
+        if _is_unscored(player):
+            # Same null+reason envelope the no-club branch below uses --
+            # profile and stats are real, the scores simply don't exist yet.
+            return Response({
+                **profile,
+                "scores": {
+                    "rmm": null_with_reason("rmm", SEASON_NOT_SCORED),
+                    "compatibility": null_with_reason("compatibility_score", SEASON_NOT_SCORED),
+                    "financial_fit": null_with_reason("financial_fit", SEASON_NOT_SCORED),
+                    "transfer_probability": null_with_reason("transfer_probability", SEASON_NOT_SCORED),
+                },
+            })
 
         club_id = request.query_params.get("club_id") or player.club_id
         if club_id is None:
@@ -176,6 +202,15 @@ class PlayerScoutingReportView(APIView):
     def post(self, request, pk):
         player = get_object_or_404(Player, id=pk)
 
+        if _is_unscored(player):
+            # A report is grounded in (and validated against) the player's
+            # real scores; with none, the only honest answer is a clear 400,
+            # never a fabricated report and never a misleading 404.
+            raise ValidationError(
+                {"player": f"Scouting reports aren't available for {player.season} players yet "
+                           f"(scores haven't been computed for that season)."}
+            )
+
         club_id = request.data.get("club_id") or player.club_id
         if club_id is None:
             raise ValidationError({"club_id": "Required for a club-relative scouting report."})
@@ -223,7 +258,9 @@ class ClubMatchesView(APIView):
         responses={200: OpenApiResponse(description="Top-N ranked club list with CS/TFM breakdown per entry."), 404: OpenApiResponse(description="Unknown player.")},
     )
     def get(self, request, pk):
-        get_object_or_404(Player, id=pk)  # fast 404 on unknown player
+        player = get_object_or_404(Player, id=pk)  # fast 404 on unknown player
+        if _is_unscored(player):
+            return Response({"player_id": str(pk), "results": [], "reason": SEASON_NOT_SCORED})
         return Response(rank_clubs_for_player(pk))
 
 

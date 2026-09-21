@@ -20,6 +20,7 @@ from rest_framework.test import APIClient
 from clubs.models import Club
 from players.ai.report_generator import GeneratedReport, ReportGeneratorError
 from players.models import Player
+from players.season import DEFAULT_SEASON
 from transfers.models import Transfer
 
 pytestmark = pytest.mark.django_db
@@ -55,8 +56,8 @@ def _fake_generator(return_value=None, side_effect=None):
 
 def _make_club_with_squad_and_transfers(name):
     club = Club.objects.create(name=name, league="Test League")
-    p1 = Player.objects.create(unique_id=hash(name) % 1_000_000 + 1, player="P1", club=club, position="CB", age=25)
-    Player.objects.create(unique_id=hash(name) % 1_000_000 + 2, player="P2", club=club, position="ST", age=29)
+    p1 = Player.objects.create(unique_id=hash(name) % 1_000_000 + 1, player="P1", club=club, position="CB", age=25, season=DEFAULT_SEASON)
+    Player.objects.create(unique_id=hash(name) % 1_000_000 + 2, player="P2", club=club, position="ST", age=29, season=DEFAULT_SEASON)
     Transfer.objects.create(
         club=club,
         player=p1,
