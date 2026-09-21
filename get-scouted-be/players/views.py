@@ -7,6 +7,7 @@ global DEFAULT_PERMISSION_CLASSES (IsAuthenticated) + DEFAULT_AUTHENTICATION
 _CLASSES (JWTAuthentication) already deny-by-default (config/settings/base.py).
 """
 
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -30,7 +31,7 @@ from players.ai.factory import get_nl_query_parser
 from players.ai.report_generator import ReportGeneratorError
 from players.filters import PlayerFilter
 from players.models import Player
-from players.season import UNSCORED_SEASONS
+from players.season import DEFAULT_SEASON, SEASON_ORDER, UNSCORED_SEASONS
 from players.serializers import PlayerDetailSerializer, PlayerListSerializer
 from scoring.exceptions import null_with_reason
 from scoring.services import rmm, summary
@@ -331,4 +332,37 @@ class PlayerSearchView(APIView):
                 "fallback_used": fallback_used,
                 "results": results,
             }
+        )
+
+
+class SeasonListView(APIView):
+    """GET /api/v1/players/seasons/ -- the seasons a season selector can
+    offer, so the frontend never hardcodes the list."""
+
+    @extend_schema(
+        tags=["players"],
+        summary="List available seasons",
+        description=(
+            "Every season the player data can be viewed under, newest first, "
+            "with the value to pass as `season` on `GET /players/` and the "
+            "club endpoints. `is_default` marks the season used when none is "
+            "given. `scored` is false for a season whose players exist but "
+            "have no computed scores yet (their score fields are null and "
+            "score-based filters/sorting will find nothing) -- disable those "
+            "controls when it is false."
+        ),
+        responses={200: OpenApiResponse(description="List of {season, is_default, scored, player_count}.")},
+    )
+    def get(self, request):
+        counts = dict(Player.objects.values_list("season").annotate(n=Count("id")))
+        return Response(
+            [
+                {
+                    "season": season,
+                    "is_default": season == DEFAULT_SEASON,
+                    "scored": season not in UNSCORED_SEASONS,
+                    "player_count": counts.get(season, 0),
+                }
+                for season in SEASON_ORDER
+            ]
         )
